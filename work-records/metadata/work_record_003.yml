@@ -1,9 +1,9 @@
 schema_version: 1
-title: 'スポーツポータルMVP仕様書の作成'
+title: 'MVPリリース工程のIssue分解'
 date: "2026-09-07"
 project_id: sport-portal
 tags:
-  - requirements
+  - planning
   - mvp
-  - cloudflare
+  - issues
 publish: true

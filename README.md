@@ -1,15 +1,14 @@
-# Work Record Source Template
+# sport-portal
 
-作業記録を生成・管理するリポジトリ用のテンプレートです。
+自分専用のスポーツ内容確認サイトと、その検討・実装過程を管理する生成元リポジトリです。
 
-このリポジトリは、公開サイト `tj-999-comp/sandbox-pages` の生成元として使うことを想定しています。新しいプロジェクトはGitHubの「Use this template」から作成してください。
+このリポジトリは、公開サイト `tj-999-comp/sandbox-pages` の生成元として使います。
 
 ## 最初に変更するもの
 
-1. このREADMEのプロジェクト名と説明
-2. `work-records/metadata/` の `project_id`
-3. 必要なら `app/` などにプロジェクト本体
-4. `request-publish.yml` の `PROJECT_ID`
+1. 必要なら `app/` などにプロジェクト本体を追加する
+2. 作業記録のmetadataには `project_id: sport-portal` を指定する
+3. 公開要求は `request-publish.yml` の `sport-portal` 固定値を使う
 
 `project_id`、公開先ディレクトリ、容量制限、受入可否の正本は公開リポジトリ側のsource registryです。生成元側で公開先パスを自由に指定しないでください。
 

@@ -1,9 +1,8 @@
 schema_version: 1
-title: 'スポーツポータルMVP仕様書の作成'
+title: 'sport-portalを生成元リポジトリとして整備'
 date: "2026-09-07"
-project_id: sport_portal
+project_id: sport-portal
 tags:
-  - requirements
-  - mvp
-  - cloudflare
+  - setup
+  - source-repository
 publish: true

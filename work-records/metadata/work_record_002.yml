@@ -1,0 +1,9 @@
+schema_version: 1
+title: 'MVPリリース工程のIssue分解'
+date: "2026-09-07"
+project_id: sport_portal
+tags:
+  - planning
+  - mvp
+  - issues
+publish: true

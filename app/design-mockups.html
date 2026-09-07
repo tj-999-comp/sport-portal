@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Design mockups</title>
+  <link rel="stylesheet" href="design-mockups.css">
+</head>
+<body class="v01">
+  <main class="mockup-shell">
+    <header class="topbar">
+      <div class="brand-lockup"><span class="brand-mark"></span><span class="brand-name">SPORTS PORTAL</span></div>
+      <div class="topbar-meta"><span>2026</span><button class="icon-button" aria-label="順位表">↗</button></div>
+    </header>
+
+    <section class="intro">
+      <div class="intro-label">J1 LEAGUE / TODAY</div>
+      <div class="date-display"><span class="date-number">09</span><span class="date-rest"><span>12</span><span>SAT</span></span></div>
+      <div class="intro-rule"></div>
+      <p class="update-note"><i></i> 12:00 UPDATED</p>
+    </section>
+
+    <nav class="date-nav" aria-label="日付">
+      <button class="date-chip muted"><small>FRI</small><strong>11</strong></button>
+      <button class="date-chip active"><small>SAT</small><strong>12</strong></button>
+      <button class="date-chip"><small>SUN</small><strong>13</strong></button>
+      <button class="date-chip"><small>MON</small><strong>14</strong></button>
+      <button class="date-chip"><small>TUE</small><strong>15</strong></button>
+    </nav>
+
+    <section class="schedule">
+      <div class="section-head"><span class="section-index">01</span><h1>Fixtures</h1><span class="section-count">6 MATCHES</span></div>
+      <article class="day-block today">
+        <header class="day-head"><div><span class="day-number">09.12</span><span class="day-week">SATURDAY</span></div><span class="day-state">TODAY</span></header>
+        <div class="match-list">
+          <div class="match-row"><div class="match-info"><span class="match-time">18:00</span><span class="match-round">MD 29</span></div><div class="teams"><span>浦和</span><b>2</b><span>鹿島</span><b>1</b></div><span class="match-dot win"></span></div>
+          <div class="match-row"><div class="match-info"><span class="match-time">19:00</span><span class="match-round">MD 29</span></div><div class="teams"><span>川崎</span><b>0</b><span>G大阪</span><b>0</b></div><span class="match-dot draw"></span></div>
+          <div class="match-row upcoming"><div class="match-info"><span class="match-time">21:00</span><span class="match-round">MD 29</span></div><div class="teams"><span>横浜FM</span><em>—</em><span>神戸</span></div><span class="match-dot next"></span></div>
+        </div>
+      </article>
+      <article class="day-block"><header class="day-head"><div><span class="day-number">09.13</span><span class="day-week">SUNDAY</span></div><span class="day-state">3 MATCHES</span></header><div class="match-list compact"><div class="match-row"><div class="match-info"><span class="match-time">14:00</span><span class="match-round">MD 30</span></div><div class="teams"><span>新潟</span><em>—</em><span>柏</span></div><span class="match-dot next"></span></div><div class="match-row"><div class="match-info"><span class="match-time">16:00</span><span class="match-round">MD 30</span></div><div class="teams"><span>東京</span><em>—</em><span>広島</span></div><span class="match-dot next"></span></div></div></article>
+    </section>
+
+    <section class="status-strip"><span class="status-pulse"></span><span>SYNCED</span><button class="refresh" aria-label="更新">↻</button></section>
+    <footer class="bottom-nav"><button class="selected"><span>◒</span><small>FIXTURES</small></button><button><span>▦</span><small>TABLE</small></button><button><span>•••</span><small>MORE</small></button></footer>
+  </main>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const variant = String(Math.min(20, Math.max(1, Number(params.get('v') || 1)))).padStart(2, '0');
+    document.body.className = `v${variant}`;
+    document.title = `Design mockup ${variant}`;
+  </script>
+</body>
+</html>

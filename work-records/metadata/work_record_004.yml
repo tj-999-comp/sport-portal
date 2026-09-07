@@ -1,0 +1,9 @@
+schema_version: 1
+title: 'スポーツポータルMVP実装'
+date: "2026-09-07"
+project_id: sport-portal
+tags:
+  - implementation
+  - mvp
+  - cloudflare
+publish: true

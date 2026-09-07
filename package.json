@@ -1,0 +1,9 @@
+{
+  "name": "sport-portal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test worker/test/*.test.js",
+    "test:syntax": "node --check app/app.js && node --check worker/src/index.js && node --check functions/_middleware.js && node --check 'functions/api/[[path]].js'"
+  }
+}

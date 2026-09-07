@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="description" content="J1リーグの試合予定・結果・順位表を確認するスポーツポータル">
+  <title>スポーツポータル | 2026 J1</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">SPORTS PORTAL / J1</p>
+        <h1>スポーツポータル</h1>
+        <p class="season">2026年 J1リーグ</p>
+      </div>
+      <div class="header-actions">
+        <button class="button button-secondary" id="standings-button" type="button">順位表を見る</button>
+        <button class="button button-primary" id="refresh-button" type="button">手動更新</button>
+      </div>
+    </header>
+
+    <section class="status-panel" aria-live="polite">
+      <div class="status-indicator" id="status-indicator"></div>
+      <div>
+        <p class="status-label" id="status-label">読み込み中</p>
+        <p class="status-detail" id="status-detail">最新データを確認しています</p>
+      </div>
+      <time class="updated-at" id="updated-at"></time>
+    </section>
+
+    <section class="matches-section" aria-labelledby="matches-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">MATCHES</p>
+          <h2 id="matches-heading">試合日程・結果</h2>
+        </div>
+        <p class="scroll-hint">← 横にスワイプ →</p>
+      </div>
+      <div class="match-days" id="match-days" tabindex="0" aria-label="試合日ごとの一覧"></div>
+      <p class="empty-state" id="empty-state" hidden>データを取得できていません</p>
+    </section>
+  </main>
+
+  <dialog class="standings-dialog" id="standings-dialog" aria-labelledby="standings-title">
+    <div class="dialog-header">
+      <div>
+        <p class="eyebrow">TABLE</p>
+        <h2 id="standings-title">J1 順位表</h2>
+      </div>
+      <button class="close-button" id="close-standings" type="button" aria-label="順位表を閉じる">×</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>順位</th><th class="team-column">チーム</th><th>試合</th><th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th><th>得失</th><th>勝点</th></tr>
+        </thead>
+        <tbody id="standings-body"></tbody>
+      </table>
+    </div>
+  </dialog>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

@@ -20,6 +20,15 @@ work-records/
 └── metadata/              # work_record_###.yml
 ```
 
+## MVPアプリ
+
+- `app/`: Cloudflare Pagesへ配置する静的フロントエンド
+- `functions/_middleware.js`: Pagesの全URLへBasic認証を適用するミドルウェア
+- `worker/`: 公式サイト取得、KV保存、API、定期実行を担うCloudflare Worker
+- `DEPLOYMENT.md`: Pages・Worker・KV・Secretの公開手順
+
+ローカル検証は `npm test` と `npm run test:syntax` で実行できます。
+
 `a_rendered`方式では、HTML・共通CSS・project indexは生成元で管理しません。公開時に公開リポジトリ側のrendererがMarkdownとmetadataから生成します。
 
 ## 作業記録の追加

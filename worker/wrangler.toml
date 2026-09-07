@@ -1,0 +1,13 @@
+name = "sport-portal-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+APP_ORIGIN = "https://sport-portal.pages.dev"
+
+[[kv_namespaces]]
+binding = "SPORTAL_DATA"
+id = "60874002e24041be8154a96d3cbc974b"
+
+[triggers]
+crons = ["0 8 * * *", "0 10 * * *", "0 12 * * *", "0 13 * * *", "0 14 * * *"]

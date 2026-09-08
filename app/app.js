@@ -132,8 +132,59 @@ async function refresh() {
   finally { state.updating = false; button.disabled = false; button.textContent = '手動更新'; }
 }
 
+const standingsSheet = $('#standings-sheet');
+const standingsPanel = $('#standings-panel');
+let standingsOpenedFrom = null;
+let sheetDragStartY = null;
+
+function openStandings() {
+  standingsOpenedFrom = document.activeElement;
+  standingsSheet.hidden = false;
+  standingsSheet.setAttribute('aria-hidden', 'false');
+  requestAnimationFrame(() => {
+    standingsSheet.classList.add('is-open');
+    standingsPanel.focus();
+  });
+}
+
+function closeStandings() {
+  if (standingsSheet.hidden) return;
+  standingsSheet.classList.remove('is-open', 'is-dragging');
+  standingsSheet.setAttribute('aria-hidden', 'true');
+  standingsPanel.style.removeProperty('--drag-offset');
+  window.setTimeout(() => { standingsSheet.hidden = true; }, 220);
+  standingsOpenedFrom?.focus();
+}
+
 $('#refresh-button').addEventListener('click', refresh);
-$('#standings-button').addEventListener('click', () => $('#standings-dialog').showModal());
-$('#close-standings').addEventListener('click', () => $('#standings-dialog').close());
-$('#standings-dialog').addEventListener('click', (event) => { if (event.target === $('#standings-dialog')) $('#standings-dialog').close(); });
+$('#standings-button').addEventListener('click', openStandings);
+$('#close-standings').addEventListener('click', closeStandings);
+$('#standings-backdrop').addEventListener('click', closeStandings);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeStandings(); });
+standingsPanel.addEventListener('pointerdown', (event) => {
+  sheetDragStartY = event.clientY;
+  standingsSheet.classList.add('is-dragging');
+  standingsPanel.setPointerCapture?.(event.pointerId);
+});
+standingsPanel.addEventListener('pointermove', (event) => {
+  if (sheetDragStartY === null) return;
+  const offset = Math.max(0, event.clientY - sheetDragStartY);
+  standingsPanel.style.setProperty('--drag-offset', `${offset}px`);
+});
+standingsPanel.addEventListener('pointerup', (event) => {
+  if (sheetDragStartY === null) return;
+  const offset = Math.max(0, event.clientY - sheetDragStartY);
+  sheetDragStartY = null;
+  standingsPanel.releasePointerCapture?.(event.pointerId);
+  if (offset > 80) closeStandings();
+  else {
+    standingsSheet.classList.remove('is-dragging');
+    standingsPanel.style.removeProperty('--drag-offset');
+  }
+});
+standingsPanel.addEventListener('pointercancel', () => {
+  sheetDragStartY = null;
+  standingsSheet.classList.remove('is-dragging');
+  standingsPanel.style.removeProperty('--drag-offset');
+});
 loadData();

@@ -66,17 +66,19 @@ const dates = [
 ];
 
 function createLeagueOption([title, variant], index) {
-  return `<article class="review-card league-card">
-    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+  const chosen = index === 0;
+  return `<article class="review-card league-card${chosen ? ' chosen' : ''}">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${chosen ? '<em class="choice-tag">採用</em>' : ''}</div>
     <div class="league-preview ${variant}">
-      <button class="league-row" type="button" aria-pressed="false"><span>Jリーグ</span><span class="league-arrow" aria-hidden="true">→</span></button>
+      <button class="league-row${chosen ? ' is-selected' : ''}" type="button" aria-pressed="${chosen}"><span>Jリーグ</span><span class="league-arrow" aria-hidden="true">→</span></button>
     </div>
   </article>`;
 }
 
 function createNavigationOption([title, variant], index) {
-  return `<article class="review-card navigation-card">
-    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+  const chosen = index === 1;
+  return `<article class="review-card navigation-card${chosen ? ' chosen' : ''}">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${chosen ? '<em class="choice-tag">採用</em>' : ''}</div>
     <div class="navigation-preview ${variant}">
       <nav class="review-bottom-nav" aria-label="下部メニュー案 ${index + 1}">
         <button class="nav-item is-selected" type="button" aria-pressed="true"><span class="nav-icon" aria-hidden="true">◒</span><span>試合</span></button>
@@ -88,8 +90,9 @@ function createNavigationOption([title, variant], index) {
 }
 
 function createDateOption([title, variant], index) {
-  return `<article class="review-card date-card">
-    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+  const chosen = index === 4;
+  return `<article class="review-card date-card${chosen ? ' chosen' : ''}">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${chosen ? '<em class="choice-tag">採用</em>' : ''}</div>
     <div class="date-preview ${variant}">
       <span class="date-month">2026年9月</span>
       <div class="date-options" role="group" aria-label="日付案 ${index + 1}">

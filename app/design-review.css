@@ -41,6 +41,8 @@ button { color: inherit; font: inherit; }
 .card-caption { display: flex; align-items: baseline; gap: 10px; padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
 .card-caption span { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
 .card-caption strong { font-size: 12px; }
+.card-caption .choice-tag { margin-left: auto; padding: 3px 6px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 9px; font-style: normal; font-weight: 700; letter-spacing: .04em; }
+.review-card.chosen { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
 /* League interaction review */
 .league-preview { display: grid; min-height: 116px; place-items: center; padding: 18px 28px; background: #fff; }

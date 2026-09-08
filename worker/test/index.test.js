@@ -28,6 +28,13 @@ test('uses the linked-card fallback used by the public schedule page', () => {
   assert.deepEqual([result[0].homeScore, result[0].awayScore], [0, 1]);
 });
 
+test('parses current nested J.League match links and derives date from href', () => {
+  const html = `<h2>2026/9/6 (日)</h2><a class="m-schedule__link" href="/match/j1/2026/090601/"><div data-match="true"><span>鹿島アントラーズ</span><p>18:00</p><span>浦和レッズ</span><span>2試合終了1</span></div></a>`;
+  const result = parseScheduleHtml(html);
+  assert.equal(result.length, 1);
+  assert.deepEqual(result[0], { id: '090601', date: '2026-09-06', matchday: null, kickoff: '18:00', home: { name: '鹿島アントラーズ', short: '鹿島' }, away: { name: '浦和レッズ', short: '浦和' }, status: 'finished', homeScore: 2, awayScore: 1 });
+});
+
 test('retains the previous payload when a refresh fails', async () => {
   const oldData = { ...emptyData({ status: 'success', at: '2026-09-06T00:00:00.000Z' }), matches: [{ id: 'old' }], standings: [{ rank: 1, team: '町田' }] };
   const writes = [];

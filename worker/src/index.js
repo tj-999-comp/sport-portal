@@ -80,18 +80,23 @@ function parseExplicitMatches(html) {
 
 function parseLinkedMatches(html) {
   const matches = [];
-  let currentDate = null;
-  let currentMatchday = null;
-  const tokenPattern = /<(?:h[1-6]|a|div|p|section)\b[^>]*>[\s\S]*?<\/[^>]+>/gi;
-  for (const token of html.matchAll(tokenPattern)) {
-    const raw = token[0];
+  const dateMarkers = [...html.matchAll(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/gi)].map((match) => ({ index: match.index, text: textFromHtml(match[0]) }));
+  const anchorPattern = /<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/gi;
+  for (const anchorMatch of html.matchAll(anchorPattern)) {
+    const raw = anchorMatch[0];
+    const href = anchorMatch[1];
+    if (!/(?:\/match\/|\/game\/)/i.test(href)) continue;
     const plain = textFromHtml(raw);
-    const date = plain.match(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})/);
-    if (date) currentDate = `${date[1]}-${date[2].padStart(2, '0')}-${date[3].padStart(2, '0')}`;
-    const round = plain.match(/第\s*(\d+)\s*節/);
-    if (round) currentMatchday = round[1];
-    const href = raw.match(/href\s*=\s*["']([^"']+)["']/i)?.[1] || '';
-    if (!/(?:\/match\/|\/game\/)/i.test(href) || !currentDate) continue;
+    const marker = dateMarkers.filter(({ index }) => index < anchorMatch.index).at(-1)?.text || '';
+    const markerDate = marker.match(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})/);
+    const hrefDate = href.match(/\/(20\d{2})\/(\d{2})(\d{2})\d{2}\/?(?:$|[?#])/);
+    const currentDate = hrefDate
+      ? `${hrefDate[1]}-${hrefDate[2]}-${hrefDate[3]}`
+      : markerDate
+        ? `${markerDate[1]}-${markerDate[2].padStart(2, '0')}-${markerDate[3].padStart(2, '0')}`
+        : null;
+    if (!currentDate) continue;
+    const currentMatchday = marker.match(/第\s*(\d+)\s*節/)?.[1] || null;
     const time = plain.match(/(\d{1,2}:\d{2})\s*(?:KO)?/i)?.[1] || null;
     const teamPositions = TEAM_NAMES.map(([name]) => ({ name, index: plain.indexOf(name) })).filter((item) => item.index >= 0).sort((a, b) => a.index - b.index);
     if (teamPositions.length < 2) continue;

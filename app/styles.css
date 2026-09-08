@@ -29,11 +29,11 @@ h1 { font-size: 12px; font-weight: 800; }
 .selected-date { font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.2; margin-bottom: 11px; }
 .date-nav { display: flex; gap: 4px; margin: 0 -4px; overflow-x: auto; padding: 0 4px 1px; scrollbar-width: none; }
 .date-nav::-webkit-scrollbar { display: none; }
-.date-chip { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; cursor: pointer; display: grid; flex: 0 0 56px; gap: 5px; justify-items: center; padding: 8px 4px; }
-.date-chip small { color: var(--muted); font-size: 9px; }
+.date-chip { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; cursor: pointer; display: grid; flex: 0 0 56px; gap: 3px; justify-items: center; padding: 7px 4px; }
+.date-chip small, .date-chip span { color: var(--muted); font-size: 8px; line-height: 1; }
 .date-chip strong { font-size: 16px; line-height: 1; }
 .date-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-.date-chip.active small { color: #ffd7e7; }
+.date-chip.active small, .date-chip.active span { color: #ffd7e7; }
 
 .matches-section { margin-top: 8px; }
 .match-days { display: flex; gap: 0; overflow-x: auto; overscroll-behavior-x: contain; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; }

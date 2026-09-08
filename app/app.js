@@ -35,11 +35,16 @@ function renderStatus(update = {}) {
 function updateDateSelection(date) {
   state.selectedDate = date;
   $('#selected-date').textContent = date ? formatLongDate(date) : '';
-  $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.classList.toggle('active', button.dataset.date === date));
+  const activeButton = [...$('#date-nav').querySelectorAll('.date-chip')].find((button) => button.dataset.date === date);
+  $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.classList.toggle('active', button === activeButton));
+  activeButton?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 function renderDateNav(dates, selectedDate) {
-  $('#date-nav').innerHTML = dates.map((date) => `<button class="date-chip${date === selectedDate ? ' active' : ''}" type="button" data-date="${escapeHtml(date)}"><small>${escapeHtml(weekdayLabel(date))}</small><strong>${escapeHtml(new Date(`${date}T00:00:00+09:00`).getDate())}</strong></button>`).join('');
+  $('#date-nav').innerHTML = dates.map((date) => {
+    const dateObject = new Date(`${date}T00:00:00+09:00`);
+    return `<button class="date-chip${date === selectedDate ? ' active' : ''}" type="button" data-date="${escapeHtml(date)}"><small>${escapeHtml(`${dateObject.getMonth() + 1}月`)}</small><strong>${escapeHtml(dateObject.getDate())}</strong><span>${escapeHtml(weekdayLabel(date))}</span></button>`;
+  }).join('');
   $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.addEventListener('click', () => scrollToDate(button.dataset.date)));
 }
 

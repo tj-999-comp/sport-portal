@@ -1,6 +1,56 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { emptyData, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
+import { onRequest as protectPagesRequest } from '../../functions/_middleware.js';
+import worker from '../src/index.js';
+
+function basicAuth(user, password) {
+  return `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`;
+}
+
+test('Pages middleware rejects missing and invalid Basic auth', async () => {
+  const env = { BASIC_AUTH_USER: 'owner', BASIC_AUTH_PASSWORD: 'secret' };
+  const next = async () => new Response('ok');
+  const missing = await protectPagesRequest({ request: new Request('https://example.test/'), env, next });
+  assert.equal(missing.status, 401);
+  assert.match(missing.headers.get('WWW-Authenticate'), /^Basic realm=/);
+
+  const invalid = await protectPagesRequest({ request: new Request('https://example.test/', { headers: { Authorization: basicAuth('owner', 'wrong') } }), env, next });
+  assert.equal(invalid.status, 401);
+});
+
+test('Pages middleware passes valid Basic auth without exposing credentials', async () => {
+  const request = new Request('https://example.test/', { headers: { Authorization: basicAuth('owner', 'secret') } });
+  const response = await protectPagesRequest({ request, env: { BASIC_AUTH_USER: 'owner', BASIC_AUTH_PASSWORD: 'secret' }, next: async () => new Response('ok') });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), 'ok');
+  assert.equal(response.headers.get('Authorization'), null);
+});
+
+test('Worker protects data and update APIs with Basic auth', async () => {
+  const env = {
+    BASIC_AUTH_USER: 'owner',
+    BASIC_AUTH_PASSWORD: 'secret',
+    SPORTAL_DATA: { async get() { return emptyData(); }, async put() {} }
+  };
+  const unauthenticated = await worker.fetch(new Request('https://example.test/api/status'), env);
+  assert.equal(unauthenticated.status, 401);
+  assert.match(unauthenticated.headers.get('WWW-Authenticate'), /^Basic realm=/);
+
+  const authenticated = await worker.fetch(new Request('https://example.test/api/status', { headers: { Authorization: basicAuth('owner', 'secret') } }), env);
+  assert.equal(authenticated.status, 200);
+  assert.deepEqual(await authenticated.json(), { update: {}, hasData: false });
+});
+
+test('static privacy controls prevent indexing', async () => {
+  const robots = await readFile(new URL('../../app/robots.txt', import.meta.url), 'utf8');
+  const headers = await readFile(new URL('../../app/_headers', import.meta.url), 'utf8');
+  const html = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+  assert.match(robots, /Disallow:\s*\//);
+  assert.match(headers, /X-Robots-Tag:\s*noindex/i);
+  assert.match(html, /<meta\s+name="robots"\s+content="[^"]*noindex/i);
+});
 
 test('parses official-style schedule cards and keeps match states', () => {
   const html = `<article data-match-id="m1" data-date="2026-09-06" data-matchday="6" data-kickoff="18:00" data-home-team="鹿島アントラーズ" data-away-team="浦和レッズ" data-status="finished" data-home-score="0" data-away-score="1"></article><article data-match-id="m2" data-date="2026-09-11" data-matchday="7" data-kickoff="19:00" data-home-team="京都サンガF.C." data-away-team="柏レイソル" data-status="scheduled"></article>`;

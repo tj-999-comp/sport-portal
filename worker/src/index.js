@@ -167,7 +167,9 @@ function authorized(request, env) {
 }
 function unauthorized() { return new Response('Authentication required', { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="sport-portal", charset="UTF-8"', 'Cache-Control': 'no-store' } }); }
 
-export async function performUpdate(env, now = new Date(), fetchImpl = fetch) {
+let activeUpdatePromise = null;
+
+async function performUpdateInternal(env, now, fetchImpl) {
   const previous = (await env.SPORTAL_DATA?.get(CONFIG.dataKey, 'json')) || emptyData();
   try {
     const data = await fetchFreshData(fetchImpl, now);
@@ -178,6 +180,15 @@ export async function performUpdate(env, now = new Date(), fetchImpl = fetch) {
     await env.SPORTAL_DATA.put(CONFIG.dataKey, JSON.stringify(failed));
     throw Object.assign(new Error(failed.update.message), { data: failed });
   }
+}
+
+export async function performUpdate(env, now = new Date(), fetchImpl = fetch) {
+  // A scheduled event and a manual request can share an isolate. Reuse the
+  // in-flight operation so a failure cannot overwrite a newer successful write.
+  if (activeUpdatePromise) return activeUpdatePromise;
+  activeUpdatePromise = performUpdateInternal(env, now, fetchImpl);
+  try { return await activeUpdatePromise; }
+  finally { activeUpdatePromise = null; }
 }
 
 export default {

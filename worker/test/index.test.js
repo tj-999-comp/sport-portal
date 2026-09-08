@@ -98,6 +98,29 @@ test('retains the previous payload when a refresh fails', async () => {
   assert.equal(writes[0].update.status, 'failure');
 });
 
+test('shares one in-flight update when manual and scheduled refreshes overlap', async () => {
+  const writes = [];
+  let reads = 0;
+  let requests = 0;
+  const env = { SPORTAL_DATA: {
+    async get() { reads += 1; return emptyData({ status: 'success', at: '2026-09-07T00:00:00.000Z' }); },
+    async put(_key, value) { writes.push(JSON.parse(value)); }
+  } };
+  const fetchImpl = async () => {
+    requests += 1;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    return new Response('down', { status: 503 });
+  };
+  const first = performUpdate(env, new Date('2026-09-08T00:00:00.000Z'), fetchImpl);
+  const second = performUpdate(env, new Date('2026-09-08T00:01:00.000Z'), fetchImpl);
+  await assert.rejects(() => first);
+  await assert.rejects(() => second);
+  assert.equal(reads, 1);
+  assert.equal(requests, 1);
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].update.status, 'failure');
+});
+
 test('returns a stable empty data shape before first update', () => {
   assert.deepEqual(emptyData(), { schemaVersion: 1, league: 'j1', season: '2026', matches: [], standings: [], update: {} });
 });

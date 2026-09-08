@@ -24,3 +24,5 @@ wrangler secret put BASIC_AUTH_PASSWORD -c worker/wrangler.toml
 Cronは日本時間の `17:00 / 19:00 / 21:00 / 22:00 / 23:00` に実行する。Cloudflare Workers Freeプランの上限に合わせて5本とし、`worker/wrangler.toml` のUTC指定は `08:00 / 10:00 / 12:00 / 13:00 / 14:00` である。Cronの変更時は、Freeプランの本数制限と日本時間・UTCの対応を同時に確認する。
 
 公式日程ページの検索結果上限（250件）を避けるため、試合日程は1〜12月の12区間に分けて取得し、重複を除いて結合する。更新に失敗した場合、試合・順位データは前回値を保持し、更新状態だけを `failure` としてKVへ保存する。
+
+手動更新とCron更新が同じWorker isolate内で重なった場合は、実行中の更新処理を共有して二重取得を防ぐ。複数isolateをまたぐ強い排他制御はMVPの対象外で、必要になった場合はDurable Objects等の協調ロックを追加する。

@@ -26,6 +26,9 @@ test('Pages middleware passes valid Basic auth without exposing credentials', as
   assert.equal(response.status, 200);
   assert.equal(await response.text(), 'ok');
   assert.equal(response.headers.get('Authorization'), null);
+  assert.equal(response.headers.get('X-Robots-Tag'), 'noindex, nofollow, noarchive');
+  assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
+  assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
 });
 
 test('Worker protects data and update APIs with Basic auth', async () => {

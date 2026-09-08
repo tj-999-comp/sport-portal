@@ -12,5 +12,10 @@ export async function onRequest({ request, env, next }) {
   if (!isAuthorized(request, env)) {
     return new Response('Authentication required', { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="sport-portal", charset="UTF-8"', 'Cache-Control': 'no-store' } });
   }
-  return next();
+  const response = await next();
+  const headers = new Headers(response.headers);
+  headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'no-referrer');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }

@@ -1,0 +1,10 @@
+schema_version: 1
+title: '#14/#7 本番デプロイとMVP受入完了'
+date: "2026-09-08"
+project_id: sport-portal
+tags:
+  - deployment
+  - acceptance
+  - cloudflare
+  - mvp
+publish: true

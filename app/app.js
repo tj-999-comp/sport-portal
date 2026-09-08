@@ -62,28 +62,33 @@ function syncDateSelectionFromScroll() {
 function renderMatches(matches = []) {
   const root = $('#match-days');
   root.innerHTML = '';
-  $('#empty-state').hidden = matches.length > 0;
+  $('#empty-state').hidden = true;
   const byDay = new Map();
   matches.forEach((match) => { if (!byDay.has(match.date)) byDay.set(match.date, []); byDay.get(match.date).push(match); });
   const dates = [...byDay.keys()].sort();
+  const today = todayJst();
   state.dates = dates;
-  const selectedDate = state.selectedDate && dates.includes(state.selectedDate) ? state.selectedDate : dates.includes(todayJst()) ? todayJst() : dates[0];
+  const defaultDate = dates.find((date) => date >= today) || dates[0];
+  const selectedDate = state.selectedDate && dates.includes(state.selectedDate) ? state.selectedDate : defaultDate;
   state.selectedDate = selectedDate || null;
   renderDateNav(dates, selectedDate);
   updateDateSelection(selectedDate);
-  [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([date, dayMatches]) => {
+  dates.forEach((date) => {
+    const dayMatches = byDay.get(date) || [];
     const day = document.createElement('article');
-    const isToday = date === todayJst();
+    const isToday = date === today;
     day.className = `match-day${isToday ? ' today' : ''}`;
     day.dataset.date = date;
-    day.innerHTML = '<div class="match-list"></div>';
+    day.innerHTML = dayMatches.length ? '<div class="match-list"></div>' : '<p class="no-matches">本日の試合はありません</p>';
     const list = day.querySelector('.match-list');
     dayMatches.sort((a, b) => (a.kickoff || '').localeCompare(b.kickoff || '')).forEach((match) => {
       const finished = match.status === 'finished';
+      const homeWon = finished && Number(match.homeScore) > Number(match.awayScore);
+      const awayWon = finished && Number(match.awayScore) > Number(match.homeScore);
       const stateText = match.status === 'postponed' ? '延期' : match.status === 'cancelled' ? '中止' : finished ? `${match.homeScore} - ${match.awayScore}` : match.kickoff || '未定';
       const card = document.createElement('div');
       card.className = 'match-card';
-      card.innerHTML = `<div class="match-meta"><span>第${escapeHtml(match.matchday || '―')}節</span><span class="${finished ? 'match-time' : 'match-state'}">${escapeHtml(stateText)}</span></div><div class="team-row"><span class="team-name">${escapeHtml(match.home?.short || match.home?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.homeScore)}</span>` : ''}</div><div class="team-row"><span class="team-name">${escapeHtml(match.away?.short || match.away?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.awayScore)}</span>` : ''}</div>`;
+      card.innerHTML = `<div class="match-meta"><span>第${escapeHtml(match.matchday || '―')}節</span><span class="${finished ? 'match-time' : 'match-state'}">${escapeHtml(stateText)}</span></div><div class="team-row${homeWon ? ' winner' : awayWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.home?.short || match.home?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.homeScore)}</span>` : ''}</div><div class="team-row${awayWon ? ' winner' : homeWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.away?.short || match.away?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.awayScore)}</span>` : ''}</div>`;
       list.append(card);
     });
     root.append(day);

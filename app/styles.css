@@ -47,9 +47,14 @@ h1 { font-size: 12px; font-weight: 800; }
 .match-meta { align-items: center; color: var(--muted); display: flex; font-size: 10px; justify-content: space-between; margin-bottom: 5px; }
 .match-time { color: var(--ink); font-size: 12px; font-weight: 800; }
 .team-row { align-items: center; display: flex; font-size: 14px; justify-content: space-between; line-height: 1.45; }
+.team-row.winner { color: var(--accent); font-weight: 800; }
+.team-row.winner .score { color: var(--accent); font-size: 16px; }
+.team-row.loser { color: var(--muted); }
+.team-row.loser .score { color: var(--muted); }
 .team-name { overflow: hidden; padding-right: 8px; text-overflow: ellipsis; white-space: nowrap; }
 .score { font-weight: 800; min-width: 20px; text-align: right; }
 .match-state { color: var(--muted); font-size: 12px; font-weight: 700; }
+.no-matches { color: var(--muted); margin: 0; padding: 22px 0; text-align: center; }
 .empty-state { color: var(--muted); padding: 32px 0; text-align: center; }
 
 .status-strip { align-items: center; border-top: 1px solid var(--line); color: var(--muted); display: flex; font-size: 10px; gap: 8px; margin-top: 12px; min-height: 34px; padding: 10px 2px 0; }

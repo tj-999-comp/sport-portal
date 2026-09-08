@@ -57,6 +57,14 @@ const dateOptions = [
   ['アクセントバー', 'date-accent']
 ];
 
+const scoreOptions = [
+  ['横一列', 'score-inline'],
+  ['左右カラム', 'score-columns'],
+  ['中央スコア', 'score-center'],
+  ['スコアピル', 'score-pill'],
+  ['縦積みコンパクト', 'score-stacked']
+];
+
 const dates = [
   ['9/5', '土'],
   ['9/6', '日'],
@@ -102,9 +110,24 @@ function createDateOption([title, variant], index) {
   </article>`;
 }
 
+function createScoreOption([title, variant], index) {
+  return `<article class="review-card score-card">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+    <div class="score-preview ${variant}">
+      <p class="score-meta">18:00 · 第29節</p>
+      <div class="score-match">
+        <div class="score-team home"><strong>浦和</strong><b>2</b></div>
+        <span class="score-divider" aria-hidden="true">—</span>
+        <div class="score-team away"><b>1</b><strong>鹿島</strong></div>
+      </div>
+    </div>
+  </article>`;
+}
+
 document.querySelector('#league-options').innerHTML = leagueOptions.map(createLeagueOption).join('');
 document.querySelector('#navigation-options').innerHTML = navigationOptions.map(createNavigationOption).join('');
 document.querySelector('#date-options').innerHTML = dateOptions.map(createDateOption).join('');
+document.querySelector('#score-options').innerHTML = scoreOptions.map(createScoreOption).join('');
 
 document.querySelectorAll('.league-row').forEach((button) => {
   button.addEventListener('click', () => {

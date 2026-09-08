@@ -174,10 +174,12 @@ $('#close-standings').addEventListener('click', closeStandings);
 $('#standings-backdrop').addEventListener('click', closeStandings);
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeStandings(); });
 standingsPanel.addEventListener('pointerdown', (event) => {
+  if (event.target.closest('button, a, input, select, textarea')) return;
   sheetDragStartY = event.clientY;
   standingsSheet.classList.add('is-dragging');
   standingsPanel.setPointerCapture?.(event.pointerId);
 });
+$('#close-standings').addEventListener('pointerdown', (event) => event.stopPropagation());
 standingsPanel.addEventListener('pointermove', (event) => {
   if (sheetDragStartY === null) return;
   const offset = Math.max(0, event.clientY - sheetDragStartY);

@@ -16,6 +16,12 @@
     </header>
 
     <section class="date-section" aria-labelledby="selected-date">
+      <section class="status-strip" aria-live="polite">
+        <span class="status-indicator" id="status-indicator"></span>
+        <span class="status-label" id="status-label">読み込み中</span>
+        <span class="status-detail" id="status-detail"></span>
+        <time class="updated-at" id="updated-at"></time>
+      </section>
       <h2 class="selected-date" id="selected-date">2026年9月6日</h2>
       <nav class="date-nav" id="date-nav" aria-label="日付"></nav>
     </section>
@@ -25,16 +31,8 @@
       <p class="empty-state" id="empty-state" hidden>データを取得できていません</p>
     </section>
 
-    <section class="status-strip" aria-live="polite">
-      <span class="status-indicator" id="status-indicator"></span>
-      <span class="status-label" id="status-label">読み込み中</span>
-      <span class="status-detail" id="status-detail"></span>
-      <time class="updated-at" id="updated-at"></time>
-    </section>
-
     <nav class="bottom-nav" aria-label="操作">
-      <span class="bottom-nav-current"><span aria-hidden="true">◒</span><small>試合</small></span>
-      <button id="standings-button" type="button"><span aria-hidden="true">▦</span><small>順位</small></button>
+      <button id="standings-button" type="button" aria-label="順位表を開く"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button>
       <button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button>
     </nav>
   </main>

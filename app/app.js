@@ -134,11 +134,22 @@ async function refresh() {
 
 const standingsSheet = $('#standings-sheet');
 const standingsPanel = $('#standings-panel');
+const standingsButton = $('#standings-button');
+const standingsIcon = $('#standings-icon');
+const standingsLabel = $('#standings-label');
 let standingsOpenedFrom = null;
 let sheetDragStartY = null;
 
+function setStandingsButton(open) {
+  standingsIcon.textContent = open ? '×' : '▦';
+  standingsLabel.textContent = open ? '閉じる' : '順位';
+  standingsButton.classList.toggle('is-open', open);
+  standingsButton.setAttribute('aria-label', open ? '順位表を閉じる' : '順位表を開く');
+}
+
 function openStandings() {
   standingsOpenedFrom = document.activeElement;
+  setStandingsButton(true);
   standingsSheet.hidden = false;
   standingsSheet.setAttribute('aria-hidden', 'false');
   requestAnimationFrame(() => {
@@ -149,6 +160,7 @@ function openStandings() {
 
 function closeStandings() {
   if (standingsSheet.hidden) return;
+  setStandingsButton(false);
   standingsSheet.classList.remove('is-open', 'is-dragging');
   standingsSheet.setAttribute('aria-hidden', 'true');
   standingsPanel.style.removeProperty('--drag-offset');

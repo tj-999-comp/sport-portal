@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="description" content="スポーツポータルのデザイン提案と採用理由を確認するSTG専用ページ">
+  <meta name="description" content="スポーツポータルのデザイン提案と採用理由を確認する検証環境専用ページ">
   <title>デザインレビュー | スポーツポータル</title>
   <link rel="stylesheet" href="design-review.css">
 </head>
@@ -12,14 +12,14 @@
   <header class="review-nav">
     <a class="review-brand" href="/">スポーツポータル</a>
     <div class="review-nav-actions">
-      <span class="environment-badge">STG</span>
+      <span class="environment-badge">検証環境</span>
       <a href="/design-mockups.html?v=6">モックアップを見る</a>
     </div>
   </header>
 
   <main class="review-page">
     <header class="page-heading">
-      <p class="eyebrow">DESIGN REVIEW / STG ONLY</p>
+      <p class="eyebrow">デザイン確認</p>
       <h1>デザインレビュー</h1>
       <p>スポーツポータルのUI提案を比較し、採用案と判断理由を残すページです。</p>
     </header>
@@ -76,21 +76,21 @@
 
     <section class="component-review" aria-labelledby="component-title">
       <div class="section-heading">
-        <p class="eyebrow">COMPONENT REVIEW / PROPOSAL No.01</p>
-        <h2 id="component-title">共通コンポーネントの確認</h2>
+        <p class="eyebrow">提案No.01 / 共通部品</p>
+        <h2 id="component-title">共通部品の確認</h2>
         <p>画面単位の提案と、部品単位の判断を分けて記録します。</p>
       </div>
       <div class="component-grid">
-        <article class="component-card"><span class="component-label">01 / Header</span><div class="component-sample sample-header"><i></i><b>スポーツポータル</b><span>2026</span></div><h3>ピル型ヘッダー</h3><p>採用：白地・薄い境界線・控えめな影。</p></article>
-        <article class="component-card"><span class="component-label">02 / Match card</span><div class="component-sample sample-match"><small>18:00</small><b>鹿島　2 — 1　浦和</b><i></i></div><h3>試合カード</h3><p>採用：角丸16px。結果と予定を同じ構造で表示。</p></article>
-        <article class="component-card"><span class="component-label">03 / Accent</span><div class="component-sample sample-accent"><i></i><b>更新済み</b><span>マゼンタ</span></div><h3>アクセントカラー</h3><p>採用：状態・選択中・主要操作にマゼンタを限定使用。</p></article>
+        <article class="component-card"><span class="component-label">01 / ヘッダー</span><div class="component-sample sample-header"><i></i><b>スポーツポータル</b><span>2026</span></div><h3>ピル型ヘッダー</h3><p>採用：白地・薄い境界線・控えめな影。</p></article>
+        <article class="component-card"><span class="component-label">02 / 試合カード</span><div class="component-sample sample-match"><small>18:00</small><b>鹿島　2 — 1　浦和</b><i></i></div><h3>試合カード</h3><p>採用：角丸16px。結果と予定を同じ構造で表示。</p></article>
+        <article class="component-card"><span class="component-label">03 / 色</span><div class="component-sample sample-accent"><i></i><b>更新済み</b><span>マゼンタ</span></div><h3>アクセントカラー</h3><p>採用：状態・選択中・主要操作にマゼンタを限定使用。</p></article>
       </div>
     </section>
 
     <aside class="operation-note">
       <strong>運用ルール</strong>
       <p>新しい提案はこのページの先頭へ追加します。採用案には候補番号・採用理由・反映先を記録し、過去の提案は下のトグルへ移します。</p>
-      <p>確認は <code>stg</code> ブランチのPreviewで行い、明示的な承認後に <code>main</code> へ反映します。</p>
+      <p>確認は検証環境で行い、明示的な承認後に本番へ反映します。</p>
     </aside>
 
     <details class="proposal-history">
@@ -102,6 +102,6 @@
     </details>
   </main>
 
-  <footer class="review-footer"><span>STG専用のデザイン比較ページ</span><a href="/">アプリ本体へ戻る →</a></footer>
+  <footer class="review-footer"><span>検証環境専用のデザイン比較ページ</span><a href="/">アプリ本体へ戻る →</a></footer>
 </body>
 </html>

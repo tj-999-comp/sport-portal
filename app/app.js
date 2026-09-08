@@ -1,4 +1,4 @@
-const state = { data: null, updating: false };
+const state = { data: null, updating: false, dates: [], selectedDate: null };
 const $ = (selector) => document.querySelector(selector);
 
 function formatDate(dateString) {
@@ -9,6 +9,17 @@ function formatDateTime(value) {
   if (!value) return '';
   return new Intl.DateTimeFormat('ja-JP', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Tokyo' }).format(new Date(value));
 }
+function formatTime(value) {
+  if (!value) return '';
+  return new Intl.DateTimeFormat('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }).format(new Date(value));
+}
+function formatLongDate(dateString) {
+  const [year, month, day] = dateString.split('-');
+  return `${year}年${Number(month)}月${Number(day)}日`;
+}
+function weekdayLabel(dateString) {
+  return new Intl.DateTimeFormat('ja-JP', { weekday: 'short', timeZone: 'Asia/Tokyo' }).format(new Date(`${dateString}T00:00:00+09:00`));
+}
 function todayJst() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()); }
 function escapeHtml(value) { return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
 
@@ -16,9 +27,36 @@ function renderStatus(update = {}) {
   const indicator = $('#status-indicator');
   indicator.className = `status-indicator ${update.status || ''}`;
   const failed = update.status === 'failure';
-  $('#status-label').textContent = failed ? '更新に失敗しました' : update.status === 'success' ? '最新データを取得済み' : 'データ未取得';
+  $('#status-label').textContent = failed ? '更新失敗' : update.status === 'success' ? '更新済み' : '読み込み中';
   $('#status-detail').textContent = failed ? (update.message || '前回正常に取得したデータを表示しています') : update.message || 'J1リーグのデータを表示しています';
-  $('#updated-at').textContent = update.at ? `更新日時 ${formatDateTime(update.at)}` : '';
+  $('#updated-at').textContent = update.at ? formatTime(update.at) : '';
+}
+
+function updateDateSelection(date) {
+  state.selectedDate = date;
+  $('#selected-date').textContent = date ? formatLongDate(date) : '';
+  $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.classList.toggle('active', button.dataset.date === date));
+}
+
+function renderDateNav(dates, selectedDate) {
+  $('#date-nav').innerHTML = dates.map((date) => `<button class="date-chip${date === selectedDate ? ' active' : ''}" type="button" data-date="${escapeHtml(date)}"><small>${escapeHtml(weekdayLabel(date))}</small><strong>${escapeHtml(new Date(`${date}T00:00:00+09:00`).getDate())}</strong></button>`).join('');
+  $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.addEventListener('click', () => scrollToDate(button.dataset.date)));
+}
+
+function scrollToDate(date, behavior = 'smooth') {
+  const root = $('#match-days');
+  const target = root.querySelector(`[data-date="${date}"]`);
+  if (!target) return;
+  updateDateSelection(date);
+  root.scrollTo({ left: target.offsetLeft, behavior });
+}
+
+function syncDateSelectionFromScroll() {
+  const root = $('#match-days');
+  if (!root.children.length || !root.clientWidth) return;
+  const index = Math.min(root.children.length - 1, Math.max(0, Math.round(root.scrollLeft / root.clientWidth)));
+  const date = root.children[index]?.dataset.date;
+  if (date && date !== state.selectedDate) updateDateSelection(date);
 }
 
 function renderMatches(matches = []) {
@@ -27,12 +65,18 @@ function renderMatches(matches = []) {
   $('#empty-state').hidden = matches.length > 0;
   const byDay = new Map();
   matches.forEach((match) => { if (!byDay.has(match.date)) byDay.set(match.date, []); byDay.get(match.date).push(match); });
+  const dates = [...byDay.keys()].sort();
+  state.dates = dates;
+  const selectedDate = state.selectedDate && dates.includes(state.selectedDate) ? state.selectedDate : dates.includes(todayJst()) ? todayJst() : dates[0];
+  state.selectedDate = selectedDate || null;
+  renderDateNav(dates, selectedDate);
+  updateDateSelection(selectedDate);
   [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([date, dayMatches]) => {
     const day = document.createElement('article');
     const isToday = date === todayJst();
     day.className = `match-day${isToday ? ' today' : ''}`;
-    const dayLabel = new Intl.DateTimeFormat('ja-JP', { weekday: 'short', timeZone: 'Asia/Tokyo' }).format(new Date(`${date}T00:00:00+09:00`));
-    day.innerHTML = `<div class="day-topline"><div><span class="day-date">${escapeHtml(formatDate(date))}</span><span class="day-weekday"> (${escapeHtml(dayLabel)})</span></div>${isToday ? '<span class="today-badge">今日</span>' : ''}</div><div class="match-list"></div>`;
+    day.dataset.date = date;
+    day.innerHTML = '<div class="match-list"></div>';
     const list = day.querySelector('.match-list');
     dayMatches.sort((a, b) => (a.kickoff || '').localeCompare(b.kickoff || '')).forEach((match) => {
       const finished = match.status === 'finished';
@@ -44,8 +88,8 @@ function renderMatches(matches = []) {
     });
     root.append(day);
   });
-  const target = [...root.querySelectorAll('.match-day')].find((day) => day.classList.contains('today')) || root.querySelector('.match-day');
-  target?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+  root.onscroll = syncDateSelectionFromScroll;
+  if (selectedDate) requestAnimationFrame(() => scrollToDate(selectedDate, 'auto'));
 }
 
 function renderStandings(rows = []) {

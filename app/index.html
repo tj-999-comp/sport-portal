@@ -11,43 +11,39 @@
 <body>
   <main class="page-shell">
     <header class="site-header">
-      <div>
-        <p class="eyebrow">SPORTS PORTAL / J1</p>
-        <h1>スポーツポータル</h1>
-        <p class="season">2026年 J1リーグ</p>
-      </div>
-      <div class="header-actions">
-        <button class="button button-secondary" id="standings-button" type="button">順位表を見る</button>
-        <button class="button button-primary" id="refresh-button" type="button">手動更新</button>
-      </div>
+      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true"></span><h1>スポーツポータル</h1></div>
+      <div class="header-meta"><span class="season">2026</span></div>
     </header>
 
-    <section class="status-panel" aria-live="polite">
-      <div class="status-indicator" id="status-indicator"></div>
-      <div>
-        <p class="status-label" id="status-label">読み込み中</p>
-        <p class="status-detail" id="status-detail">最新データを確認しています</p>
-      </div>
-      <time class="updated-at" id="updated-at"></time>
+    <section class="date-section" aria-labelledby="selected-date">
+      <h2 class="selected-date" id="selected-date">2026年9月6日</h2>
+      <nav class="date-nav" id="date-nav" aria-label="日付"></nav>
     </section>
 
-    <section class="matches-section" aria-labelledby="matches-heading">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">MATCHES</p>
-          <h2 id="matches-heading">試合日程・結果</h2>
-        </div>
-        <p class="scroll-hint">← 横にスワイプ →</p>
-      </div>
+    <section class="matches-section" aria-label="試合日程・結果">
       <div class="match-days" id="match-days" tabindex="0" aria-label="試合日ごとの一覧"></div>
       <p class="empty-state" id="empty-state" hidden>データを取得できていません</p>
     </section>
+
+    <section class="status-strip" aria-live="polite">
+      <span class="status-indicator" id="status-indicator"></span>
+      <span class="status-label" id="status-label">読み込み中</span>
+      <span class="status-detail" id="status-detail"></span>
+      <time class="updated-at" id="updated-at"></time>
+    </section>
+
+    <nav class="bottom-nav" aria-label="操作">
+      <span class="bottom-nav-current"><span aria-hidden="true">◒</span><small>試合</small></span>
+      <button id="standings-button" type="button"><span aria-hidden="true">▦</span><small>順位</small></button>
+      <button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button>
+    </nav>
   </main>
 
   <dialog class="standings-dialog" id="standings-dialog" aria-labelledby="standings-title">
+    <div class="modal-grabber" aria-hidden="true"></div>
     <div class="dialog-header">
       <div>
-        <p class="eyebrow">TABLE</p>
+        <p class="eyebrow">順位表</p>
         <h2 id="standings-title">J1 順位表</h2>
       </div>
       <button class="close-button" id="close-standings" type="button" aria-label="順位表を閉じる">×</button>

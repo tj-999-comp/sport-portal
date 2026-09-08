@@ -5,15 +5,16 @@ button { color:inherit; font:inherit; }
 .mockup-shell { position:relative; min-height:100vh; max-width:430px; margin:0 auto; overflow:hidden; background:var(--paper); padding:24px 20px 92px; }
 .topbar { display:flex; align-items:center; justify-content:space-between; min-height:34px; }
 .brand-lockup,.topbar-meta,.intro-label,.day-head,.section-head,.status-strip,.bottom-nav,.date-nav,.match-info,.match-row,.teams { display:flex; align-items:center; }
-.brand-lockup { gap:9px; font-size:10px; letter-spacing:.17em; font-weight:800; }
+.brand-lockup { gap:9px; font-size:11px; font-weight:800; }
 .brand-mark { width:13px; height:13px; display:inline-block; background:var(--pink); border-radius:50%; }
 .topbar-meta { gap:16px; color:var(--muted); font-size:10px; letter-spacing:.1em; }
 .icon-button,.refresh { background:none; border:0; padding:3px; cursor:pointer; }
 .intro { padding:54px 0 26px; }
 .intro-label,.section-count,.section-index,.day-state,.match-round,.update-note { color:var(--muted); font-size:9px; letter-spacing:.17em; }
 .date-display { display:flex; align-items:center; line-height:.78; margin:16px 0 20px; }
-.date-number { font-size:112px; font-weight:800; letter-spacing:-.1em; }
-.date-rest { display:grid; gap:12px; margin-left:14px; font-size:17px; font-weight:800; letter-spacing:.08em; }
+.date-simple { display:none; line-height:1.2; }
+.date-number { font-size:64px; font-weight:800; letter-spacing:-.1em; }
+.date-rest { display:grid; gap:7px; margin-left:11px; font-size:14px; font-weight:800; }
 .date-rest span:last-child { color:var(--pink); font-size:10px; letter-spacing:.2em; }
 .intro-rule { width:100%; height:1px; background:var(--ink); }
 .update-note { margin:14px 0 0; }
@@ -26,6 +27,7 @@ button { color:inherit; font:inherit; }
 .match-list { padding:0 16px 8px; }.match-row { position:relative; min-height:64px; gap:12px; border-top:1px solid var(--line); }.match-info { display:grid; flex:0 0 48px; gap:4px; }.match-time { font-size:12px; font-weight:800; }.match-round { font-size:8px; letter-spacing:.08em; }.teams { flex:1; justify-content:flex-end; gap:9px; font-size:13px; }.teams b,.teams em { font-style:normal; font-size:15px; min-width:11px; text-align:center; }.teams em { color:var(--muted); font-size:17px; }.match-dot { width:7px; height:7px; border-radius:50%; background:var(--muted); }.match-dot.win { background:var(--pink); }.match-dot.draw { background:var(--ink); }.match-dot.next { background:var(--line); }.match-list.compact .match-row { min-height:57px; }
 .status-strip { justify-content:space-between; gap:7px; margin-top:22px; border-top:1px solid var(--line); padding-top:15px; color:var(--muted); font-size:9px; letter-spacing:.16em; }.status-pulse { width:6px; height:6px; margin-right:auto; border-radius:50%; background:var(--pink); }.refresh { color:var(--pink); font-size:18px; line-height:1; }
 .bottom-nav { position:absolute; right:0; bottom:0; left:0; justify-content:space-around; min-height:70px; border-top:1px solid var(--line); background:rgba(255,255,255,.95); }.bottom-nav button { display:grid; gap:5px; place-items:center; border:0; background:none; color:var(--muted); font-size:18px; }.bottom-nav button.selected { color:var(--pink); }.bottom-nav small { font-size:8px; letter-spacing:.12em; }
+.standings-modal { display:none; }
 
 /* 01 — clean editorial */
 .v01 .mockup-shell { background:#fff; }
@@ -38,7 +40,17 @@ button { color:inherit; font:inherit; }
 /* 05 — oversized calendar */
 .v05 .intro { padding-top:28px; }.v05 .date-display { align-items:flex-end; }.v05 .date-number { font-size:148px; }.v05 .date-rest { margin-bottom:14px; }.v05 .date-nav { margin-bottom:20px; }.v05 .date-chip { border-radius:5px; }.v05 .day-block { border-radius:5px; }.v05 .day-head { background:var(--black); color:white; }.v05 .day-state { color:#ff7caf; }
 /* 06 — floating cards */
-.v06 .mockup-shell { background:#efebee; }.v06 .topbar { padding:8px 12px; background:white; border-radius:30px; box-shadow:0 7px 20px rgba(20,18,22,.07); }.v06 .intro { padding-bottom:16px; }.v06 .date-display { margin-bottom:8px; }.v06 .date-nav { margin-bottom:23px; }.v06 .date-chip { box-shadow:0 6px 14px rgba(20,18,22,.06); border:0; }.v06 .day-block { box-shadow:0 10px 26px rgba(20,18,22,.07); border:0; }
+.v06 .mockup-shell { background:#efebee; }.v06 .topbar { padding:8px 12px; background:white; border-radius:30px; box-shadow:0 7px 20px rgba(20,18,22,.07); }.v06 .intro { padding-bottom:16px; }.v06 .date-display { display:block; margin:38px 0 17px; }.v06 .date-number,.v06 .date-rest { display:none; }.v06 .date-simple { display:block; font-size:20px; font-weight:700; letter-spacing:.02em; }.v06 .date-nav { margin-bottom:23px; }.v06 .date-chip { box-shadow:0 6px 14px rgba(20,18,22,.06); border:0; }.v06 .day-block { box-shadow:0 10px 26px rgba(20,18,22,.07); border:0; }
+.v06 .mockup-shell { padding:14px 16px 78px; }.v06 .topbar { padding:7px 10px; }.v06 .intro { padding:24px 0 10px; }.v06 .date-display { margin:22px 0 11px; }.v06 .date-simple { font-size:18px; }.v06 .date-nav { gap:4px; margin-bottom:16px; }.v06 .schedule { gap:8px; }.v06 .section-head { padding-bottom:6px; }.v06 .day-head { padding:12px 14px 10px; }.v06 .match-list { padding:0 14px 4px; }.v06 .match-row { min-height:54px; gap:8px; }.v06 .status-strip { margin-top:12px; padding-top:10px; }.v06 .bottom-nav { min-height:62px; }
+.v06 .mockup-shell { background:#f7fafc; color:#1e1e1e; }.v06 .topbar { border:1px solid #f0f1f3; box-shadow:rgba(0,0,0,.05) 0 2px 8px; }.v06 .date-chip { background:#fff; border:1px solid #ccd1da; }.v06 .date-chip.active { background:var(--pink); border-color:var(--pink); }.v06 .day-block { border-radius:16px; box-shadow:rgba(0,0,0,.05) 0 2px 8px; }.v06 .day-block.today { border:1px solid var(--pink); }.v06 .match-row { border-color:#ccd1da; }.v06 .match-round,.v06 .status-strip { color:#666; }.v06 .status-strip { border-color:#ccd1da; }
+.v06 .intro-label,.v06 .intro .update-note,.v06 .section-head,.v06 .day-head,.v06 .day-block:not(:first-of-type) { display:none; }.v06 .date-nav { overflow-x:auto; }.v06 .day-block.today { border:0; }
+.v06.modal-open .standings-modal { display:block; position:fixed; inset:0; z-index:5; }
+.v06 .modal-scrim { position:absolute; inset:0; background:rgba(20,18,22,.42); }
+.v06 .modal-panel { position:absolute; right:0; bottom:0; left:0; max-height:76vh; overflow:auto; padding:12px 20px 28px; border-radius:22px 22px 0 0; background:#fff; box-shadow:0 -12px 40px rgba(20,18,22,.14); }
+.v06 .modal-grabber { width:36px; height:4px; margin:0 auto 18px; border-radius:10px; background:#d8d3d7; }
+.v06 .modal-header { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:1px solid var(--line); }
+.v06 .modal-header p { margin:0 0 5px; color:var(--pink); font-size:10px; font-weight:700; }.v06 .modal-header h2 { margin:0; font-size:20px; }.v06 .modal-header button { width:32px; height:32px; border:0; border-radius:50%; background:var(--wash); font-size:22px; line-height:1; }
+.v06 .standing-table { display:grid; }.v06 .standing-row { display:grid; grid-template-columns:34px 1fr 44px 48px; align-items:center; min-height:52px; border-bottom:1px solid var(--line); font-size:13px; }.v06 .standing-row > :nth-child(3),.v06 .standing-row > :nth-child(4) { text-align:right; }.v06 .standing-label { min-height:36px; color:var(--muted); font-size:10px; }.v06 .standing-row strong { font-weight:700; }.v06 .standing-row em { color:var(--pink); font-style:normal; font-weight:800; }.v06 .standing-row.current { margin:0 -8px; padding:0 8px; border-radius:8px; background:#fff3f8; }.v06 .modal-note { margin:14px 0 0; color:var(--muted); font-size:10px; text-align:right; }
 /* 07 — magenta wash */
 .v07 .mockup-shell { background:#fbecf3; }.v07 .brand-mark,.v07 .date-chip.active,.v07 .status-pulse { background:var(--black); }.v07 .date-rest span:last-child,.v07 .day-state,.v07 .refresh { color:var(--black); }.v07 .intro-rule { background:var(--pink); }.v07 .day-block.today { border-color:var(--black); }.v07 .match-dot.win { background:var(--black); }
 /* 08 — compact dashboard */
@@ -67,5 +79,11 @@ button { color:inherit; font:inherit; }
 .v19 .mockup-shell { background:#eee9ec; padding:0 16px 90px; }.v19 .topbar { margin:0 -16px; padding:19px 16px 14px; background:white; }.v19 .intro { margin:0 -16px; padding:38px 16px 25px; background:var(--pink); color:white; }.v19 .intro-label,.v19 .update-note,.v19 .date-rest span:last-child { color:#ffd7e7; }.v19 .intro-rule { background:#ef79a9; }.v19 .date-display { margin-top:12px; }.v19 .date-nav { margin-top:-9px; padding:12px 8px; border-radius:20px; background:white; }.v19 .date-chip { border:0; }.v19 .date-chip.active { background:var(--black); }.v19 .day-block { border:0; border-radius:13px; }.v19 .section-head { border:0; }.v19 .status-strip { border:0; }
 /* 20 — quiet black and white */
 .v20 .mockup-shell { background:white; padding:28px 24px 94px; }.v20 .brand-mark { width:9px; height:9px; border-radius:0; background:var(--ink); }.v20 .intro { padding:82px 0 32px; }.v20 .intro-label,.v20 .update-note,.v20 .day-state,.v20 .date-rest span:last-child { color:var(--ink); }.v20 .date-display { margin:0 0 20px; }.v20 .date-number { font-size:134px; font-weight:300; letter-spacing:-.13em; }.v20 .date-rest { font-weight:400; }.v20 .date-nav { margin-bottom:40px; }.v20 .date-chip { border:0; border-radius:0; background:transparent; }.v20 .date-chip.active { color:var(--ink); background:transparent; box-shadow:inset 0 -2px var(--ink); }.v20 .day-block,.v20 .day-block.today { border:0; border-top:1px solid var(--ink); border-radius:0; }.v20 .match-list { padding:0; }.v20 .match-row { border-color:var(--line); }.v20 .match-dot.win,.v20 .status-pulse { background:var(--ink); }
+
+/* 文字量を抑え、日付を主役にしすぎない共通調整 */
+.v03 .date-number,.v04 .date-number,.v05 .date-number,.v06 .date-number,.v07 .date-number,.v08 .date-number,.v09 .date-number,.v10 .date-number,.v11 .date-number,.v12 .date-number,.v14 .date-number,.v15 .date-number,.v16 .date-number,.v17 .date-number,.v18 .date-number,.v19 .date-number,.v20 .date-number { font-size:58px; }
+.v13 .date-number { width:92px; height:92px; font-size:50px; }
+.v05 .date-number,.v10 .date-number,.v13 .date-number,.v14 .date-number,.v15 .date-number,.v16 .date-number,.v17 .date-number,.v18 .date-number,.v19 .date-number,.v20 .date-number { font-size:58px; }
+.v13 .date-number { font-size:50px; }
 
 @media (min-width:700px) { .mockup-shell { margin:24px auto; min-height:calc(100vh - 48px); border-radius:24px; box-shadow:0 24px 80px rgba(23,21,26,.18); } }

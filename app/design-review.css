@@ -26,6 +26,9 @@ button { color: inherit; font: inherit; }
 .review-index::-webkit-scrollbar { display: none; }
 .review-index a { flex: 0 0 auto; color: var(--muted); font-size: 12px; text-decoration: none; }
 .review-index a:hover, .review-index a:focus-visible { color: var(--accent); }
+.proposal-history { margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.proposal-history summary { cursor: pointer; color: var(--ink); font-weight: 700; }
+.proposal-history p { max-width: 720px; margin: 10px 0 0; }
 
 .review-section { padding-top: 64px; scroll-margin-top: 20px; }
 .section-heading { display: grid; grid-template-columns: 42px 1fr; gap: 16px; margin-bottom: 24px; }

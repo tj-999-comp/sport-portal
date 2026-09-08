@@ -35,6 +35,6 @@ Issue #6をデザイン決定タスクとして扱い、モックアップ #6を
 
 ## 参照
 
-- メインデザイン: [DESIGN.md](../../DESIGN.md)
+- メインデザイン: `DESIGN.md`
 - 公開URL: https://sport-portal.pages.dev/
 - Issue: [#6](https://github.com/tj-999-comp/sport-portal/issues/6)

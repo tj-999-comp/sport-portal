@@ -1,0 +1,10 @@
+schema_version: 1
+title: 'MVP残作業の完了と親Issueクローズ'
+date: "2026-09-08"
+project_id: sport-portal
+tags:
+  - acceptance
+  - testing
+  - deployment
+  - mvp
+publish: true

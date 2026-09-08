@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>スポーツポータル — v1.0.1 デザインレビュー</title>
+  <link rel="stylesheet" href="/design-review.css">
+</head>
+<body>
+  <main class="review-page">
+    <header class="review-header">
+      <div>
+        <p class="review-kicker">[v1.0.1] / DESIGN REVIEW</p>
+        <h1>スポーツポータルのUI改修案</h1>
+        <p class="review-lede">ホバー・選択の状態を操作しながら、今回の改修候補を比較できます。</p>
+      </div>
+      <div class="review-meta">
+        <span>v1.0.0</span>
+        <span class="review-meta-stg">STG</span>
+      </div>
+    </header>
+
+    <nav class="review-index" aria-label="レビューページ内目次">
+      <a href="#league">01 リーグ選択</a>
+      <a href="#navigation">02 下部メニュー</a>
+      <a href="#dates">03 日付UI</a>
+    </nav>
+
+    <section class="review-section" id="league" aria-labelledby="league-title">
+      <div class="section-heading">
+        <p class="section-number">01</p>
+        <div>
+          <h2 id="league-title">リーグ選択 — ラインの動き</h2>
+          <p>カード感や浮き上がりを使わず、「Jリーグ」と矢印、ラインだけで選択状態を表現する10案です。マウスを乗せるとホバー状態、クリックすると選択状態を確認できます。</p>
+        </div>
+      </div>
+      <div class="review-grid league-grid" id="league-options"></div>
+    </section>
+
+    <section class="review-section" id="navigation" aria-labelledby="navigation-title">
+      <div class="section-heading">
+        <p class="section-number">02</p>
+        <div>
+          <h2 id="navigation-title">下部3メニュー — 選択デザイン</h2>
+          <p>アイコンとラベルを大きくした、試合・順位・更新の20案です。各案のメニューをクリックして選択状態を切り替えられます。</p>
+        </div>
+      </div>
+      <div class="review-grid navigation-grid" id="navigation-options"></div>
+    </section>
+
+    <section class="review-section" id="dates" aria-labelledby="dates-title">
+      <div class="section-heading">
+        <p class="section-number">03</p>
+        <div>
+          <h2 id="dates-title">リーグページの日付UI</h2>
+          <p>日付の情報量と選択状態を比較する20案です。日付をクリックすると、各案の選択状態を確認できます。</p>
+        </div>
+      </div>
+      <div class="review-grid dates-grid" id="date-options"></div>
+    </section>
+  </main>
+  <script src="/design-review.js" type="module"></script>
+</body>
+</html>

@@ -55,6 +55,24 @@ test('static privacy controls prevent indexing', async () => {
   assert.match(html, /<meta\s+name="robots"\s+content="[^"]*noindex/i);
 });
 
+test('design review keeps the latest proposal visible and history collapsed', async () => {
+  const html = await readFile(new URL('../../app/design-review.html', import.meta.url), 'utf8');
+  assert.match(html, /提案No\.01/);
+  assert.match(html, /<details class="proposal-history">/);
+  assert.doesNotMatch(html, /<details class="proposal-history"[^>]*open/);
+  assert.match(html, /stg.*Preview|Preview.*stg/i);
+  assert.match(html, /採用理由/);
+});
+
+test('portal root links to the J.League page and keeps the review page separate', async () => {
+  const portal = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+  const jLeague = await readFile(new URL('../../app/j-league/index.html', import.meta.url), 'utf8');
+  assert.match(portal, /href="\/j-league\/"/);
+  assert.match(portal, /href="\/design-review\.html"/);
+  assert.match(jLeague, /href="\/"/);
+  assert.match(jLeague, /href="\/design-review\.html"/);
+});
+
 test('STG Wrangler environment is isolated and manual-only by default', async () => {
   const config = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
   assert.match(config, /\[env\.stg\]\s+name = "sport-portal-api-stg"/);

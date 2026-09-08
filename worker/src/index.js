@@ -133,13 +133,16 @@ function validMatches(matches) {
 function validStandings(standings) { return standings.length >= 2 && standings.every((row) => Number.isInteger(row.rank) && row.team); }
 
 export async function fetchFreshData(fetchImpl = fetch, now = new Date()) {
-  const [scheduleResponses, standingsResponse] = await Promise.all([
-    Promise.all(scheduleUrls().map((url) => fetchImpl(url, { headers: SOURCE_HEADERS, redirect: 'follow' }))),
-    fetchImpl(CONFIG.standingsUrl, { headers: SOURCE_HEADERS, redirect: 'follow' })
-  ]);
-  const failedSchedule = scheduleResponses.find((response) => !response.ok);
-  if (failedSchedule || !standingsResponse.ok) throw new Error(`公式サイトの応答エラー (${failedSchedule?.status || 200}/${standingsResponse.status})`);
-  const [scheduleHtml, standingsHtml] = await Promise.all([Promise.all(scheduleResponses.map((response) => response.text())).then((pages) => pages.join('\n')), standingsResponse.text()]);
+  const schedulePages = [];
+  for (const url of scheduleUrls()) {
+    const response = await fetchImpl(url, { headers: SOURCE_HEADERS, redirect: 'follow' });
+    if (!response.ok) throw new Error(`公式サイトの応答エラー (${response.status}/200)`);
+    schedulePages.push(await response.text());
+  }
+  const standingsResponse = await fetchImpl(CONFIG.standingsUrl, { headers: SOURCE_HEADERS, redirect: 'follow' });
+  if (!standingsResponse.ok) throw new Error(`公式サイトの応答エラー (200/${standingsResponse.status})`);
+  const scheduleHtml = schedulePages.join('\n');
+  const standingsHtml = await standingsResponse.text();
   const matches = parseScheduleHtml(scheduleHtml);
   const standings = parseStandingsHtml(standingsHtml);
   if (!validMatches(matches)) throw new Error('試合データを抽出できませんでした');

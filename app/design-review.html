@@ -4,104 +4,62 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="description" content="スポーツポータルのデザイン提案と採用理由を確認する検証環境専用ページ">
-  <title>デザインレビュー | スポーツポータル</title>
-  <link rel="stylesheet" href="design-review.css">
+  <title>スポーツポータル — v1.0.1 デザインレビュー</title>
+  <link rel="stylesheet" href="/design-review.css">
 </head>
 <body>
-  <header class="review-nav">
-    <a class="review-brand" href="/">スポーツポータル</a>
-    <div class="review-nav-actions">
-      <span class="environment-badge">検証環境</span>
-      <a href="/design-mockups.html?v=6">モックアップを見る</a>
-    </div>
-  </header>
-
   <main class="review-page">
-    <header class="page-heading">
-      <p class="eyebrow">デザイン確認</p>
-      <h1>デザインレビュー</h1>
-      <p>スポーツポータルのUI提案を比較し、採用案と判断理由を残すページです。</p>
+    <header class="review-header">
+      <div>
+        <p class="review-kicker">[v1.0.1] / DESIGN REVIEW</p>
+        <h1>スポーツポータルのUI改修案</h1>
+        <p class="review-lede">ホバー・選択の状態を操作しながら、今回の改修候補を比較できます。</p>
+      </div>
+      <div class="review-meta">
+        <span>v1.0.0</span>
+        <span class="review-meta-stg">STG</span>
+      </div>
     </header>
 
-    <section class="latest-proposal" aria-labelledby="proposal-01-title">
-      <div class="proposal-heading">
-        <p class="proposal-number">提案No.01 / 現行メイン画面</p>
-        <h2 id="proposal-01-title">日付と試合を主役にする</h2>
-        <p>試合情報への到達を最短にするため、情報量を絞った白い浮遊カード型の画面を比較します。</p>
-      </div>
+    <nav class="review-index" aria-label="レビューページ内目次">
+      <a href="#league">01 リーグ選択</a>
+      <a href="#navigation">02 下部メニュー</a>
+      <a href="#dates">03 日付UI</a>
+    </nav>
 
-      <div class="option-grid" aria-label="メイン画面の候補">
-        <article class="option-card selected">
-          <div class="option-top"><span class="option-number">01</span><span class="status-tag">採用</span></div>
-          <div class="screen-preview preview-card">
-            <div class="preview-pill"></div>
-            <strong>2026年9月6日</strong>
-            <div class="preview-match"><span>18:00</span><b>鹿島　2 — 1　浦和</b></div>
-            <div class="preview-match"><span>19:00</span><b>川崎　0 — 0　G大阪</b></div>
-          </div>
-          <h3>浮遊カード</h3>
-          <p>日付ナビ、試合カード、下部の更新状態を優先。現行のデザイン案 #6。</p>
-        </article>
-        <article class="option-card">
-          <div class="option-top"><span class="option-number">02</span><span class="status-tag candidate">候補</span></div>
-          <div class="screen-preview preview-editorial">
-            <div class="preview-line wide"></div>
-            <div class="preview-date">06</div>
-            <div class="preview-line"></div>
-            <div class="preview-line short"></div>
-            <div class="preview-line"></div>
-          </div>
-          <h3>エディトリアル</h3>
-          <p>日付の視認性を強める案。情報の主従が大きくなり、一覧性は下がる。</p>
-        </article>
-        <article class="option-card">
-          <div class="option-top"><span class="option-number">03</span><span class="status-tag candidate">候補</span></div>
-          <div class="screen-preview preview-dark">
-            <div class="preview-line wide"></div>
-            <div class="preview-date">J1</div>
-            <div class="preview-dark-card"></div>
-            <div class="preview-dark-card"></div>
-          </div>
-          <h3>ダークヒーロー</h3>
-          <p>視覚的な強さはあるが、日常的に試合を確認する用途には重い。</p>
-        </article>
-      </div>
-
-      <aside class="decision-note">
-        <strong>採用理由</strong>
-        <p>候補01を採用。試合の予定・結果・更新状態を一画面で確認でき、既存MVPの操作（日付切替・順位表・手動更新）も維持できるためです。</p>
-      </aside>
-    </section>
-
-    <section class="component-review" aria-labelledby="component-title">
+    <section class="review-section" id="league" aria-labelledby="league-title">
       <div class="section-heading">
-        <p class="eyebrow">提案No.01 / 共通部品</p>
-        <h2 id="component-title">共通部品の確認</h2>
-        <p>画面単位の提案と、部品単位の判断を分けて記録します。</p>
+        <p class="section-number">01</p>
+        <div>
+          <h2 id="league-title">リーグ選択 — ラインの動き</h2>
+          <p>カード感や浮き上がりを使わず、「Jリーグ」と矢印、ラインだけで選択状態を表現する10案です。マウスを乗せるとホバー状態、クリックすると選択状態を確認できます。</p>
+        </div>
       </div>
-      <div class="component-grid">
-        <article class="component-card"><span class="component-label">01 / ヘッダー</span><div class="component-sample sample-header"><i></i><b>スポーツポータル</b><span>2026</span></div><h3>ピル型ヘッダー</h3><p>採用：白地・薄い境界線・控えめな影。</p></article>
-        <article class="component-card"><span class="component-label">02 / 試合カード</span><div class="component-sample sample-match"><small>18:00</small><b>鹿島　2 — 1　浦和</b><i></i></div><h3>試合カード</h3><p>採用：角丸16px。結果と予定を同じ構造で表示。</p></article>
-        <article class="component-card"><span class="component-label">03 / 色</span><div class="component-sample sample-accent"><i></i><b>更新済み</b><span>マゼンタ</span></div><h3>アクセントカラー</h3><p>採用：状態・選択中・主要操作にマゼンタを限定使用。</p></article>
-      </div>
+      <div class="review-grid league-grid" id="league-options"></div>
     </section>
 
-    <aside class="operation-note">
-      <strong>運用ルール</strong>
-      <p>新しい提案はこのページの先頭へ追加します。採用案には候補番号・採用理由・反映先を記録し、過去の提案は下のトグルへ移します。</p>
-      <p>確認は検証環境で行い、明示的な承認後に本番へ反映します。</p>
-    </aside>
-
-    <details class="proposal-history">
-      <summary>過去の提案（初回導入前）</summary>
-      <div class="history-content">
-        <p class="history-label">履歴は新しい提案の追加時にここへ移動します</p>
-        <p>過去案を残す場合は、提案番号、比較対象、採用・見送りの判断、判断理由をセットで記録してください。</p>
+    <section class="review-section" id="navigation" aria-labelledby="navigation-title">
+      <div class="section-heading">
+        <p class="section-number">02</p>
+        <div>
+          <h2 id="navigation-title">下部3メニュー — 選択デザイン</h2>
+          <p>アイコンとラベルを大きくした、試合・順位・更新の20案です。各案のメニューをクリックして選択状態を切り替えられます。</p>
+        </div>
       </div>
-    </details>
-  </main>
+      <div class="review-grid navigation-grid" id="navigation-options"></div>
+    </section>
 
-  <footer class="review-footer"><span>検証環境専用のデザイン比較ページ</span><a href="/">アプリ本体へ戻る →</a></footer>
+    <section class="review-section" id="dates" aria-labelledby="dates-title">
+      <div class="section-heading">
+        <p class="section-number">03</p>
+        <div>
+          <h2 id="dates-title">リーグページの日付UI</h2>
+          <p>日付の情報量と選択状態を比較する20案です。日付をクリックすると、各案の選択状態を確認できます。</p>
+        </div>
+      </div>
+      <div class="review-grid dates-grid" id="date-options"></div>
+    </section>
+  </main>
+  <script src="/design-review.js" type="module"></script>
 </body>
 </html>

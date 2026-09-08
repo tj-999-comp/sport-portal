@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="description" content="J1リーグの試合予定・結果・順位表を確認するスポーツポータル">
+  <title>スポーツポータル | 2026 J1</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="site-header">
+      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true"></span><h1><a class="brand-link" href="/">スポーツポータル</a></h1></div>
+      <div class="header-meta"><a class="header-link" href="/design-review.html">レビュー</a><span class="season">2026</span></div>
+    </header>
+
+    <section class="date-section" aria-labelledby="selected-date">
+      <h2 class="selected-date" id="selected-date">2026年9月6日</h2>
+      <nav class="date-nav" id="date-nav" aria-label="日付"></nav>
+    </section>
+
+    <section class="matches-section" aria-label="試合日程・結果">
+      <div class="match-days" id="match-days" tabindex="0" aria-label="試合日ごとの一覧"></div>
+      <p class="empty-state" id="empty-state" hidden>データを取得できていません</p>
+    </section>
+
+    <section class="status-strip" aria-live="polite">
+      <span class="status-indicator" id="status-indicator"></span>
+      <span class="status-label" id="status-label">読み込み中</span>
+      <span class="status-detail" id="status-detail"></span>
+      <time class="updated-at" id="updated-at"></time>
+    </section>
+
+    <nav class="bottom-nav" aria-label="操作">
+      <span class="bottom-nav-current"><span aria-hidden="true">◒</span><small>試合</small></span>
+      <button id="standings-button" type="button"><span aria-hidden="true">▦</span><small>順位</small></button>
+      <button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button>
+    </nav>
+  </main>
+
+  <dialog class="standings-dialog" id="standings-dialog" aria-labelledby="standings-title">
+    <div class="modal-grabber" aria-hidden="true"></div>
+    <div class="dialog-header">
+      <div>
+        <p class="eyebrow">順位表</p>
+        <h2 id="standings-title">J1 順位表</h2>
+      </div>
+      <button class="close-button" id="close-standings" type="button" aria-label="順位表を閉じる">×</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>順位</th><th class="team-column">チーム</th><th>試合</th><th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th><th>得失</th><th>勝点</th></tr>
+        </thead>
+        <tbody id="standings-body"></tbody>
+      </table>
+    </div>
+  </dialog>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

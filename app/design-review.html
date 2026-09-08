@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="description" content="スポーツポータルのデザイン提案と採用理由を確認するSTG専用ページ">
+  <title>デザインレビュー | スポーツポータル</title>
+  <link rel="stylesheet" href="design-review.css">
+</head>
+<body>
+  <header class="review-nav">
+    <a class="review-brand" href="/">スポーツポータル</a>
+    <div class="review-nav-actions">
+      <span class="environment-badge">STG</span>
+      <a href="/design-mockups.html?v=6">モックアップを見る</a>
+    </div>
+  </header>
+
+  <main class="review-page">
+    <header class="page-heading">
+      <p class="eyebrow">DESIGN REVIEW / STG ONLY</p>
+      <h1>デザインレビュー</h1>
+      <p>スポーツポータルのUI提案を比較し、採用案と判断理由を残すページです。</p>
+    </header>
+
+    <section class="latest-proposal" aria-labelledby="proposal-01-title">
+      <div class="proposal-heading">
+        <p class="proposal-number">提案No.01 / 現行メイン画面</p>
+        <h2 id="proposal-01-title">日付と試合を主役にする</h2>
+        <p>試合情報への到達を最短にするため、情報量を絞った白い浮遊カード型の画面を比較します。</p>
+      </div>
+
+      <div class="option-grid" aria-label="メイン画面の候補">
+        <article class="option-card selected">
+          <div class="option-top"><span class="option-number">01</span><span class="status-tag">採用</span></div>
+          <div class="screen-preview preview-card">
+            <div class="preview-pill"></div>
+            <strong>2026年9月6日</strong>
+            <div class="preview-match"><span>18:00</span><b>鹿島　2 — 1　浦和</b></div>
+            <div class="preview-match"><span>19:00</span><b>川崎　0 — 0　G大阪</b></div>
+          </div>
+          <h3>浮遊カード</h3>
+          <p>日付ナビ、試合カード、下部の更新状態を優先。現行のデザイン案 #6。</p>
+        </article>
+        <article class="option-card">
+          <div class="option-top"><span class="option-number">02</span><span class="status-tag candidate">候補</span></div>
+          <div class="screen-preview preview-editorial">
+            <div class="preview-line wide"></div>
+            <div class="preview-date">06</div>
+            <div class="preview-line"></div>
+            <div class="preview-line short"></div>
+            <div class="preview-line"></div>
+          </div>
+          <h3>エディトリアル</h3>
+          <p>日付の視認性を強める案。情報の主従が大きくなり、一覧性は下がる。</p>
+        </article>
+        <article class="option-card">
+          <div class="option-top"><span class="option-number">03</span><span class="status-tag candidate">候補</span></div>
+          <div class="screen-preview preview-dark">
+            <div class="preview-line wide"></div>
+            <div class="preview-date">J1</div>
+            <div class="preview-dark-card"></div>
+            <div class="preview-dark-card"></div>
+          </div>
+          <h3>ダークヒーロー</h3>
+          <p>視覚的な強さはあるが、日常的に試合を確認する用途には重い。</p>
+        </article>
+      </div>
+
+      <aside class="decision-note">
+        <strong>採用理由</strong>
+        <p>候補01を採用。試合の予定・結果・更新状態を一画面で確認でき、既存MVPの操作（日付切替・順位表・手動更新）も維持できるためです。</p>
+      </aside>
+    </section>
+
+    <section class="component-review" aria-labelledby="component-title">
+      <div class="section-heading">
+        <p class="eyebrow">COMPONENT REVIEW / PROPOSAL No.01</p>
+        <h2 id="component-title">共通コンポーネントの確認</h2>
+        <p>画面単位の提案と、部品単位の判断を分けて記録します。</p>
+      </div>
+      <div class="component-grid">
+        <article class="component-card"><span class="component-label">01 / Header</span><div class="component-sample sample-header"><i></i><b>スポーツポータル</b><span>2026</span></div><h3>ピル型ヘッダー</h3><p>採用：白地・薄い境界線・控えめな影。</p></article>
+        <article class="component-card"><span class="component-label">02 / Match card</span><div class="component-sample sample-match"><small>18:00</small><b>鹿島　2 — 1　浦和</b><i></i></div><h3>試合カード</h3><p>採用：角丸16px。結果と予定を同じ構造で表示。</p></article>
+        <article class="component-card"><span class="component-label">03 / Accent</span><div class="component-sample sample-accent"><i></i><b>更新済み</b><span>マゼンタ</span></div><h3>アクセントカラー</h3><p>採用：状態・選択中・主要操作にマゼンタを限定使用。</p></article>
+      </div>
+    </section>
+
+    <aside class="operation-note">
+      <strong>運用ルール</strong>
+      <p>新しい提案はこのページの先頭へ追加します。採用案には候補番号・採用理由・反映先を記録し、過去の提案は下のトグルへ移します。</p>
+      <p>確認は <code>stg</code> ブランチのPreviewで行い、明示的な承認後に <code>main</code> へ反映します。</p>
+    </aside>
+
+    <details class="proposal-history">
+      <summary>過去の提案（初回導入前）</summary>
+      <div class="history-content">
+        <p class="history-label">履歴は新しい提案の追加時にここへ移動します</p>
+        <p>過去案を残す場合は、提案番号、比較対象、採用・見送りの判断、判断理由をセットで記録してください。</p>
+      </div>
+    </details>
+  </main>
+
+  <footer class="review-footer"><span>STG専用のデザイン比較ページ</span><a href="/">アプリ本体へ戻る →</a></footer>
+</body>
+</html>

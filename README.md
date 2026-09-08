@@ -64,7 +64,9 @@ publish: true
 
 Pull Requestまたはpush時に、`validate.yml` が命名、Markdown、metadataの対応を確認します。
 
-公開要求は、内容をcommitした後にActionsの `Request publish` workflowを手動実行します。入力には対象recordのbasenameだけを指定し、workflowは固定commit SHAとともに公開リポジトリの受入workflowを起動します。
+`work-records/md/**` または `work-records/metadata/**` を `main`へpushすると、`Request publish` workflowが自動起動します。変更されたrecordのbasenameを抽出し、固定commit SHAとともに公開リポジトリの受入workflowを起動します。複数recordを含むpushにも対応します。アプリ本体だけのpushでは作業記録の公開処理は起動しません。
+
+再公開や復旧が必要な場合は、Actionsの `Request publish` workflowを手動実行し、対象recordのbasenameを指定します。
 
 公開前に、公開リポジトリ側でsource registry登録、disabled dry-run、固定commitによる手動E2Eを完了させてください。Actions Variableに `PUBLISH_APP_ID`、Actions Secretに `PUBLISH_APP_PRIVATE_KEY` を登録します。秘密鍵をファイルやmetadataへ保存しないでください。
 

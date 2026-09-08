@@ -1,6 +1,11 @@
 name: Request publish
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - work-records/md/**
+      - work-records/metadata/**
   workflow_dispatch:
     inputs:
       target_basename:
@@ -19,17 +24,42 @@ jobs:
       - name: Checkout fixed source commit
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
       - name: Validate source
         run: python3 scripts/dev/validate_work_records.py
-      - name: Check target basename
+      - name: Resolve target basenames
+        id: targets
         env:
+          EVENT_NAME: ${{ github.event_name }}
           TARGET_BASENAME: ${{ inputs.target_basename }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          [[ "$TARGET_BASENAME" =~ ^work_record_[0-9]{3}$ ]]
-          test -f "work-records/md/$TARGET_BASENAME.md"
-          test -f "work-records/metadata/$TARGET_BASENAME.yml"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            targets="$TARGET_BASENAME"
+          else
+            if [[ "$PUSH_BEFORE" =~ ^0+$ ]]; then
+              changed_paths="$(git diff-tree --no-commit-id --name-only -r "$PUSH_SHA")"
+            else
+              changed_paths="$(git diff --name-only "$PUSH_BEFORE" "$PUSH_SHA")"
+            fi
+            targets="$(printf '%s\n' "$changed_paths" | sed -nE 's#^work-records/(md|metadata)/(work_record_[0-9]{3})\.(md|yml)$#\2#p' | sort -u | paste -sd, -)"
+          fi
+
+          if [[ -z "$targets" ]]; then
+            echo "No work records changed; nothing to publish."
+            echo "targets=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          IFS=',' read -r -a target_array <<< "$targets"
+          for target in "${target_array[@]}"; do
+            [[ "$target" =~ ^work_record_[0-9]{3}$ ]]
+            test -f "work-records/md/$target.md"
+            test -f "work-records/metadata/$target.yml"
+          done
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
       - name: Create GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v2
@@ -44,13 +74,17 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PROJECT_ID: sport-portal
           SOURCE_COMMIT_SHA: ${{ github.sha }}
-          TARGET_BASENAME: ${{ inputs.target_basename }}
+          TARGET_BASENAMES: ${{ steps.targets.outputs.targets }}
         run: |
           set -euo pipefail
           test "$PROJECT_ID" = "sport-portal"
-          gh workflow run accept-source.yml \
-            --repo tj-999-comp/sandbox-pages \
-            --ref main \
-            -f project_id="$PROJECT_ID" \
-            -f source_commit_sha="$SOURCE_COMMIT_SHA" \
-            -f target_basename="$TARGET_BASENAME"
+          [[ -n "$TARGET_BASENAMES" ]]
+          IFS=',' read -r -a target_array <<< "$TARGET_BASENAMES"
+          for target in "${target_array[@]}"; do
+            gh workflow run accept-source.yml \
+              --repo tj-999-comp/sandbox-pages \
+              --ref main \
+              -f project_id="$PROJECT_ID" \
+              -f source_commit_sha="$SOURCE_COMMIT_SHA" \
+              -f target_basename="$target"
+          done

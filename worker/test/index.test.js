@@ -60,7 +60,7 @@ test('design review keeps the latest proposal visible and history collapsed', as
   assert.match(html, /提案No\.01/);
   assert.match(html, /<details class="proposal-history">/);
   assert.doesNotMatch(html, /<details class="proposal-history"[^>]*open/);
-  assert.match(html, /stg.*Preview|Preview.*stg/i);
+  assert.match(html, /検証環境で行い/);
   assert.match(html, /採用理由/);
 });
 

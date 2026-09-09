@@ -44,10 +44,9 @@ h1 { font-size: 12px; font-weight: 800; }
 
 .matches-section { margin-top: 8px; }
 .match-days { align-items: flex-start; display: flex; gap: 0; overflow-x: hidden; overflow-y: hidden; overscroll-behavior-x: contain; scroll-behavior: auto; scroll-snap-type: none; scrollbar-width: none; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
-.match-days.is-scrollable { overflow-x: auto; scroll-snap-type: none; }
+.match-days.is-scrollable { overflow-x: auto; scroll-snap-type: x proximity; }
 .match-days::-webkit-scrollbar { display: none; }
-.match-day { background: var(--paper); border: 1px solid transparent; border-radius: 16px; box-shadow: rgba(0, 0, 0, .05) 0 2px 8px; flex: 0 0 100%; min-width: 0; padding: 12px 14px 4px; scroll-snap-align: start; }
-.match-day.today { border-color: var(--accent); }
+.match-day { background: transparent; border: 0; border-radius: 0; box-shadow: none; flex: 0 0 100%; min-width: 0; padding: 12px 14px 4px; scroll-snap-align: start; }
 .day-topline { display: none; }
 .match-list { display: grid; }
 .match-card { border-top: 1px solid var(--line); padding: 10px 0; }

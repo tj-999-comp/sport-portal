@@ -138,7 +138,6 @@ const standingsButton = $('#standings-button');
 const standingsIcon = $('#standings-icon');
 const standingsLabel = $('#standings-label');
 let standingsOpenedFrom = null;
-let sheetDragStartY = null;
 
 function setStandingsButton(open) {
   standingsIcon.textContent = open ? '×' : '▦';
@@ -161,10 +160,9 @@ function openStandings() {
 function closeStandings() {
   if (standingsSheet.hidden) return;
   setStandingsButton(false);
-  standingsSheet.classList.remove('is-open', 'is-dragging');
+  standingsSheet.classList.remove('is-open');
   standingsSheet.setAttribute('aria-hidden', 'true');
-  standingsPanel.style.removeProperty('--drag-offset');
-  window.setTimeout(() => { standingsSheet.hidden = true; }, 220);
+  standingsSheet.hidden = true;
   standingsOpenedFrom?.focus();
 }
 
@@ -173,32 +171,4 @@ $('#standings-button').addEventListener('click', openStandings);
 $('#close-standings').addEventListener('click', closeStandings);
 $('#standings-backdrop').addEventListener('click', closeStandings);
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeStandings(); });
-standingsPanel.addEventListener('pointerdown', (event) => {
-  if (event.target.closest('button, a, input, select, textarea')) return;
-  sheetDragStartY = event.clientY;
-  standingsSheet.classList.add('is-dragging');
-  standingsPanel.setPointerCapture?.(event.pointerId);
-});
-$('#close-standings').addEventListener('pointerdown', (event) => event.stopPropagation());
-standingsPanel.addEventListener('pointermove', (event) => {
-  if (sheetDragStartY === null) return;
-  const offset = Math.max(0, event.clientY - sheetDragStartY);
-  standingsPanel.style.setProperty('--drag-offset', `${offset}px`);
-});
-standingsPanel.addEventListener('pointerup', (event) => {
-  if (sheetDragStartY === null) return;
-  const offset = Math.max(0, event.clientY - sheetDragStartY);
-  sheetDragStartY = null;
-  standingsPanel.releasePointerCapture?.(event.pointerId);
-  if (offset > 80) closeStandings();
-  else {
-    standingsSheet.classList.remove('is-dragging');
-    standingsPanel.style.removeProperty('--drag-offset');
-  }
-});
-standingsPanel.addEventListener('pointercancel', () => {
-  sheetDragStartY = null;
-  standingsSheet.classList.remove('is-dragging');
-  standingsPanel.style.removeProperty('--drag-offset');
-});
 loadData();

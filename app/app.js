@@ -37,7 +37,11 @@ function updateDateSelection(date) {
   $('#selected-date').textContent = date ? formatLongDate(date) : '';
   const activeButton = [...$('#date-nav').querySelectorAll('.date-chip')].find((button) => button.dataset.date === date);
   $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.classList.toggle('active', button === activeButton));
-  activeButton?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  const dateNav = $('#date-nav');
+  if (activeButton && dateNav.classList.contains('is-scrollable')) {
+    const targetLeft = activeButton.offsetLeft - (dateNav.clientWidth - activeButton.offsetWidth) / 2;
+    dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+  }
 }
 
 function renderDateNav(dates, selectedDate) {
@@ -51,6 +55,12 @@ function renderDateNav(dates, selectedDate) {
 
 function updateScrollState(element) {
   element.classList.toggle('is-scrollable', element.scrollWidth > element.clientWidth + 1);
+}
+
+function updatePageScrollState() {
+  const root = document.documentElement;
+  const needsScroll = root.scrollHeight > root.clientHeight + 1;
+  root.classList.toggle('page-is-scrollable', needsScroll);
 }
 
 function scrollToDate(date, behavior = 'smooth') {
@@ -105,7 +115,10 @@ function renderMatches(matches = []) {
   });
   root.onscroll = syncDateSelectionFromScroll;
   updateScrollState(root);
-  if (selectedDate) requestAnimationFrame(() => scrollToDate(selectedDate, 'auto'));
+  requestAnimationFrame(() => {
+    if (selectedDate) scrollToDate(selectedDate, 'auto');
+    updatePageScrollState();
+  });
 }
 
 function renderStandings(rows = []) {
@@ -121,6 +134,7 @@ async function loadData() {
   } catch (error) {
     renderStatus({ status: 'failure', message: error.message });
     $('#empty-state').hidden = false;
+    requestAnimationFrame(updatePageScrollState);
   }
 }
 async function refresh() {
@@ -194,5 +208,6 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape') cl
 window.addEventListener('resize', () => {
   updateScrollState($('#date-nav'));
   updateScrollState($('#match-days'));
+  requestAnimationFrame(updatePageScrollState);
 });
 loadData();

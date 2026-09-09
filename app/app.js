@@ -90,10 +90,10 @@ function renderMatches(matches = []) {
       const finished = match.status === 'finished';
       const homeWon = finished && Number(match.homeScore) > Number(match.awayScore);
       const awayWon = finished && Number(match.awayScore) > Number(match.homeScore);
-      const stateText = match.status === 'postponed' ? '延期' : match.status === 'cancelled' ? '中止' : finished ? '試合終了' : match.kickoff || '未定';
+      const stateText = match.status === 'postponed' ? '延期' : match.status === 'cancelled' ? '中止' : finished ? `${match.homeScore} - ${match.awayScore}` : match.kickoff || '未定';
       const card = document.createElement('div');
       card.className = 'match-card';
-      card.innerHTML = `<div class="match-meta"><span>第${escapeHtml(match.matchday || '―')}節</span><span class="${finished ? 'match-time' : 'match-state'}">${escapeHtml(stateText)}</span></div><div class="scoreline"><div class="team-row home${homeWon ? ' winner' : awayWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.home?.short || match.home?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.homeScore)}</span>` : ''}</div><span class="score-divider" aria-hidden="true">—</span><div class="team-row away${awayWon ? ' winner' : homeWon ? ' loser' : ''}">${finished ? `<span class="score">${escapeHtml(match.awayScore)}</span>` : ''}<span class="team-name">${escapeHtml(match.away?.short || match.away?.name)}</span></div></div>`;
+      card.innerHTML = `<div class="match-meta"><span>第${escapeHtml(match.matchday || '―')}節</span><span class="${finished ? 'match-time' : 'match-state'}">${escapeHtml(stateText)}</span></div><div class="team-row${homeWon ? ' winner' : awayWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.home?.short || match.home?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.homeScore)}</span>` : ''}</div><div class="team-row${awayWon ? ' winner' : homeWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.away?.short || match.away?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.awayScore)}</span>` : ''}</div>`;
       list.append(card);
     });
     root.append(day);
@@ -132,73 +132,8 @@ async function refresh() {
   finally { state.updating = false; button.disabled = false; button.textContent = '手動更新'; }
 }
 
-const standingsSheet = $('#standings-sheet');
-const standingsPanel = $('#standings-panel');
-const standingsButton = $('#standings-button');
-const standingsIcon = $('#standings-icon');
-const standingsLabel = $('#standings-label');
-let standingsOpenedFrom = null;
-let sheetDragStartY = null;
-
-function setStandingsButton(open) {
-  standingsIcon.textContent = open ? '×' : '▦';
-  standingsLabel.textContent = open ? '閉じる' : '順位';
-  standingsButton.classList.toggle('is-open', open);
-  standingsButton.setAttribute('aria-label', open ? '順位表を閉じる' : '順位表を開く');
-}
-
-function openStandings() {
-  standingsOpenedFrom = document.activeElement;
-  setStandingsButton(true);
-  standingsSheet.hidden = false;
-  standingsSheet.setAttribute('aria-hidden', 'false');
-  requestAnimationFrame(() => {
-    standingsSheet.classList.add('is-open');
-    standingsPanel.focus();
-  });
-}
-
-function closeStandings() {
-  if (standingsSheet.hidden) return;
-  setStandingsButton(false);
-  standingsSheet.classList.remove('is-open', 'is-dragging');
-  standingsSheet.setAttribute('aria-hidden', 'true');
-  standingsPanel.style.removeProperty('--drag-offset');
-  window.setTimeout(() => { standingsSheet.hidden = true; }, 220);
-  standingsOpenedFrom?.focus();
-}
-
 $('#refresh-button').addEventListener('click', refresh);
-$('#standings-button').addEventListener('click', openStandings);
-$('#close-standings').addEventListener('click', closeStandings);
-$('#standings-backdrop').addEventListener('click', closeStandings);
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeStandings(); });
-standingsPanel.addEventListener('pointerdown', (event) => {
-  if (event.target.closest('button, a, input, select, textarea')) return;
-  sheetDragStartY = event.clientY;
-  standingsSheet.classList.add('is-dragging');
-  standingsPanel.setPointerCapture?.(event.pointerId);
-});
-$('#close-standings').addEventListener('pointerdown', (event) => event.stopPropagation());
-standingsPanel.addEventListener('pointermove', (event) => {
-  if (sheetDragStartY === null) return;
-  const offset = Math.max(0, event.clientY - sheetDragStartY);
-  standingsPanel.style.setProperty('--drag-offset', `${offset}px`);
-});
-standingsPanel.addEventListener('pointerup', (event) => {
-  if (sheetDragStartY === null) return;
-  const offset = Math.max(0, event.clientY - sheetDragStartY);
-  sheetDragStartY = null;
-  standingsPanel.releasePointerCapture?.(event.pointerId);
-  if (offset > 80) closeStandings();
-  else {
-    standingsSheet.classList.remove('is-dragging');
-    standingsPanel.style.removeProperty('--drag-offset');
-  }
-});
-standingsPanel.addEventListener('pointercancel', () => {
-  sheetDragStartY = null;
-  standingsSheet.classList.remove('is-dragging');
-  standingsPanel.style.removeProperty('--drag-offset');
-});
+$('#standings-button').addEventListener('click', () => $('#standings-dialog').showModal());
+$('#close-standings').addEventListener('click', () => $('#standings-dialog').close());
+$('#standings-dialog').addEventListener('click', (event) => { if (event.target === $('#standings-dialog')) $('#standings-dialog').close(); });
 loadData();

@@ -57,32 +57,6 @@ const dateOptions = [
   ['アクセントバー', 'date-accent']
 ];
 
-const scoreOptions = [
-  ['勝敗見出し', 'score-result-heading'],
-  ['勝者帯', 'score-winner-band'],
-  ['勝者矢印', 'score-winner-arrow'],
-  ['トロフィー', 'score-trophy'],
-  ['WIN / LOSE', 'score-win-lose'],
-  ['勝者を上段', 'score-winner-top'],
-  ['勝利スタンプ', 'score-stamp'],
-  ['勝敗色分け', 'score-result-color'],
-  ['スコアボード式', 'score-board'],
-  ['勝者を主役', 'score-winner-focus']
-];
-
-const previousScoreOptions = [
-  ['横一列', 'score-inline'],
-  ['左右カラム', 'score-columns'],
-  ['中央スコア', 'score-center'],
-  ['スコアピル', 'score-pill'],
-  ['縦積みコンパクト', 'score-stacked'],
-  ['勝者ラベル', 'score-winner-label'],
-  ['勝敗バッジ', 'score-result-badge'],
-  ['勝者マーク', 'score-winner-mark'],
-  ['勝敗カラム', 'score-result-columns'],
-  ['勝者ハイライト', 'score-winner-highlight']
-];
-
 const dates = [
   ['9/5', '土'],
   ['9/6', '日'],
@@ -92,19 +66,17 @@ const dates = [
 ];
 
 function createLeagueOption([title, variant], index) {
-  const chosen = index === 0;
-  return `<article class="review-card league-card${chosen ? ' chosen' : ''}">
-    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${chosen ? '<em class="choice-tag">採用</em>' : ''}</div>
+  return `<article class="review-card league-card">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
     <div class="league-preview ${variant}">
-      <button class="league-row${chosen ? ' is-selected' : ''}" type="button" aria-pressed="${chosen}"><span>Jリーグ</span><span class="league-arrow" aria-hidden="true">→</span></button>
+      <button class="league-row" type="button" aria-pressed="false"><span>Jリーグ</span><span class="league-arrow" aria-hidden="true">→</span></button>
     </div>
   </article>`;
 }
 
 function createNavigationOption([title, variant], index) {
-  const chosen = index === 1;
-  return `<article class="review-card navigation-card${chosen ? ' chosen' : ''}">
-    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${chosen ? '<em class="choice-tag">採用</em>' : ''}</div>
+  return `<article class="review-card navigation-card">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
     <div class="navigation-preview ${variant}">
       <nav class="review-bottom-nav" aria-label="下部メニュー案 ${index + 1}">
         <button class="nav-item is-selected" type="button" aria-pressed="true"><span class="nav-icon" aria-hidden="true">◒</span><span>試合</span></button>
@@ -116,9 +88,8 @@ function createNavigationOption([title, variant], index) {
 }
 
 function createDateOption([title, variant], index) {
-  const chosen = index === 4;
-  return `<article class="review-card date-card${chosen ? ' chosen' : ''}">
-    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${chosen ? '<em class="choice-tag">採用</em>' : ''}</div>
+  return `<article class="review-card date-card">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
     <div class="date-preview ${variant}">
       <span class="date-month">2026年9月</span>
       <div class="date-options" role="group" aria-label="日付案 ${index + 1}">
@@ -128,34 +99,9 @@ function createDateOption([title, variant], index) {
   </article>`;
 }
 
-function createScoreOption([title, variant], index, label = '案') {
-  return `<article class="review-card score-card">
-    <div class="card-caption"><span>${label} ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
-    <div class="score-preview ${variant}">
-      <p class="score-meta">18:00 · 第29節</p>
-      <p class="score-victory-note">浦和の勝利</p>
-      <div class="score-match">
-        <div class="score-team home winner">
-          <span class="score-marker" aria-hidden="true">✓</span>
-          <span class="score-result-label">勝者</span>
-          <strong>浦和</strong><b>2</b>
-        </div>
-        <span class="score-divider" aria-hidden="true">—</span>
-        <div class="score-team away loser">
-          <span class="score-result-label">敗者</span>
-          <span class="score-marker" aria-hidden="true">—</span>
-          <b>1</b><strong>鹿島</strong>
-        </div>
-      </div>
-    </div>
-  </article>`;
-}
-
 document.querySelector('#league-options').innerHTML = leagueOptions.map(createLeagueOption).join('');
 document.querySelector('#navigation-options').innerHTML = navigationOptions.map(createNavigationOption).join('');
 document.querySelector('#date-options').innerHTML = dateOptions.map(createDateOption).join('');
-document.querySelector('#score-options').innerHTML = scoreOptions.map((option, index) => createScoreOption(option, index)).join('');
-document.querySelector('#score-history-options').innerHTML = previousScoreOptions.map((option, index) => createScoreOption(option, index, '旧案')).join('');
 
 document.querySelectorAll('.league-row').forEach((button) => {
   button.addEventListener('click', () => {

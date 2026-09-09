@@ -28,7 +28,12 @@ button { color: inherit; font: inherit; }
 .review-index a:hover, .review-index a:focus-visible { color: var(--accent); }
 .proposal-history { margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .proposal-history summary { cursor: pointer; color: var(--ink); font-weight: 700; }
-.proposal-history p { max-width: 720px; margin: 10px 0 0; }
+.score-history { margin-top: 18px; }
+.score-history .review-grid { margin-top: 18px; }
+.history-content h2 { margin: 16px 0 0; color: var(--ink); font-size: 16px; }
+.history-content p { max-width: 720px; margin: 10px 0 0; }
+.history-content ul { max-width: 720px; margin: 10px 0 0; padding-left: 20px; }
+.history-content li + li { margin-top: 4px; }
 
 .review-section { padding-top: 64px; scroll-margin-top: 20px; }
 .section-heading { display: grid; grid-template-columns: 42px 1fr; gap: 16px; margin-bottom: 24px; }
@@ -37,10 +42,13 @@ button { color: inherit; font: inherit; }
 .review-grid { display: grid; gap: 14px; }
 .league-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .navigation-grid, .dates-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .review-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .card-caption { display: flex; align-items: baseline; gap: 10px; padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
 .card-caption span { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
 .card-caption strong { font-size: 12px; }
+.card-caption .choice-tag { margin-left: auto; padding: 3px 6px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 9px; font-style: normal; font-weight: 700; letter-spacing: .04em; }
+.review-card.chosen { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
 /* League interaction review */
 .league-preview { display: grid; min-height: 116px; place-items: center; padding: 18px 28px; background: #fff; }
@@ -124,14 +132,105 @@ button { color: inherit; font: inherit; }
 .date-compact { padding: 11px 13px; }.date-compact .date-month { margin-bottom: 7px; }.date-compact .date-option { padding: 6px 2px; border-radius: 4px; }.date-compact .date-option strong { font-size: 12px; }.date-compact .date-option small { font-size: 8px; }
 .date-accent .date-option { border-radius: 0; }.date-accent .date-option.is-selected { background: transparent; color: var(--ink); }.date-accent .date-option.is-selected small { color: var(--accent); }.date-accent .date-option.is-selected::after { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: var(--accent); content: ""; }
 
+/* Score display review */
+.score-preview { min-height: 132px; display: grid; align-content: center; gap: 14px; padding: 15px; background: #fff; }
+.score-meta { margin: 0; color: var(--muted); font-size: 10px; }
+.score-victory-note { display: none; margin: 0; color: var(--accent); font-size: 12px; font-weight: 800; }
+.score-match { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; }
+.score-team { display: flex; align-items: center; gap: 6px; min-width: 0; }.score-team strong { font-size: 14px; }.score-team b { color: var(--accent); font-size: 21px; }.score-divider { color: var(--muted); font-size: 17px; }
+.score-marker, .score-result-label { display: none; }
+.score-inline .score-match { gap: 5px; }.score-inline .score-team b { padding: 0 2px; font-size: 19px; }
+.score-columns .score-match { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; }.score-columns .score-team { flex-direction: column; gap: 3px; }.score-columns .score-team.away { flex-direction: column-reverse; }.score-columns .score-team strong { font-size: 13px; }.score-columns .score-team b { line-height: 1; }
+.score-center .score-match { gap: 13px; }.score-center .score-team { flex: 1; justify-content: space-between; }.score-center .score-team.away { justify-content: flex-start; }.score-center .score-team strong { font-size: 13px; }.score-center .score-divider { display: none; }
+.score-pill .score-match { gap: 9px; }.score-pill .score-divider { display: grid; width: 58px; height: 34px; place-items: center; border-radius: 999px; background: var(--accent); color: #fff; font-size: 0; }.score-pill .score-divider::before { content: "2 — 1"; font-size: 15px; font-weight: 800; }.score-pill .score-team b { display: none; }
+.score-stacked .score-match { display: grid; gap: 5px; }.score-stacked .score-divider { display: none; }.score-stacked .score-team { justify-content: space-between; gap: 12px; }.score-stacked .score-team.away { flex-direction: row; }.score-stacked .score-team b { order: 2; min-width: 22px; text-align: right; }.score-stacked .score-team strong { order: 1; }.score-stacked .score-meta { margin-bottom: -3px; }
+.score-winner-label .score-match { gap: 10px; }
+.score-winner-label .score-result-label { display: block; color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: .04em; }
+.score-winner-label .score-team.loser .score-result-label { color: var(--muted); }
+.score-result-badge .score-team { position: relative; padding-top: 17px; }
+.score-result-badge .score-result-label { position: absolute; top: 0; display: block; padding: 2px 5px; border-radius: 4px; background: var(--accent); color: #fff; font-size: 8px; font-weight: 800; line-height: 1.2; }
+.score-result-badge .score-team.loser .score-result-label { background: var(--soft); color: var(--muted); }
+.score-winner-mark .score-marker { display: inline-block; color: var(--accent); font-size: 17px; font-weight: 800; line-height: 1; }
+.score-winner-mark .score-team.loser .score-marker { color: var(--muted); font-size: 14px; }
+.score-result-columns .score-match { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; }
+.score-result-columns .score-team { display: grid; justify-items: center; gap: 3px; }
+.score-result-columns .score-team.away { grid-template-areas: "score" "team" "result"; }
+.score-result-columns .score-team.home { grid-template-areas: "score" "team" "result"; }
+.score-result-columns .score-team b { grid-area: score; line-height: 1; }
+.score-result-columns .score-team strong { grid-area: team; font-size: 13px; }
+.score-result-columns .score-result-label { display: block; grid-area: result; color: var(--muted); font-size: 9px; font-weight: 700; }
+.score-result-columns .score-team.winner .score-result-label { color: var(--accent); }
+.score-winner-highlight .score-team { padding: 6px 9px; border-radius: 8px; }
+.score-winner-highlight .score-team.winner { background: var(--accent-soft); box-shadow: inset 0 -3px var(--accent); }
+.score-winner-highlight .score-team.loser { color: var(--muted); opacity: .68; }
+.score-winner-highlight .score-result-label { display: block; color: var(--accent); font-size: 9px; font-weight: 800; }
+.score-winner-highlight .score-team.loser .score-result-label { color: var(--muted); }
+.score-result-heading { gap: 8px; }
+.score-result-heading .score-victory-note { display: block; font-size: 15px; }
+.score-result-heading .score-match { justify-content: flex-start; gap: 5px; }
+.score-result-heading .score-team b { font-size: 19px; }
+.score-winner-band .score-match { width: 100%; gap: 0; }
+.score-winner-band .score-team { flex: 1; padding: 10px 9px; }
+.score-winner-band .score-team.winner { background: var(--accent); color: #fff; }
+.score-winner-band .score-team.winner b { color: #fff; }
+.score-winner-band .score-team.loser { padding-left: 12px; color: var(--muted); }
+.score-winner-band .score-divider { padding: 0 3px; }
+.score-winner-arrow .score-match { gap: 5px; }
+.score-winner-arrow .score-team.winner::before { content: "▶"; color: var(--accent); font-size: 11px; }
+.score-winner-arrow .score-team.loser { color: var(--muted); }
+.score-winner-arrow .score-team.loser::after { content: ""; width: 20px; }
+.score-trophy .score-team.winner::before { content: "🏆"; font-size: 16px; line-height: 1; }
+.score-trophy .score-team.loser { color: var(--muted); opacity: .7; }
+.score-trophy .score-result-label { display: block; color: var(--accent); font-size: 9px; font-weight: 800; }
+.score-win-lose .score-team { position: relative; padding-top: 16px; }
+.score-win-lose .score-result-label { position: absolute; top: 0; display: block; color: var(--accent); font-size: 9px; font-weight: 900; letter-spacing: .06em; }
+.score-win-lose .score-team.loser .score-result-label { color: var(--muted); }
+.score-win-lose .score-team.loser { color: var(--muted); }
+.score-winner-top .score-match { display: grid; gap: 5px; }
+.score-winner-top .score-divider { display: none; }
+.score-winner-top .score-team { justify-content: space-between; width: 100%; padding: 5px 8px; }
+.score-winner-top .score-team.winner { order: -1; border-bottom: 3px solid var(--accent); color: var(--accent); }
+.score-winner-top .score-team.loser { color: var(--muted); }
+.score-winner-top .score-team b { order: 2; }
+.score-winner-top .score-team strong { order: 1; }
+.score-stamp .score-preview { position: relative; }
+.score-stamp .score-team.winner { position: relative; }
+.score-stamp .score-team.winner::after { position: absolute; top: -17px; right: -16px; display: grid; width: 36px; height: 36px; place-items: center; transform: rotate(-8deg); border: 2px solid var(--accent); border-radius: 50%; color: var(--accent); content: "WIN"; font-size: 8px; font-weight: 900; }
+.score-stamp .score-team.loser { color: var(--muted); opacity: .58; }
+.score-result-color .score-team.winner { color: var(--accent); }
+.score-result-color .score-team.winner b { color: var(--accent); }
+.score-result-color .score-team.loser { color: #333; }
+.score-result-color .score-team.loser b { color: #333; }
+.score-result-color .score-result-label { display: none; }
+.score-result-color .score-team.winner .score-result-label { color: var(--accent); }
+.score-result-color .score-team.loser .score-result-label { color: #333; }
+.score-board { padding-right: 22px; padding-left: 22px; background: var(--ink); color: #fff; }
+.score-board .score-meta { color: #aaa; }
+.score-board .score-match { gap: 10px; }
+.score-board .score-team.winner { display: grid; grid-template-columns: auto auto; gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--accent); background: #2c2027; }
+.score-board .score-team.winner strong { grid-column: 1; grid-row: 1; }
+.score-board .score-team.winner b { grid-column: 2; grid-row: 1; color: #fff; }
+.score-board .score-team.loser { color: #aaa; }
+.score-board .score-team.loser b { color: #fff; }
+.score-board .score-result-label { display: block; color: #ff9ac6; font-size: 9px; font-weight: 800; }
+.score-board .score-divider { color: #777; }
+.score-winner-focus .score-match { gap: 11px; }
+.score-winner-focus .score-team.winner { display: grid; grid-template-columns: auto auto; gap: 7px; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); }
+.score-winner-focus .score-team.winner strong { font-size: 16px; }
+.score-winner-focus .score-team.winner b { font-size: 28px; }
+.score-winner-focus .score-team.loser { color: #aaa; opacity: .65; }
+.score-winner-focus .score-result-label { display: block; color: var(--accent); font-size: 9px; font-weight: 800; }
+.score-winner-focus .score-team.loser .score-result-label { color: #999; }
+
 @media (max-width: 860px) {
   .navigation-grid, .dates-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {
   .review-page { width: min(100% - 24px, 520px); padding-top: 22px; }
   .review-header { gap: 14px; }.review-header h1 { font-size: 28px; }.review-lede { font-size: 13px; }.review-meta { font-size: 10px; }
   .review-section { padding-top: 48px; }.section-heading { grid-template-columns: 32px 1fr; gap: 9px; }.section-heading h2 { font-size: 22px; }.section-heading p:last-child { font-size: 12px; }
-  .league-grid, .navigation-grid, .dates-grid { grid-template-columns: 1fr; }
-  .navigation-grid, .dates-grid { gap: 12px; }
+  .league-grid, .navigation-grid, .dates-grid, .score-grid { grid-template-columns: 1fr; }
+  .navigation-grid, .dates-grid, .score-grid { gap: 12px; }
 }

@@ -11,3 +11,19 @@ id = "60874002e24041be8154a96d3cbc974b"
 
 [triggers]
 crons = ["0 8 * * *", "0 10 * * *", "0 12 * * *", "0 13 * * *", "0 14 * * *"]
+
+# STG is deployed with `wrangler deploy --env stg` and uses isolated
+# resources. The KV ID must be filled after the STG namespace is created.
+[env.stg]
+name = "sport-portal-api-stg"
+
+[env.stg.vars]
+APP_ORIGIN = "https://stg.sport-portal.pages.dev"
+
+[[env.stg.kv_namespaces]]
+binding = "SPORTAL_DATA"
+id = "a2ddffe1d704474db6ae5f7ba65c67b9"
+
+# Keep STG manual-only until the STG update policy is explicitly approved.
+[env.stg.triggers]
+crons = []

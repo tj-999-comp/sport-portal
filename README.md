@@ -26,6 +26,8 @@ work-records/
 - `functions/_middleware.js`: Pagesの全URLへBasic認証を適用するミドルウェア
 - `worker/`: 公式サイト取得、KV保存、API、定期実行を担うCloudflare Worker
 - `DEPLOYMENT.md`: Pages・Worker・KV・Secretの公開手順
+- `docs/STG_DEPLOYMENT.md`: STG Preview・STG Worker・STG KVの分離手順
+- `docs/PORTAL_STRUCTURE.md`: ポータルトップとリーグ配下のURL構成
 
 ローカル検証は `npm test` と `npm run test:syntax` で実行できます。
 

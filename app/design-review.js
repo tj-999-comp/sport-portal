@@ -58,6 +58,19 @@ const dateOptions = [
 ];
 
 const scoreOptions = [
+  ['勝敗見出し', 'score-result-heading'],
+  ['勝者帯', 'score-winner-band'],
+  ['勝者矢印', 'score-winner-arrow'],
+  ['トロフィー', 'score-trophy'],
+  ['WIN / LOSE', 'score-win-lose'],
+  ['勝者を上段', 'score-winner-top'],
+  ['勝利スタンプ', 'score-stamp'],
+  ['勝敗色分け', 'score-result-color'],
+  ['スコアボード式', 'score-board'],
+  ['勝者を主役', 'score-winner-focus']
+];
+
+const previousScoreOptions = [
   ['横一列', 'score-inline'],
   ['左右カラム', 'score-columns'],
   ['中央スコア', 'score-center'],
@@ -115,11 +128,12 @@ function createDateOption([title, variant], index) {
   </article>`;
 }
 
-function createScoreOption([title, variant], index) {
+function createScoreOption([title, variant], index, label = '案') {
   return `<article class="review-card score-card">
-    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+    <div class="card-caption"><span>${label} ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
     <div class="score-preview ${variant}">
       <p class="score-meta">18:00 · 第29節</p>
+      <p class="score-victory-note">浦和の勝利</p>
       <div class="score-match">
         <div class="score-team home winner">
           <span class="score-marker" aria-hidden="true">✓</span>
@@ -140,7 +154,8 @@ function createScoreOption([title, variant], index) {
 document.querySelector('#league-options').innerHTML = leagueOptions.map(createLeagueOption).join('');
 document.querySelector('#navigation-options').innerHTML = navigationOptions.map(createNavigationOption).join('');
 document.querySelector('#date-options').innerHTML = dateOptions.map(createDateOption).join('');
-document.querySelector('#score-options').innerHTML = scoreOptions.map(createScoreOption).join('');
+document.querySelector('#score-options').innerHTML = scoreOptions.map((option, index) => createScoreOption(option, index)).join('');
+document.querySelector('#score-history-options').innerHTML = previousScoreOptions.map((option, index) => createScoreOption(option, index, '旧案')).join('');
 
 document.querySelectorAll('.league-row').forEach((button) => {
   button.addEventListener('click', () => {

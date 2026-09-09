@@ -42,6 +42,7 @@ function updateDateSelection(date) {
     const targetLeft = activeButton.offsetLeft - (dateNav.clientWidth - activeButton.offsetWidth) / 2;
     dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
   }
+  updateMatchDaysHeight(date);
 }
 
 function renderDateNav(dates, selectedDate) {
@@ -61,6 +62,19 @@ function updatePageScrollState() {
   const root = document.documentElement;
   const needsScroll = root.scrollHeight > root.clientHeight + 1;
   root.classList.toggle('page-is-scrollable', needsScroll);
+}
+
+function updateMatchDaysHeight(date = state.selectedDate) {
+  const root = $('#match-days');
+  const target = date ? root.querySelector(`[data-date="${date}"]`) : null;
+  if (!target) {
+    root.style.removeProperty('height');
+    requestAnimationFrame(updatePageScrollState);
+    return;
+  }
+  root.style.height = 'auto';
+  root.style.height = `${target.offsetHeight}px`;
+  requestAnimationFrame(updatePageScrollState);
 }
 
 function scrollToDate(date, behavior = 'smooth') {
@@ -117,6 +131,7 @@ function renderMatches(matches = []) {
   updateScrollState(root);
   requestAnimationFrame(() => {
     if (selectedDate) scrollToDate(selectedDate, 'auto');
+    updateMatchDaysHeight(selectedDate);
     updatePageScrollState();
   });
 }
@@ -208,6 +223,7 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape') cl
 window.addEventListener('resize', () => {
   updateScrollState($('#date-nav'));
   updateScrollState($('#match-days'));
+  updateMatchDaysHeight();
   requestAnimationFrame(updatePageScrollState);
 });
 loadData();

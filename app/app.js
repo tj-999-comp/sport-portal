@@ -189,7 +189,6 @@ $('#standings-button').addEventListener('click', () => {
   if (standingsSheet.hidden) openStandings();
   else closeStandings();
 });
-$('#close-standings').addEventListener('click', closeStandings);
 $('#standings-backdrop').addEventListener('click', closeStandings);
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeStandings(); });
 window.addEventListener('resize', () => {

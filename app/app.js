@@ -45,7 +45,12 @@ function renderDateNav(dates, selectedDate) {
     const dateObject = new Date(`${date}T00:00:00+09:00`);
     return `<button class="date-chip${date === selectedDate ? ' active' : ''}" type="button" data-date="${escapeHtml(date)}"><small>${escapeHtml(`${dateObject.getMonth() + 1}月`)}</small><strong>${escapeHtml(dateObject.getDate())}</strong><span>${escapeHtml(weekdayLabel(date))}</span></button>`;
   }).join('');
+  updateScrollState($('#date-nav'));
   $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.addEventListener('click', () => scrollToDate(button.dataset.date)));
+}
+
+function updateScrollState(element) {
+  element.classList.toggle('is-scrollable', element.scrollWidth > element.clientWidth + 1);
 }
 
 function scrollToDate(date, behavior = 'smooth') {
@@ -99,6 +104,7 @@ function renderMatches(matches = []) {
     root.append(day);
   });
   root.onscroll = syncDateSelectionFromScroll;
+  updateScrollState(root);
   if (selectedDate) requestAnimationFrame(() => scrollToDate(selectedDate, 'auto'));
 }
 
@@ -138,6 +144,9 @@ const standingsButton = $('#standings-button');
 const standingsIcon = $('#standings-icon');
 const standingsLabel = $('#standings-label');
 let standingsOpenedFrom = null;
+let standingsHideTimer = null;
+let standingsOpenFrame = null;
+let standingsClosing = false;
 
 function setStandingsButton(open) {
   standingsIcon.textContent = open ? '×' : '▦';
@@ -148,22 +157,30 @@ function setStandingsButton(open) {
 }
 
 function openStandings() {
+  window.clearTimeout(standingsHideTimer);
+  window.cancelAnimationFrame(standingsOpenFrame);
+  standingsClosing = false;
   standingsOpenedFrom = document.activeElement;
   setStandingsButton(true);
   standingsSheet.hidden = false;
   standingsSheet.setAttribute('aria-hidden', 'false');
-  requestAnimationFrame(() => {
+  standingsOpenFrame = requestAnimationFrame(() => {
     standingsSheet.classList.add('is-open');
     standingsPanel.focus();
   });
 }
 
 function closeStandings() {
-  if (standingsSheet.hidden) return;
+  if (standingsSheet.hidden || standingsClosing) return;
+  window.cancelAnimationFrame(standingsOpenFrame);
+  standingsClosing = true;
   setStandingsButton(false);
   standingsSheet.classList.remove('is-open');
   standingsSheet.setAttribute('aria-hidden', 'true');
-  standingsSheet.hidden = true;
+  standingsHideTimer = window.setTimeout(() => {
+    standingsSheet.hidden = true;
+    standingsClosing = false;
+  }, 360);
   standingsOpenedFrom?.focus();
 }
 
@@ -175,4 +192,8 @@ $('#standings-button').addEventListener('click', () => {
 $('#close-standings').addEventListener('click', closeStandings);
 $('#standings-backdrop').addEventListener('click', closeStandings);
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeStandings(); });
+window.addEventListener('resize', () => {
+  updateScrollState($('#date-nav'));
+  updateScrollState($('#match-days'));
+});
 loadData();

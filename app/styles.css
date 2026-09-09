@@ -18,7 +18,7 @@ body { margin: 0; background: #fff; color: var(--ink); }
 button { color: inherit; font: inherit; }
 
 .page-shell { min-height: 100dvh; max-width: 720px; margin: 0 auto; padding: 14px 16px 110px; }
-.app-header { position: sticky; top: 0; z-index: 6; margin: -14px -16px 0; padding: 14px 16px 0; background: #fff; }
+.app-header { position: sticky; top: 0; z-index: 5; margin: -14px -16px 0; padding: 14px 16px 0; background: #fff; }
 .site-header { align-items: center; background: var(--paper); border: 1px solid #f0f1f3; border-radius: 999px; box-shadow: rgba(0, 0, 0, .05) 0 2px 8px; display: flex; justify-content: space-between; min-height: 34px; padding: 7px 10px; }
 .brand-lockup { align-items: center; display: flex; }
 h1, h2, p { margin: 0; }
@@ -85,7 +85,7 @@ h1 { font-size: 12px; font-weight: 800; }
 .bottom-nav button:disabled { cursor: wait; opacity: .55; }
 
 .standings-sheet[hidden] { display: none; }
-.standings-sheet { position: fixed; inset: 0; z-index: 8; pointer-events: none; }
+.standings-sheet { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
 .sheet-backdrop { position: absolute; inset: 0 0 var(--bottom-nav-height, 78px); width: 100%; border: 0; background: rgba(20, 18, 22, .42); cursor: pointer; }
 .sheet-backdrop, .standings-sheet-panel { pointer-events: auto; }
 .standings-sheet-panel { position: absolute; right: 0; bottom: var(--bottom-nav-height, 78px); left: 0; z-index: 1; height: min(78vh, 780px); max-height: min(78vh, 780px); display: flex; flex-direction: column; overflow: hidden; padding: 12px 20px 28px; border-radius: 22px; background: #fff; box-shadow: 0 -12px 40px rgba(20, 18, 22, .14); transform: translateY(100%); transition: transform .36s cubic-bezier(.22, 1, .36, 1); }

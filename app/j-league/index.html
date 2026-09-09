@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="description" content="J1リーグの試合予定・結果・順位表を確認するスポーツポータル">
   <title>スポーツポータル | 2026 J1</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=1.0.1-close-fix">
 </head>
 <body>
   <main class="page-shell">
@@ -32,7 +32,7 @@
     </section>
 
     <nav class="bottom-nav" aria-label="操作">
-      <button id="standings-button" type="button" aria-label="順位表を開く"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button>
+      <button id="standings-button" type="button" aria-label="順位表を開く" aria-controls="standings-sheet" aria-expanded="false"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button>
       <button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button>
     </nav>
   </main>
@@ -58,6 +58,6 @@
       </div>
     </div>
   </section>
-  <script src="/app.js" type="module"></script>
+  <script src="/app.js?v=1.0.1-close-fix" type="module"></script>
 </body>
 </html>

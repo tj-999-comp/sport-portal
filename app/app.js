@@ -144,6 +144,7 @@ function setStandingsButton(open) {
   standingsLabel.textContent = open ? '閉じる' : '順位';
   standingsButton.classList.toggle('is-open', open);
   standingsButton.setAttribute('aria-label', open ? '順位表を閉じる' : '順位表を開く');
+  standingsButton.setAttribute('aria-expanded', String(open));
 }
 
 function openStandings() {

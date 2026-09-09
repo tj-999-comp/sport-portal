@@ -84,14 +84,14 @@ h1 { font-size: 12px; font-weight: 800; }
 .standings-sheet[hidden] { display: none; }
 .standings-sheet { position: fixed; inset: 0; z-index: 5; }
 .sheet-backdrop { position: absolute; inset: 0 0 var(--bottom-nav-height, 78px); width: 100%; border: 0; background: rgba(20, 18, 22, .42); cursor: pointer; }
-.standings-sheet-panel { position: absolute; right: 0; bottom: var(--bottom-nav-height, 78px); left: 0; max-height: min(78vh, 780px); overflow: auto; padding: 12px 20px 28px; border-radius: 22px 22px 0 0; background: #fff; box-shadow: 0 -12px 40px rgba(20, 18, 22, .14); transform: translateY(100%); transition: transform .22s ease; }
+.standings-sheet-panel { position: absolute; right: 0; bottom: var(--bottom-nav-height, 78px); left: 0; height: min(78vh, 780px); max-height: min(78vh, 780px); display: flex; flex-direction: column; overflow: hidden; padding: 12px 20px 28px; border-radius: 22px 22px 0 0; background: #fff; box-shadow: 0 -12px 40px rgba(20, 18, 22, .14); transform: translateY(100%); transition: transform .22s ease; }
 .standings-sheet.is-open .standings-sheet-panel { transform: translateY(0); }
 .modal-grabber { background: #d8d3d7; border-radius: 10px; height: 4px; margin: 0 auto 18px; width: 36px; }
 .dialog-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding-bottom: 16px; }
 .dialog-header .eyebrow { color: var(--accent); font-size: 10px; font-weight: 700; margin-bottom: 5px; }
 .dialog-header h2 { font-size: 20px; }
 .close-button { background: var(--snow); border: 0; border-radius: 50%; cursor: pointer; font-size: 22px; height: 32px; line-height: 1; width: 32px; }
-.table-wrap { overflow-x: auto; padding: 0 0 4px; }
+.table-wrap { min-height: 0; flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 0 4px; }
 table { border-collapse: collapse; font-size: 12px; min-width: 690px; width: 100%; }
 th { color: var(--muted); font-size: 11px; font-weight: 700; padding: 14px 7px 10px; text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: center; }

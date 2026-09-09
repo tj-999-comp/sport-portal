@@ -90,10 +90,10 @@ function renderMatches(matches = []) {
       const finished = match.status === 'finished';
       const homeWon = finished && Number(match.homeScore) > Number(match.awayScore);
       const awayWon = finished && Number(match.awayScore) > Number(match.homeScore);
-      const stateText = match.status === 'postponed' ? '延期' : match.status === 'cancelled' ? '中止' : finished ? `${match.homeScore} - ${match.awayScore}` : match.kickoff || '未定';
+      const stateText = match.status === 'postponed' ? '延期' : match.status === 'cancelled' ? '中止' : finished ? '試合終了' : match.kickoff || '未定';
       const card = document.createElement('div');
       card.className = 'match-card';
-      card.innerHTML = `<div class="match-meta"><span>第${escapeHtml(match.matchday || '―')}節</span><span class="${finished ? 'match-time' : 'match-state'}">${escapeHtml(stateText)}</span></div><div class="team-row${homeWon ? ' winner' : awayWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.home?.short || match.home?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.homeScore)}</span>` : ''}</div><div class="team-row${awayWon ? ' winner' : homeWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.away?.short || match.away?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.awayScore)}</span>` : ''}</div>`;
+      card.innerHTML = `<div class="match-meta"><span>第${escapeHtml(match.matchday || '―')}節</span><span class="${finished ? 'match-time' : 'match-state'}">${escapeHtml(stateText)}</span></div><div class="scoreline"><div class="team-row home${homeWon ? ' winner' : awayWon ? ' loser' : ''}"><span class="team-name">${escapeHtml(match.home?.short || match.home?.name)}</span>${finished ? `<span class="score">${escapeHtml(match.homeScore)}</span>` : ''}</div><span class="score-divider" aria-hidden="true">—</span><div class="team-row away${awayWon ? ' winner' : homeWon ? ' loser' : ''}">${finished ? `<span class="score">${escapeHtml(match.awayScore)}</span>` : ''}<span class="team-name">${escapeHtml(match.away?.short || match.away?.name)}</span></div></div>`;
       list.append(card);
     });
     root.append(day);

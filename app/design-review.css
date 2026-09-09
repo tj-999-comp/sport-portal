@@ -199,11 +199,11 @@ button { color: inherit; font: inherit; }
 .score-stamp .score-team.loser { color: var(--muted); opacity: .58; }
 .score-result-color .score-team.winner { color: var(--accent); }
 .score-result-color .score-team.winner b { color: var(--accent); }
-.score-result-color .score-team.loser { color: #aaa; }
-.score-result-color .score-team.loser b { color: #aaa; }
-.score-result-color .score-result-label { display: block; font-size: 9px; font-weight: 800; }
+.score-result-color .score-team.loser { color: #333; }
+.score-result-color .score-team.loser b { color: #333; }
+.score-result-color .score-result-label { display: none; }
 .score-result-color .score-team.winner .score-result-label { color: var(--accent); }
-.score-result-color .score-team.loser .score-result-label { color: #aaa; }
+.score-result-color .score-team.loser .score-result-label { color: #333; }
 .score-board { padding-right: 22px; padding-left: 22px; background: var(--ink); color: #fff; }
 .score-board .score-meta { color: #aaa; }
 .score-board .score-match { gap: 10px; }

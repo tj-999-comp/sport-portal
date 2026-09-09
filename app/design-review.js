@@ -62,7 +62,12 @@ const scoreOptions = [
   ['左右カラム', 'score-columns'],
   ['中央スコア', 'score-center'],
   ['スコアピル', 'score-pill'],
-  ['縦積みコンパクト', 'score-stacked']
+  ['縦積みコンパクト', 'score-stacked'],
+  ['勝者ラベル', 'score-winner-label'],
+  ['勝敗バッジ', 'score-result-badge'],
+  ['勝者マーク', 'score-winner-mark'],
+  ['勝敗カラム', 'score-result-columns'],
+  ['勝者ハイライト', 'score-winner-highlight']
 ];
 
 const dates = [
@@ -116,9 +121,17 @@ function createScoreOption([title, variant], index) {
     <div class="score-preview ${variant}">
       <p class="score-meta">18:00 · 第29節</p>
       <div class="score-match">
-        <div class="score-team home"><strong>浦和</strong><b>2</b></div>
+        <div class="score-team home winner">
+          <span class="score-marker" aria-hidden="true">✓</span>
+          <span class="score-result-label">勝者</span>
+          <strong>浦和</strong><b>2</b>
+        </div>
         <span class="score-divider" aria-hidden="true">—</span>
-        <div class="score-team away"><b>1</b><strong>鹿島</strong></div>
+        <div class="score-team away loser">
+          <span class="score-result-label">敗者</span>
+          <span class="score-marker" aria-hidden="true">—</span>
+          <b>1</b><strong>鹿島</strong>
+        </div>
       </div>
     </div>
   </article>`;

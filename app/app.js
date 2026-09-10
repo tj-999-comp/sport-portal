@@ -8,6 +8,7 @@ let matchWheelDelta = 0;
 let matchSwipeUnlockTimer = null;
 let matchSwipeLocked = false;
 let matchPointer = null;
+let matchTouch = null;
 const matchSwipeThreshold = 72;
 
 function formatDate(dateString) {
@@ -160,6 +161,7 @@ function handleMatchDaysWheel(event) {
 function handleMatchDaysPointerDown(event) {
   const root = $('#match-days');
   if (!root.classList.contains('is-scrollable')) return;
+  if (event.pointerType === 'touch') return;
   if (matchSwipeLocked) return;
   if (event.pointerType === 'mouse' && event.button !== 0) return;
   matchPointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, startScroll: root.scrollLeft, horizontal: false };
@@ -198,6 +200,53 @@ function finishMatchDaysPointer(event) {
   }
   if (root.hasPointerCapture(event.pointerId)) root.releasePointerCapture(event.pointerId);
   matchPointer = null;
+}
+
+function handleMatchDaysTouchStart(event) {
+  const root = $('#match-days');
+  if (!root.classList.contains('is-scrollable') || matchSwipeLocked || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  matchTouch = { startX: touch.clientX, startY: touch.clientY, startScroll: root.scrollLeft, horizontal: false };
+}
+
+function handleMatchDaysTouchMove(event) {
+  if (!matchTouch || event.touches.length !== 1) return;
+  const root = $('#match-days');
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - matchTouch.startX;
+  const deltaY = touch.clientY - matchTouch.startY;
+  if (!matchTouch.horizontal && Math.abs(deltaX) <= Math.abs(deltaY)) return;
+  matchTouch.horizontal = true;
+  event.preventDefault();
+  root.classList.add('is-dragging');
+  const limitedDelta = Math.max(-72, Math.min(72, deltaX));
+  root.scrollLeft = matchTouch.startScroll - limitedDelta;
+}
+
+function finishMatchDaysTouch(event) {
+  if (!matchTouch) return;
+  const root = $('#match-days');
+  const touch = event.changedTouches?.[0];
+  const deltaX = touch ? touch.clientX - matchTouch.startX : 0;
+  if (matchTouch.horizontal) {
+    event.preventDefault();
+    const currentIndex = rootToClosestMatchDayIndex(root, matchTouch.startScroll);
+    const direction = Math.abs(deltaX) >= matchSwipeThreshold ? (deltaX < 0 ? 1 : -1) : 0;
+    const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+    root.classList.remove('is-dragging');
+    matchSwipeLocked = true;
+    window.clearTimeout(matchSwipeUnlockTimer);
+    matchSwipeUnlockTimer = window.setTimeout(() => { matchSwipeLocked = false; }, 520);
+    root.scrollTo({ left: root.children[nextIndex].offsetLeft - root.offsetLeft, behavior: 'smooth' });
+  }
+  root.classList.remove('is-dragging');
+  matchTouch = null;
+}
+
+function cancelMatchDaysTouch() {
+  if (!matchTouch) return;
+  $('#match-days').classList.remove('is-dragging');
+  matchTouch = null;
 }
 
 function renderMatches(matches = []) {
@@ -286,6 +335,10 @@ matchDays.addEventListener('pointerdown', handleMatchDaysPointerDown);
 matchDays.addEventListener('pointermove', handleMatchDaysPointerMove);
 matchDays.addEventListener('pointerup', finishMatchDaysPointer);
 matchDays.addEventListener('pointercancel', finishMatchDaysPointer);
+matchDays.addEventListener('touchstart', handleMatchDaysTouchStart, { passive: true });
+matchDays.addEventListener('touchmove', handleMatchDaysTouchMove, { passive: false });
+matchDays.addEventListener('touchend', finishMatchDaysTouch, { passive: false });
+matchDays.addEventListener('touchcancel', cancelMatchDaysTouch, { passive: true });
 let standingsOpenedFrom = null;
 let standingsHideTimer = null;
 let standingsOpenFrame = null;

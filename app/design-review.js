@@ -90,6 +90,7 @@ const motionOptions = [
   ['即時ページ送り', 'motion-direct', '入力を検知した瞬間に次の日へ'],
   ['日付自由／試合1日', 'motion-split', '日付は連続、試合一覧は1日ずつ']
 ];
+const motionSwipeThreshold = 72;
 
 const dates = [
   ['9/5', '土'],
@@ -248,6 +249,9 @@ function setupMotionCard(card) {
   const track = card.querySelector('[data-motion-track]');
   let pointerStart = null;
   let pointerDelta = 0;
+  let pointerId = null;
+  let touchStart = null;
+  let touchDelta = 0;
   let lockedUntil = 0;
   const variant = card.dataset.motionVariant;
   card.dataset.motionIndex = '1';
@@ -260,29 +264,54 @@ function setupMotionCard(card) {
   };
 
   preview.addEventListener('pointerdown', (event) => {
-    if (event.target.closest('button, [data-motion-date-rail]')) return;
+    if (event.pointerType === 'touch' || event.target.closest('button, [data-motion-date-rail]')) return;
     pointerStart = event.clientX;
     pointerDelta = 0;
-    preview.setPointerCapture(event.pointerId);
-    track.classList.add('is-dragging');
+    pointerId = event.pointerId;
   });
   preview.addEventListener('pointermove', (event) => {
-    if (pointerStart === null) return;
+    if (pointerStart === null || event.pointerId !== pointerId) return;
     pointerDelta = event.clientX - pointerStart;
+    track.classList.add('is-dragging');
     if (variant !== 'motion-direct') track.style.setProperty('--motion-drag', `${Math.max(-72, Math.min(72, pointerDelta))}px`);
   });
-  const finishPointer = () => {
-    if (pointerStart === null) return;
-    const threshold = variant === 'motion-threshold' ? 42 : 24;
+  const finishPointer = (event) => {
+    if (pointerStart === null || event.pointerId !== pointerId) return;
+    const threshold = variant === 'motion-threshold' ? motionSwipeThreshold : 24;
     const direction = Math.abs(pointerDelta) >= threshold ? (pointerDelta < 0 ? 1 : -1) : 0;
     track.classList.remove('is-dragging');
     track.style.setProperty('--motion-drag', '0px');
     pointerStart = null;
     pointerDelta = 0;
+    pointerId = null;
     if (direction) moveByInput(direction);
   };
   preview.addEventListener('pointerup', finishPointer);
   preview.addEventListener('pointercancel', finishPointer);
+  preview.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 1 || event.target.closest('button, [data-motion-date-rail]')) return;
+    touchStart = event.touches[0].clientX;
+    touchDelta = 0;
+  }, { passive: true });
+  preview.addEventListener('touchmove', (event) => {
+    if (touchStart === null || event.touches.length !== 1) return;
+    touchDelta = event.touches[0].clientX - touchStart;
+    event.preventDefault();
+    track.classList.add('is-dragging');
+    if (variant !== 'motion-direct') track.style.setProperty('--motion-drag', `${Math.max(-72, Math.min(72, touchDelta))}px`);
+  }, { passive: false });
+  const finishTouch = () => {
+    if (touchStart === null) return;
+    const threshold = variant === 'motion-threshold' ? motionSwipeThreshold : 24;
+    const direction = Math.abs(touchDelta) >= threshold ? (touchDelta < 0 ? 1 : -1) : 0;
+    track.classList.remove('is-dragging');
+    track.style.setProperty('--motion-drag', '0px');
+    touchStart = null;
+    touchDelta = 0;
+    if (direction) moveByInput(direction);
+  };
+  preview.addEventListener('touchend', finishTouch, { passive: true });
+  preview.addEventListener('touchcancel', finishTouch, { passive: true });
   preview.addEventListener('wheel', (event) => {
     if (event.target.closest('[data-motion-date-rail]')) return;
     const horizontalDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.shiftKey ? event.deltaY : 0;

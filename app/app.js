@@ -5,8 +5,10 @@ let matchWheelUnlockTimer = null;
 let matchWheelResetTimer = null;
 let matchWheelLocked = false;
 let matchWheelDelta = 0;
+let matchSwipeUnlockTimer = null;
+let matchSwipeLocked = false;
 let matchPointer = null;
-const matchSwipeThreshold = 42;
+const matchSwipeThreshold = 72;
 
 function formatDate(dateString) {
   const date = new Date(`${dateString}T00:00:00+09:00`);
@@ -46,7 +48,9 @@ function updateDateSelection(date, centerDate = true) {
   $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.classList.toggle('active', button === activeButton));
   const dateNav = $('#date-nav');
   if (centerDate && activeButton && dateNav.classList.contains('is-scrollable')) {
-    const targetLeft = activeButton.offsetLeft - (dateNav.clientWidth - activeButton.offsetWidth) / 2;
+    const navRect = dateNav.getBoundingClientRect();
+    const buttonRect = activeButton.getBoundingClientRect();
+    const targetLeft = dateNav.scrollLeft + buttonRect.left - navRect.left - (dateNav.clientWidth - buttonRect.width) / 2;
     dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' });
   }
   updateMatchDaysHeight(date);
@@ -65,13 +69,16 @@ function renderDateNav(dates, selectedDate) {
 function settleDateNavSelection() {
   const dateNav = $('#date-nav');
   if (!dateNav.classList.contains('is-scrollable') || !dateNav.clientWidth) return;
-  const center = dateNav.scrollLeft + dateNav.clientWidth / 2;
+  const navRect = dateNav.getBoundingClientRect();
+  const center = navRect.left + navRect.width / 2;
   const closest = [...dateNav.querySelectorAll('.date-chip')].reduce((current, chip) => {
-    const distance = Math.abs(chip.offsetLeft + chip.offsetWidth / 2 - center);
+    const chipRect = chip.getBoundingClientRect();
+    const distance = Math.abs(chipRect.left + chipRect.width / 2 - center);
     return !current || distance < current.distance ? { chip, distance } : current;
   }, null)?.chip;
   if (!closest) return;
-  const targetLeft = closest.offsetLeft - (dateNav.clientWidth - closest.offsetWidth) / 2;
+  const closestRect = closest.getBoundingClientRect();
+  const targetLeft = dateNav.scrollLeft + closestRect.left - navRect.left - (dateNav.clientWidth - closestRect.width) / 2;
   if (closest.dataset.date !== state.selectedDate) scrollToDate(closest.dataset.date, 'smooth', false);
   dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' });
 }
@@ -109,15 +116,23 @@ function scrollToDate(date, behavior = 'smooth', centerDate = true) {
   const target = root.querySelector(`[data-date="${date}"]`);
   if (!target) return;
   updateDateSelection(date, centerDate);
-  root.scrollTo({ left: target.offsetLeft, behavior });
+  root.scrollTo({ left: Math.max(0, target.offsetLeft - root.offsetLeft), behavior });
 }
 
 function syncDateSelectionFromScroll() {
   const root = $('#match-days');
   if (!root.children.length || !root.clientWidth) return;
-  const index = Math.min(root.children.length - 1, Math.max(0, Math.round(root.scrollLeft / root.clientWidth)));
+  const index = rootToClosestMatchDayIndex(root, root.scrollLeft);
   const date = root.children[index]?.dataset.date;
   if (date && date !== state.selectedDate) updateDateSelection(date);
+}
+
+function rootToClosestMatchDayIndex(root, scrollLeft) {
+  return [...root.children].reduce((closestIndex, child, index) => {
+    const closestDistance = Math.abs((root.children[closestIndex].offsetLeft - root.offsetLeft) - scrollLeft);
+    const distance = Math.abs((child.offsetLeft - root.offsetLeft) - scrollLeft);
+    return distance < closestDistance ? index : closestIndex;
+  }, 0);
 }
 
 function handleMatchDaysWheel(event) {
@@ -131,13 +146,13 @@ function handleMatchDaysWheel(event) {
   matchWheelResetTimer = window.setTimeout(() => { matchWheelDelta = 0; }, 160);
   if (matchWheelLocked) return;
   if (Math.abs(matchWheelDelta) < matchSwipeThreshold) return;
-  const currentIndex = Math.round(root.scrollLeft / root.clientWidth);
+  const currentIndex = rootToClosestMatchDayIndex(root, root.scrollLeft);
   const direction = matchWheelDelta > 0 ? 1 : -1;
   const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
   matchWheelDelta = 0;
   if (nextIndex === currentIndex) return;
   matchWheelLocked = true;
-  root.scrollTo({ left: nextIndex * root.clientWidth, behavior: 'smooth' });
+  root.scrollTo({ left: root.children[nextIndex].offsetLeft - root.offsetLeft, behavior: 'smooth' });
   window.clearTimeout(matchWheelUnlockTimer);
   matchWheelUnlockTimer = window.setTimeout(() => { matchWheelLocked = false; }, 420);
 }
@@ -145,6 +160,7 @@ function handleMatchDaysWheel(event) {
 function handleMatchDaysPointerDown(event) {
   const root = $('#match-days');
   if (!root.classList.contains('is-scrollable')) return;
+  if (matchSwipeLocked) return;
   if (event.pointerType === 'mouse' && event.button !== 0) return;
   matchPointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, startScroll: root.scrollLeft, horizontal: false };
 }
@@ -169,13 +185,16 @@ function finishMatchDaysPointer(event) {
   if (!matchPointer || event.pointerId !== matchPointer.id) return;
   const root = $('#match-days');
   const deltaX = event.clientX - matchPointer.startX;
-  const currentIndex = Math.round(matchPointer.startScroll / root.clientWidth);
+  const currentIndex = rootToClosestMatchDayIndex(root, matchPointer.startScroll);
   const direction = Math.abs(deltaX) >= matchSwipeThreshold ? (deltaX < 0 ? 1 : -1) : 0;
   if (matchPointer.horizontal) {
     event.preventDefault();
     const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
     root.classList.remove('is-dragging');
-    root.scrollTo({ left: nextIndex * root.clientWidth, behavior: 'smooth' });
+    matchSwipeLocked = true;
+    window.clearTimeout(matchSwipeUnlockTimer);
+    matchSwipeUnlockTimer = window.setTimeout(() => { matchSwipeLocked = false; }, 520);
+    root.scrollTo({ left: root.children[nextIndex].offsetLeft - root.offsetLeft, behavior: 'smooth' });
   }
   if (root.hasPointerCapture(event.pointerId)) root.releasePointerCapture(event.pointerId);
   matchPointer = null;

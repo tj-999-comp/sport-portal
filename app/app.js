@@ -137,6 +137,11 @@ function rootToClosestMatchDayIndex(root, scrollLeft) {
   }, 0);
 }
 
+function isMatchGestureSurface(target) {
+  const element = target instanceof Element ? target : target?.parentElement;
+  return Boolean(element?.closest('main')) && !element.closest('.app-header, .date-nav, .bottom-nav, .standings-sheet, button, a');
+}
+
 function handleMatchDaysWheel(event) {
   const root = $('#match-days');
   if (!root.classList.contains('is-scrollable')) return;
@@ -161,7 +166,7 @@ function handleMatchDaysWheel(event) {
 
 function handleMatchDaysPointerDown(event) {
   const root = $('#match-days');
-  if (!root.classList.contains('is-scrollable')) return;
+  if (!isMatchGestureSurface(event.target)) return;
   if (event.pointerType === 'touch') return;
   if (matchSwipeLocked) return;
   if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -205,7 +210,7 @@ function finishMatchDaysPointer(event) {
 
 function handleMatchDaysTouchStart(event) {
   const root = $('#match-days');
-  if (!root.classList.contains('is-scrollable') || matchSwipeLocked || event.touches.length !== 1) return;
+  if (!isMatchGestureSurface(event.target) || matchSwipeLocked || event.touches.length !== 1) return;
   const touch = event.touches[0];
   matchTouch = { startX: touch.clientX, startY: touch.clientY, startScroll: root.scrollLeft, horizontal: false };
 }
@@ -332,14 +337,14 @@ const standingsIcon = $('#standings-icon');
 const standingsLabel = $('#standings-label');
 const matchDays = $('#match-days');
 matchDays.addEventListener('wheel', handleMatchDaysWheel, { passive: false });
-matchDays.addEventListener('pointerdown', handleMatchDaysPointerDown);
-matchDays.addEventListener('pointermove', handleMatchDaysPointerMove);
-matchDays.addEventListener('pointerup', finishMatchDaysPointer);
-matchDays.addEventListener('pointercancel', finishMatchDaysPointer);
-matchDays.addEventListener('touchstart', handleMatchDaysTouchStart, { passive: true });
-matchDays.addEventListener('touchmove', handleMatchDaysTouchMove, { passive: false });
-matchDays.addEventListener('touchend', finishMatchDaysTouch, { passive: false });
-matchDays.addEventListener('touchcancel', cancelMatchDaysTouch, { passive: true });
+document.addEventListener('pointerdown', handleMatchDaysPointerDown);
+document.addEventListener('pointermove', handleMatchDaysPointerMove);
+document.addEventListener('pointerup', finishMatchDaysPointer);
+document.addEventListener('pointercancel', finishMatchDaysPointer);
+document.addEventListener('touchstart', handleMatchDaysTouchStart, { passive: true });
+document.addEventListener('touchmove', handleMatchDaysTouchMove, { passive: false });
+document.addEventListener('touchend', finishMatchDaysTouch, { passive: false });
+document.addEventListener('touchcancel', cancelMatchDaysTouch, { passive: true });
 let standingsOpenedFrom = null;
 let standingsHideTimer = null;
 let standingsOpenFrame = null;

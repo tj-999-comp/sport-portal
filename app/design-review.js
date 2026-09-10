@@ -161,11 +161,15 @@ function createScoreOption([title, variant], index, label = '案') {
 
 function createMotionOption([title, variant, description], index) {
   const motionDates = ['9/5', '9/6', '9/7', '9/8', '9/9', '9/10', '9/11', '9/12', '9/13'];
-  const pages = motionDates.map((date, dateIndex) => `<article class="motion-page" data-motion-page="${dateIndex}">
-    <div class="motion-page-head"><span>試合日</span><strong>${date}</strong></div>
-    <div class="motion-match-row"><span>${dateIndex % 2 ? '浦和' : '鹿島'}</span><b>${dateIndex % 3 === 0 ? '2 — 1' : '— — —'}</b><span>${dateIndex % 2 ? '神戸' : '広島'}</span></div>
-    <div class="motion-match-row"><span>${dateIndex % 2 ? '川崎' : '柏'}</span><b>${dateIndex % 2 ? '1 — 0' : '— — —'}</b><span>${dateIndex % 2 ? 'G大阪' : '新潟'}</span></div>
-  </article>`).join('');
+  const teamPairs = [['鹿島', '広島'], ['浦和', '神戸'], ['柏', '新潟'], ['川崎', 'G大阪'], ['東京', '清水'], ['横浜FM', '町田'], ['福岡', '名古屋'], ['京都', 'C大阪'], ['FC東京', '湘南'], ['磐田', '札幌']];
+  const pages = motionDates.map((date, dateIndex) => {
+    const matchCount = dateIndex % 2 === 0 ? 2 : 10;
+    const matches = teamPairs.slice(0, matchCount).map(([home, away], matchIndex) => `<div class="motion-match-row"><span>${home}</span><b>${matchIndex % 3 === 0 && dateIndex % 2 ? '2 — 1' : '— — —'}</b><span>${away}</span></div>`).join('');
+    return `<article class="motion-page" data-motion-page="${dateIndex}">
+      <div class="motion-page-head"><span>試合日</span><div><strong>${date}</strong><small>${matchCount}試合</small></div></div>
+      <div class="motion-match-list">${matches}</div>
+    </article>`;
+  }).join('');
   const dateRail = motionDates.map((date, dateIndex) => `<button class="motion-date${dateIndex === 1 ? ' is-active' : ''}" type="button" data-motion-date="${dateIndex}" aria-label="${date}を表示"><span>${date}</span></button>`).join('');
   return `<article class="review-card motion-card" data-motion-variant="${variant}">
     <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${index === 4 ? '<em class="choice-tag">本命</em>' : ''}</div>

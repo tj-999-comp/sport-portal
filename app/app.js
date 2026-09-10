@@ -1,5 +1,8 @@
 const state = { data: null, updating: false, dates: [], selectedDate: null };
 const $ = (selector) => document.querySelector(selector);
+let dateNavScrollTimer = null;
+let matchWheelUnlockTimer = null;
+let matchWheelLocked = false;
 
 function formatDate(dateString) {
   const date = new Date(`${dateString}T00:00:00+09:00`);
@@ -32,26 +35,46 @@ function renderStatus(update = {}) {
   $('#updated-at').textContent = update.at ? formatTime(update.at) : '';
 }
 
-function updateDateSelection(date) {
+function updateDateSelection(date, centerDate = true) {
   state.selectedDate = date;
   $('#selected-date').textContent = date ? formatLongDate(date) : '';
   const activeButton = [...$('#date-nav').querySelectorAll('.date-chip')].find((button) => button.dataset.date === date);
   $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.classList.toggle('active', button === activeButton));
   const dateNav = $('#date-nav');
-  if (activeButton && dateNav.classList.contains('is-scrollable')) {
+  if (centerDate && activeButton && dateNav.classList.contains('is-scrollable')) {
     const targetLeft = activeButton.offsetLeft - (dateNav.clientWidth - activeButton.offsetWidth) / 2;
-    dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+    dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' });
   }
   updateMatchDaysHeight(date);
 }
 
 function renderDateNav(dates, selectedDate) {
-  $('#date-nav').innerHTML = dates.map((date) => {
+  const dateNav = $('#date-nav');
+  dateNav.innerHTML = dates.map((date) => {
     const dateObject = new Date(`${date}T00:00:00+09:00`);
     return `<button class="date-chip${date === selectedDate ? ' active' : ''}" type="button" data-date="${escapeHtml(date)}"><small>${escapeHtml(`${dateObject.getMonth() + 1}月`)}</small><strong>${escapeHtml(dateObject.getDate())}</strong><span>${escapeHtml(weekdayLabel(date))}</span></button>`;
   }).join('');
-  updateScrollState($('#date-nav'));
-  $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.addEventListener('click', () => scrollToDate(button.dataset.date)));
+  updateScrollState(dateNav);
+  dateNav.querySelectorAll('.date-chip').forEach((button) => button.addEventListener('click', () => scrollToDate(button.dataset.date)));
+}
+
+function settleDateNavSelection() {
+  const dateNav = $('#date-nav');
+  if (!dateNav.classList.contains('is-scrollable') || !dateNav.clientWidth) return;
+  const center = dateNav.scrollLeft + dateNav.clientWidth / 2;
+  const closest = [...dateNav.querySelectorAll('.date-chip')].reduce((current, chip) => {
+    const distance = Math.abs(chip.offsetLeft + chip.offsetWidth / 2 - center);
+    return !current || distance < current.distance ? { chip, distance } : current;
+  }, null)?.chip;
+  if (!closest) return;
+  const targetLeft = closest.offsetLeft - (dateNav.clientWidth - closest.offsetWidth) / 2;
+  if (closest.dataset.date !== state.selectedDate) scrollToDate(closest.dataset.date, 'smooth', false);
+  dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' });
+}
+
+function syncDateSelectionFromDateNav() {
+  window.clearTimeout(dateNavScrollTimer);
+  dateNavScrollTimer = window.setTimeout(settleDateNavSelection, 120);
 }
 
 function updateScrollState(element) {
@@ -77,11 +100,11 @@ function updateMatchDaysHeight(date = state.selectedDate) {
   requestAnimationFrame(updatePageScrollState);
 }
 
-function scrollToDate(date, behavior = 'smooth') {
+function scrollToDate(date, behavior = 'smooth', centerDate = true) {
   const root = $('#match-days');
   const target = root.querySelector(`[data-date="${date}"]`);
   if (!target) return;
-  updateDateSelection(date);
+  updateDateSelection(date, centerDate);
   root.scrollTo({ left: target.offsetLeft, behavior });
 }
 
@@ -91,6 +114,23 @@ function syncDateSelectionFromScroll() {
   const index = Math.min(root.children.length - 1, Math.max(0, Math.round(root.scrollLeft / root.clientWidth)));
   const date = root.children[index]?.dataset.date;
   if (date && date !== state.selectedDate) updateDateSelection(date);
+}
+
+function handleMatchDaysWheel(event) {
+  const root = $('#match-days');
+  if (!root.classList.contains('is-scrollable')) return;
+  const horizontalDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.shiftKey ? event.deltaY : 0;
+  if (!horizontalDelta) return;
+  event.preventDefault();
+  if (matchWheelLocked) return;
+  const currentIndex = Math.round(root.scrollLeft / root.clientWidth);
+  const direction = horizontalDelta > 0 ? 1 : -1;
+  const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+  if (nextIndex === currentIndex) return;
+  matchWheelLocked = true;
+  root.scrollTo({ left: nextIndex * root.clientWidth, behavior: 'smooth' });
+  window.clearTimeout(matchWheelUnlockTimer);
+  matchWheelUnlockTimer = window.setTimeout(() => { matchWheelLocked = false; }, 420);
 }
 
 function renderMatches(matches = []) {
@@ -128,6 +168,7 @@ function renderMatches(matches = []) {
     root.append(day);
   });
   root.onscroll = syncDateSelectionFromScroll;
+  $('#date-nav').onscroll = syncDateSelectionFromDateNav;
   updateScrollState(root);
   requestAnimationFrame(() => {
     if (selectedDate) scrollToDate(selectedDate, 'auto');
@@ -172,6 +213,7 @@ const standingsPanel = $('#standings-panel');
 const standingsButton = $('#standings-button');
 const standingsIcon = $('#standings-icon');
 const standingsLabel = $('#standings-label');
+$('#match-days').addEventListener('wheel', handleMatchDaysWheel, { passive: false });
 let standingsOpenedFrom = null;
 let standingsHideTimer = null;
 let standingsOpenFrame = null;

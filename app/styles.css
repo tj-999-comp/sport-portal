@@ -33,7 +33,7 @@ h1 { font-size: 12px; font-weight: 800; }
 .date-section { padding: 12px 0 10px; background: #fff; }
 .date-section .status-strip { margin: 0 0 12px; border-top: 0; border-bottom: 1px solid var(--line); min-height: 24px; padding: 0 2px 9px; }
 .selected-date { font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.2; margin-bottom: 11px; }
-.date-nav { display: flex; gap: 4px; margin: 0 -4px; overflow-x: hidden; overflow-y: hidden; padding: 0 4px 1px; scrollbar-width: none; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
+.date-nav { display: flex; gap: 4px; margin: 0 -4px; overflow-x: hidden; overflow-y: hidden; padding: 0 max(4px, calc((100% - 56px) / 2)) 1px; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
 .date-nav.is-scrollable { overflow-x: auto; }
 .date-nav::-webkit-scrollbar { display: none; }
 .date-chip { align-items: center; aspect-ratio: 1; background: transparent; border: 1px solid transparent; border-radius: 50%; cursor: pointer; display: grid; flex: 0 0 56px; gap: 3px; justify-items: center; padding: 7px 4px; }
@@ -44,9 +44,9 @@ h1 { font-size: 12px; font-weight: 800; }
 
 .matches-section { margin-top: 8px; }
 .match-days { align-items: flex-start; display: flex; gap: 0; overflow-x: hidden; overflow-y: hidden; overscroll-behavior-x: contain; scroll-behavior: auto; scroll-snap-type: none; scrollbar-width: none; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
-.match-days.is-scrollable { overflow-x: auto; scroll-snap-type: x proximity; }
+.match-days.is-scrollable { overflow-x: auto; scroll-snap-type: x mandatory; }
 .match-days::-webkit-scrollbar { display: none; }
-.match-day { background: transparent; border: 0; border-radius: 0; box-shadow: none; flex: 0 0 100%; min-width: 0; padding: 12px 14px 4px; scroll-snap-align: start; }
+.match-day { background: transparent; border: 0; border-radius: 0; box-shadow: none; flex: 0 0 100%; min-width: 0; padding: 12px 14px 4px; scroll-snap-align: start; scroll-snap-stop: always; }
 .day-topline { display: none; }
 .match-list { display: grid; }
 .match-card { border-top: 1px solid var(--line); padding: 10px 0; }

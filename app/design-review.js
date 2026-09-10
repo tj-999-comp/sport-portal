@@ -83,6 +83,14 @@ const previousScoreOptions = [
   ['勝者ハイライト', 'score-winner-highlight']
 ];
 
+const motionOptions = [
+  ['中央スナップ', 'motion-snap', '止まる位置を日付の中央に固定'],
+  ['1日ロック', 'motion-lock', '入力の勢いを受けても1日だけ進む'],
+  ['しきい値付き', 'motion-threshold', '小さな揺れでは日付を切り替えない'],
+  ['即時ページ送り', 'motion-direct', '入力を検知した瞬間に次の日へ'],
+  ['日付自由／試合1日', 'motion-split', '日付は連続、試合一覧は1日ずつ']
+];
+
 const dates = [
   ['9/5', '土'],
   ['9/6', '日'],
@@ -151,11 +159,38 @@ function createScoreOption([title, variant], index, label = '案') {
   </article>`;
 }
 
+function createMotionOption([title, variant, description], index) {
+  const motionDates = ['9/5', '9/6', '9/7', '9/8', '9/9', '9/10', '9/11', '9/12', '9/13'];
+  const pages = motionDates.map((date, dateIndex) => `<article class="motion-page" data-motion-page="${dateIndex}">
+    <div class="motion-page-head"><span>試合日</span><strong>${date}</strong></div>
+    <div class="motion-match-row"><span>${dateIndex % 2 ? '浦和' : '鹿島'}</span><b>${dateIndex % 3 === 0 ? '2 — 1' : '— — —'}</b><span>${dateIndex % 2 ? '神戸' : '広島'}</span></div>
+    <div class="motion-match-row"><span>${dateIndex % 2 ? '川崎' : '柏'}</span><b>${dateIndex % 2 ? '1 — 0' : '— — —'}</b><span>${dateIndex % 2 ? 'G大阪' : '新潟'}</span></div>
+  </article>`).join('');
+  const dateRail = motionDates.map((date, dateIndex) => `<button class="motion-date${dateIndex === 1 ? ' is-active' : ''}" type="button" data-motion-date="${dateIndex}" aria-label="${date}を表示"><span>${date}</span></button>`).join('');
+  return `<article class="review-card motion-card" data-motion-variant="${variant}">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${index === 4 ? '<em class="choice-tag">本命</em>' : ''}</div>
+    <div class="motion-preview ${variant}">
+      <div class="motion-date-rail" data-motion-date-rail>${dateRail}</div>
+      <div class="motion-window" data-motion-window>
+        <div class="motion-track" data-motion-track>${pages}</div>
+      </div>
+      <div class="motion-readout"><span data-motion-description>${description}</span><output data-motion-status>2 / ${motionDates.length}</output></div>
+      <div class="motion-controls">
+        <button type="button" data-motion-prev aria-label="前の日へ">←</button>
+        <span>横入力デモ</span>
+        <button type="button" data-motion-next aria-label="次の日へ">→</button>
+      </div>
+      <p class="motion-hint">左右にドラッグ / ホイール / 矢印</p>
+    </div>
+  </article>`;
+}
+
 document.querySelector('#league-options').innerHTML = leagueOptions.map(createLeagueOption).join('');
 document.querySelector('#navigation-options').innerHTML = navigationOptions.map(createNavigationOption).join('');
 document.querySelector('#date-options').innerHTML = dateOptions.map(createDateOption).join('');
 document.querySelector('#score-options').innerHTML = scoreOptions.map((option, index) => createScoreOption(option, index)).join('');
 document.querySelector('#score-history-options').innerHTML = previousScoreOptions.map((option, index) => createScoreOption(option, index, '旧案')).join('');
+document.querySelector('#motion-options').innerHTML = motionOptions.map(createMotionOption).join('');
 
 document.querySelectorAll('.league-row').forEach((button) => {
   button.addEventListener('click', () => {
@@ -188,3 +223,75 @@ document.querySelectorAll('.date-options').forEach((group) => {
     });
   });
 });
+
+function setMotionIndex(card, nextIndex, behavior = 'smooth') {
+  const track = card.querySelector('[data-motion-track]');
+  const pages = track.querySelectorAll('.motion-page');
+  const index = Math.min(pages.length - 1, Math.max(0, nextIndex));
+  card.dataset.motionIndex = String(index);
+  track.style.setProperty('--motion-offset', `${index * -100}%`);
+  track.style.setProperty('--motion-drag', '0px');
+  card.querySelector('[data-motion-status]').textContent = `${index + 1} / ${pages.length}`;
+  card.querySelectorAll('.motion-date').forEach((date) => date.classList.toggle('is-active', Number(date.dataset.motionDate) === index));
+  if (behavior === 'auto') track.classList.add('is-immediate');
+  else track.classList.remove('is-immediate');
+  window.clearTimeout(card.motionImmediateTimer);
+  if (behavior === 'auto') card.motionImmediateTimer = window.setTimeout(() => track.classList.remove('is-immediate'), 30);
+}
+
+function setupMotionCard(card) {
+  const preview = card.querySelector('.motion-preview');
+  const track = card.querySelector('[data-motion-track]');
+  let pointerStart = null;
+  let pointerDelta = 0;
+  let lockedUntil = 0;
+  const variant = card.dataset.motionVariant;
+  card.dataset.motionIndex = '1';
+
+  const moveByInput = (direction, behavior = 'smooth') => {
+    if (Date.now() < lockedUntil) return;
+    const current = Number(card.dataset.motionIndex || 1);
+    setMotionIndex(card, current + direction, behavior);
+    if (variant === 'motion-lock' || variant === 'motion-split') lockedUntil = Date.now() + 420;
+  };
+
+  preview.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('button, [data-motion-date-rail]')) return;
+    pointerStart = event.clientX;
+    pointerDelta = 0;
+    preview.setPointerCapture(event.pointerId);
+    track.classList.add('is-dragging');
+  });
+  preview.addEventListener('pointermove', (event) => {
+    if (pointerStart === null) return;
+    pointerDelta = event.clientX - pointerStart;
+    if (variant !== 'motion-direct') track.style.setProperty('--motion-drag', `${Math.max(-72, Math.min(72, pointerDelta))}px`);
+  });
+  const finishPointer = () => {
+    if (pointerStart === null) return;
+    const threshold = variant === 'motion-threshold' ? 42 : 24;
+    const direction = Math.abs(pointerDelta) >= threshold ? (pointerDelta < 0 ? 1 : -1) : 0;
+    track.classList.remove('is-dragging');
+    track.style.setProperty('--motion-drag', '0px');
+    pointerStart = null;
+    pointerDelta = 0;
+    if (direction) moveByInput(direction);
+  };
+  preview.addEventListener('pointerup', finishPointer);
+  preview.addEventListener('pointercancel', finishPointer);
+  preview.addEventListener('wheel', (event) => {
+    if (event.target.closest('[data-motion-date-rail]')) return;
+    const horizontalDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.shiftKey ? event.deltaY : 0;
+    if (!horizontalDelta) return;
+    event.preventDefault();
+    moveByInput(horizontalDelta > 0 ? 1 : -1, variant === 'motion-direct' ? 'auto' : 'smooth');
+  }, { passive: false });
+  card.querySelector('[data-motion-prev]').addEventListener('click', () => moveByInput(-1, variant === 'motion-direct' ? 'auto' : 'smooth'));
+  card.querySelector('[data-motion-next]').addEventListener('click', () => moveByInput(1, variant === 'motion-direct' ? 'auto' : 'smooth'));
+  card.querySelector('[data-motion-date-rail]').addEventListener('click', (event) => {
+    const date = event.target.closest('[data-motion-date]');
+    if (date) setMotionIndex(card, Number(date.dataset.motionDate), 'smooth');
+  });
+}
+
+document.querySelectorAll('.motion-card').forEach(setupMotionCard);

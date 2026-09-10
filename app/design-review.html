@@ -22,8 +22,20 @@
     </header>
 
     <nav class="review-index" aria-label="レビューページ内目次">
-      <a href="#scores">02 得点表示</a>
+      <a href="#motion">02 横スクロールの動き</a>
     </nav>
+
+    <section class="review-section motion-section" id="motion" aria-labelledby="motion-title">
+      <div class="section-heading">
+        <p class="section-number">02</p>
+        <div>
+          <h2 id="motion-title">横スクロールの動き</h2>
+          <p>日付は連続して動き、試合一覧は1回の横入力で1日だけ進む5案です。左右にドラッグするか、各案の矢印を押して動きを確認してください。</p>
+        </div>
+      </div>
+      <div class="motion-guide"><span class="motion-guide-dot"></span><span>現在位置</span><span class="motion-guide-line"></span><span>入力1回 = 1日</span></div>
+      <div class="review-grid motion-grid" id="motion-options"></div>
+    </section>
 
     <details class="proposal-history">
       <summary>過去提案（提案No.01）を表示</summary>
@@ -80,17 +92,22 @@
       </div>
     </details>
 
-    <section class="review-section" id="scores" aria-labelledby="scores-title">
-      <div class="section-heading">
-        <p class="section-number">02</p>
-        <div>
-          <h2 id="scores-title">得点表示</h2>
-          <p>これまでの案を整理し、どちらが勝ったかを最初に読み取れるようにした追加10案です。終了試合の表示を想定しています。</p>
-        </div>
+    <details class="proposal-history score-current-history">
+      <summary>既存の得点表示10案を表示</summary>
+      <div class="history-content">
+        <section class="review-section" id="scores" aria-labelledby="scores-title">
+          <div class="section-heading">
+            <p class="section-number">02</p>
+            <div>
+              <h2 id="scores-title">得点表示</h2>
+              <p>これまでの案を整理し、どちらが勝ったかを最初に読み取れるようにした追加10案です。終了試合の表示を想定しています。</p>
+            </div>
+          </div>
+          <div class="review-grid score-grid" id="score-options"></div>
+        </section>
       </div>
-      <div class="review-grid score-grid" id="score-options"></div>
-    </section>
+    </details>
   </main>
-  <script src="/design-review.js" type="module"></script>
+  <script src="/design-review.js?v=1.0.1-motion-review" type="module"></script>
 </body>
 </html>

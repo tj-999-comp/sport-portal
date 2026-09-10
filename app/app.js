@@ -147,7 +147,6 @@ function handleMatchDaysPointerDown(event) {
   if (!root.classList.contains('is-scrollable')) return;
   if (event.pointerType === 'mouse' && event.button !== 0) return;
   matchPointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, startScroll: root.scrollLeft, horizontal: false };
-  root.setPointerCapture(event.pointerId);
 }
 
 function handleMatchDaysPointerMove(event) {
@@ -156,9 +155,14 @@ function handleMatchDaysPointerMove(event) {
   const deltaX = event.clientX - matchPointer.startX;
   const deltaY = event.clientY - matchPointer.startY;
   if (!matchPointer.horizontal && Math.abs(deltaX) <= Math.abs(deltaY)) return;
-  matchPointer.horizontal = true;
+  if (!matchPointer.horizontal) {
+    matchPointer.horizontal = true;
+    root.setPointerCapture(event.pointerId);
+    root.classList.add('is-dragging');
+  }
   event.preventDefault();
-  root.scrollLeft = matchPointer.startScroll - deltaX;
+  const limitedDelta = Math.max(-72, Math.min(72, deltaX));
+  root.scrollLeft = matchPointer.startScroll - limitedDelta;
 }
 
 function finishMatchDaysPointer(event) {
@@ -170,9 +174,10 @@ function finishMatchDaysPointer(event) {
   if (matchPointer.horizontal) {
     event.preventDefault();
     const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+    root.classList.remove('is-dragging');
     root.scrollTo({ left: nextIndex * root.clientWidth, behavior: 'smooth' });
   }
-  root.releasePointerCapture(event.pointerId);
+  if (root.hasPointerCapture(event.pointerId)) root.releasePointerCapture(event.pointerId);
   matchPointer = null;
 }
 

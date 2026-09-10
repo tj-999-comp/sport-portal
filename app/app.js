@@ -2,7 +2,11 @@ const state = { data: null, updating: false, dates: [], selectedDate: null };
 const $ = (selector) => document.querySelector(selector);
 let dateNavScrollTimer = null;
 let matchWheelUnlockTimer = null;
+let matchWheelResetTimer = null;
 let matchWheelLocked = false;
+let matchWheelDelta = 0;
+let matchPointer = null;
+const matchSwipeThreshold = 42;
 
 function formatDate(dateString) {
   const date = new Date(`${dateString}T00:00:00+09:00`);
@@ -122,15 +126,54 @@ function handleMatchDaysWheel(event) {
   const horizontalDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.shiftKey ? event.deltaY : 0;
   if (!horizontalDelta) return;
   event.preventDefault();
+  matchWheelDelta += horizontalDelta;
+  window.clearTimeout(matchWheelResetTimer);
+  matchWheelResetTimer = window.setTimeout(() => { matchWheelDelta = 0; }, 160);
   if (matchWheelLocked) return;
+  if (Math.abs(matchWheelDelta) < matchSwipeThreshold) return;
   const currentIndex = Math.round(root.scrollLeft / root.clientWidth);
-  const direction = horizontalDelta > 0 ? 1 : -1;
+  const direction = matchWheelDelta > 0 ? 1 : -1;
   const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+  matchWheelDelta = 0;
   if (nextIndex === currentIndex) return;
   matchWheelLocked = true;
   root.scrollTo({ left: nextIndex * root.clientWidth, behavior: 'smooth' });
   window.clearTimeout(matchWheelUnlockTimer);
   matchWheelUnlockTimer = window.setTimeout(() => { matchWheelLocked = false; }, 420);
+}
+
+function handleMatchDaysPointerDown(event) {
+  const root = $('#match-days');
+  if (!root.classList.contains('is-scrollable')) return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  matchPointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, startScroll: root.scrollLeft, horizontal: false };
+  root.setPointerCapture(event.pointerId);
+}
+
+function handleMatchDaysPointerMove(event) {
+  if (!matchPointer || event.pointerId !== matchPointer.id) return;
+  const root = $('#match-days');
+  const deltaX = event.clientX - matchPointer.startX;
+  const deltaY = event.clientY - matchPointer.startY;
+  if (!matchPointer.horizontal && Math.abs(deltaX) <= Math.abs(deltaY)) return;
+  matchPointer.horizontal = true;
+  event.preventDefault();
+  root.scrollLeft = matchPointer.startScroll - deltaX;
+}
+
+function finishMatchDaysPointer(event) {
+  if (!matchPointer || event.pointerId !== matchPointer.id) return;
+  const root = $('#match-days');
+  const deltaX = event.clientX - matchPointer.startX;
+  const currentIndex = Math.round(matchPointer.startScroll / root.clientWidth);
+  const direction = Math.abs(deltaX) >= matchSwipeThreshold ? (deltaX < 0 ? 1 : -1) : 0;
+  if (matchPointer.horizontal) {
+    event.preventDefault();
+    const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+    root.scrollTo({ left: nextIndex * root.clientWidth, behavior: 'smooth' });
+  }
+  root.releasePointerCapture(event.pointerId);
+  matchPointer = null;
 }
 
 function renderMatches(matches = []) {
@@ -213,7 +256,12 @@ const standingsPanel = $('#standings-panel');
 const standingsButton = $('#standings-button');
 const standingsIcon = $('#standings-icon');
 const standingsLabel = $('#standings-label');
-$('#match-days').addEventListener('wheel', handleMatchDaysWheel, { passive: false });
+const matchDays = $('#match-days');
+matchDays.addEventListener('wheel', handleMatchDaysWheel, { passive: false });
+matchDays.addEventListener('pointerdown', handleMatchDaysPointerDown);
+matchDays.addEventListener('pointermove', handleMatchDaysPointerMove);
+matchDays.addEventListener('pointerup', finishMatchDaysPointer);
+matchDays.addEventListener('pointercancel', finishMatchDaysPointer);
 let standingsOpenedFrom = null;
 let standingsHideTimer = null;
 let standingsOpenFrame = null;

@@ -1,8 +1,6 @@
 const state = { data: null, updating: false, dates: [], selectedDate: null };
 const $ = (selector) => document.querySelector(selector);
 let dateNavScrollTimer = null;
-let matchDateSelectionTimer = null;
-let matchScrollTargetDate = null;
 let matchWheelUnlockTimer = null;
 let matchWheelResetTimer = null;
 let matchWheelLocked = false;
@@ -66,7 +64,7 @@ function renderDateNav(dates, selectedDate) {
     return `<button class="date-chip${date === selectedDate ? ' active' : ''}" type="button" data-date="${escapeHtml(date)}"><small>${escapeHtml(`${dateObject.getMonth() + 1}月`)}</small><strong>${escapeHtml(dateObject.getDate())}</strong><span>${escapeHtml(weekdayLabel(date))}</span></button>`;
   }).join('');
   updateScrollState(dateNav);
-  dateNav.querySelectorAll('.date-chip').forEach((button) => button.addEventListener('click', () => scrollToDate(button.dataset.date)));
+  dateNav.querySelectorAll('.date-chip').forEach((button) => button.addEventListener('click', () => scrollToDate(button.dataset.date, 'auto')));
 }
 
 function settleDateNavSelection() {
@@ -82,7 +80,7 @@ function settleDateNavSelection() {
   if (!closest) return;
   const closestRect = closest.getBoundingClientRect();
   const targetLeft = dateNav.scrollLeft + closestRect.left - navRect.left - (dateNav.clientWidth - closestRect.width) / 2;
-  if (closest.dataset.date !== state.selectedDate) scrollToDate(closest.dataset.date, 'smooth', false);
+  if (closest.dataset.date !== state.selectedDate) scrollToDate(closest.dataset.date, 'auto', false);
   dateNav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' });
 }
 
@@ -114,26 +112,16 @@ function updateMatchDaysHeight(date = state.selectedDate) {
   requestAnimationFrame(updatePageScrollState);
 }
 
-function scrollToDate(date, behavior = 'smooth', centerDate = true) {
+function scrollToDate(date, behavior = 'auto', centerDate = true) {
   const root = $('#match-days');
   const target = root.querySelector(`[data-date="${date}"]`);
   if (!target) return;
-  window.clearTimeout(matchDateSelectionTimer);
-  matchScrollTargetDate = behavior === 'smooth' ? date : null;
   updateDateSelection(date, centerDate);
   const targetLeft = Math.max(0, target.offsetLeft - root.offsetLeft);
   root.scrollTo({ left: targetLeft, behavior });
-  if (behavior === 'smooth') {
-    matchDateSelectionTimer = window.setTimeout(() => {
-      matchScrollTargetDate = null;
-      updateDateSelection(date, centerDate);
-      root.scrollTo({ left: targetLeft, behavior: 'auto' });
-    }, 700);
-  }
 }
 
 function syncDateSelectionFromScroll() {
-  if (matchScrollTargetDate) return;
   const root = $('#match-days');
   if (!root.children.length || !root.clientWidth) return;
   const index = rootToClosestMatchDayIndex(root, root.scrollLeft);

@@ -1,6 +1,8 @@
 const state = { data: null, updating: false, dates: [], selectedDate: null };
 const $ = (selector) => document.querySelector(selector);
 let dateNavScrollTimer = null;
+let matchDateSelectionTimer = null;
+let matchScrollTargetDate = null;
 let matchWheelUnlockTimer = null;
 let matchWheelResetTimer = null;
 let matchWheelLocked = false;
@@ -116,11 +118,22 @@ function scrollToDate(date, behavior = 'smooth', centerDate = true) {
   const root = $('#match-days');
   const target = root.querySelector(`[data-date="${date}"]`);
   if (!target) return;
+  window.clearTimeout(matchDateSelectionTimer);
+  matchScrollTargetDate = behavior === 'smooth' ? date : null;
   updateDateSelection(date, centerDate);
-  root.scrollTo({ left: Math.max(0, target.offsetLeft - root.offsetLeft), behavior });
+  const targetLeft = Math.max(0, target.offsetLeft - root.offsetLeft);
+  root.scrollTo({ left: targetLeft, behavior });
+  if (behavior === 'smooth') {
+    matchDateSelectionTimer = window.setTimeout(() => {
+      matchScrollTargetDate = null;
+      updateDateSelection(date, centerDate);
+      root.scrollTo({ left: targetLeft, behavior: 'auto' });
+    }, 700);
+  }
 }
 
 function syncDateSelectionFromScroll() {
+  if (matchScrollTargetDate) return;
   const root = $('#match-days');
   if (!root.children.length || !root.clientWidth) return;
   const index = rootToClosestMatchDayIndex(root, root.scrollLeft);

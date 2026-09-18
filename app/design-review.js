@@ -173,13 +173,11 @@ function createScoreAlignmentOption([title, variant], index) {
       <p class="alignment-meta">18:00 · 第29節</p>
       <div class="alignment-match">
         <div class="alignment-side alignment-home winner">
-          <span class="alignment-role">Home</span>
-          <div class="alignment-team-line"><strong>浦和</strong><b>2</b></div>
+          <div class="alignment-team-line"><div class="alignment-name-block"><span class="alignment-role">Home</span><strong>浦和</strong></div><b>2</b></div>
         </div>
         <span class="alignment-divider-mark" aria-hidden="true">-</span>
         <div class="alignment-side alignment-away loser">
-          <span class="alignment-role">Away</span>
-          <div class="alignment-team-line"><b>1</b><strong>鹿島</strong></div>
+          <div class="alignment-team-line"><b>1</b><div class="alignment-name-block"><span class="alignment-role">Away</span><strong>鹿島</strong></div></div>
         </div>
       </div>
       <p class="alignment-note">チーム名は外側、得点は中央寄り</p>

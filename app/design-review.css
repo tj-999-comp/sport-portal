@@ -229,8 +229,8 @@ button { color: inherit; font: inherit; }
 .alignment-note { padding-top: 11px; border-top: 1px solid var(--line); font-size: 9px; }
 .alignment-match { display: grid; grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr); gap: 10px; align-items: end; }
 .alignment-side { min-width: 0; }
-.alignment-role { display: block; margin-bottom: 6px; color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: .12em; line-height: 1; }
-.alignment-team-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; min-width: 0; }
+.alignment-role { display: block; margin-bottom: 4px; color: var(--muted); font-size: 7px; font-weight: 700; letter-spacing: .06em; line-height: 1; }
+.alignment-team-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; align-items: center; min-width: 0; }
 .alignment-away .alignment-team-line { grid-template-columns: auto minmax(0, 1fr); }
 .alignment-team-line strong { min-width: 0; overflow: hidden; font-size: 15px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .alignment-home .alignment-team-line strong { text-align: left; }
@@ -241,7 +241,7 @@ button { color: inherit; font: inherit; }
 .alignment-divider-mark { align-self: end; padding-bottom: 3px; color: var(--muted); font-size: 18px; line-height: 1; text-align: center; }
 .alignment-center .alignment-match { grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr); gap: 0; }
 .alignment-center .alignment-divider-mark { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; padding: 0; font-size: 15px; }
-.alignment-center .alignment-role { letter-spacing: .18em; }
+.alignment-center .alignment-role { letter-spacing: .06em; }
 .alignment-divider .alignment-match { position: relative; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
 .alignment-divider .alignment-match::before { position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px solid var(--line); content: ""; }
 .alignment-divider .alignment-divider-mark { position: absolute; top: 50%; left: 50%; z-index: 1; display: grid; width: 24px; height: 24px; place-items: center; transform: translate(-50%, -8%); border-radius: 50%; background: #fff; font-size: 15px; }

@@ -84,9 +84,9 @@ const previousScoreOptions = [
 ];
 
 const scoreAlignmentOptions = [
-  ['左右端揃え', 'alignment-outer'],
-  ['中央距離を固定', 'alignment-center'],
-  ['中央仕切り線', 'alignment-divider']
+  ['左右端揃え・近接', 'alignment-outer'],
+  ['中央距離固定・近接', 'alignment-center'],
+  ['中央仕切り線・近接', 'alignment-divider']
 ];
 
 const motionOptions = [

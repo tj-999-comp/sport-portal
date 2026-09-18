@@ -230,8 +230,9 @@ button { color: inherit; font: inherit; }
 .alignment-match { display: grid; grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr); gap: 10px; align-items: end; }
 .alignment-side { min-width: 0; }
 .alignment-role { display: block; margin-bottom: 4px; color: var(--muted); font-size: 7px; font-weight: 700; letter-spacing: .06em; line-height: 1; }
-.alignment-team-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; align-items: center; min-width: 0; }
-.alignment-away .alignment-team-line { grid-template-columns: auto minmax(0, 1fr); }
+.alignment-team-line { display: flex; width: fit-content; max-width: 100%; gap: 4px; align-items: center; min-width: 0; }
+.alignment-home .alignment-team-line { margin-right: auto; }
+.alignment-away .alignment-team-line { margin-left: auto; }
 .alignment-team-line strong { min-width: 0; overflow: hidden; font-size: 15px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .alignment-home .alignment-team-line strong { text-align: left; }
 .alignment-away .alignment-team-line strong { text-align: right; }

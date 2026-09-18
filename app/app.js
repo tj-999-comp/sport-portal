@@ -1,4 +1,5 @@
-const state = { data: null, updating: false, dates: [], selectedDate: null };
+const LEAGUES = { j1: 'J1', j2: 'J2', j3: 'J3' };
+const state = { data: null, dataByLeague: new Map(), updating: false, dates: [], selectedDate: null, selectedDates: {}, selectedLeague: 'j1', requestToken: 0 };
 const $ = (selector) => document.querySelector(selector);
 let dateNavScrollTimer = null;
 let matchWheelUnlockTimer = null;
@@ -33,17 +34,46 @@ function weekdayLabel(dateString) {
 function todayJst() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()); }
 function escapeHtml(value) { return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
 
-function renderStatus(update = {}) {
+function leagueLabel(league = state.selectedLeague) { return LEAGUES[league] || league; }
+
+function renderStatus(update = {}, league = state.selectedLeague) {
   const indicator = $('#status-indicator');
   indicator.className = `status-indicator ${update.status || ''}`;
   const failed = update.status === 'failure';
   $('#status-label').textContent = failed ? '更新失敗' : update.status === 'success' ? '更新済み' : '読み込み中';
-  $('#status-detail').textContent = failed ? (update.message || '前回正常に取得したデータを表示しています') : update.message || 'J1リーグのデータを表示しています';
+  $('#status-detail').textContent = failed ? (update.message || '前回正常に取得したデータを表示しています') : update.message || `${leagueLabel(league)}リーグのデータを表示しています`;
   $('#updated-at').textContent = update.at ? formatTime(update.at) : '';
+}
+
+function updateLeagueTabSelection(league) {
+  document.querySelectorAll('.league-tab').forEach((button) => {
+    const selected = button.dataset.league === league;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-selected', String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  });
+  const panel = $('#league-panel');
+  panel.setAttribute('aria-label', `${leagueLabel(league)}の試合日程・結果`);
+  document.title = `スポーツポータル | 2026 ${leagueLabel(league)}`;
+}
+
+function renderLeagueLoading(league) {
+  state.selectedLeague = league;
+  state.selectedDate = state.selectedDates[league] || null;
+  state.data = null;
+  updateLeagueTabSelection(league);
+  renderStatus({ status: 'loading', message: `${leagueLabel(league)}リーグのデータを読み込んでいます` }, league);
+  renderDateNav([], null);
+  $('#match-days').innerHTML = '';
+  $('#standings-body').innerHTML = '';
+  $('#empty-state').hidden = false;
+  $('#empty-state').textContent = 'データを読み込んでいます';
+  updateMatchDaysHeight(null);
 }
 
 function updateDateSelection(date, centerDate = true) {
   state.selectedDate = date;
+  state.selectedDates[state.selectedLeague] = date;
   $('#selected-date').textContent = date ? formatLongDate(date) : '';
   const activeButton = [...$('#date-nav').querySelectorAll('.date-chip')].find((button) => button.dataset.date === date);
   $('#date-nav').querySelectorAll('.date-chip').forEach((button) => button.classList.toggle('active', button === activeButton));
@@ -265,8 +295,10 @@ function renderMatches(matches = []) {
   const today = todayJst();
   state.dates = dates;
   const defaultDate = dates.find((date) => date >= today) || dates[0];
-  const selectedDate = state.selectedDate && dates.includes(state.selectedDate) ? state.selectedDate : defaultDate;
+  const rememberedDate = state.selectedDates[state.selectedLeague];
+  const selectedDate = rememberedDate && dates.includes(rememberedDate) ? rememberedDate : defaultDate;
   state.selectedDate = selectedDate || null;
+  state.selectedDates[state.selectedLeague] = state.selectedDate;
   renderDateNav(dates, selectedDate);
   updateDateSelection(selectedDate);
   dates.forEach((date) => {
@@ -289,6 +321,10 @@ function renderMatches(matches = []) {
     });
     root.append(day);
   });
+  if (!dates.length) {
+    $('#empty-state').textContent = `${leagueLabel(state.selectedLeague)}の試合データはありません`;
+    $('#empty-state').hidden = false;
+  }
   root.onscroll = syncDateSelectionFromScroll;
   $('#date-nav').onscroll = syncDateSelectionFromDateNav;
   updateScrollState(root);
@@ -302,17 +338,37 @@ function renderMatches(matches = []) {
 function renderStandings(rows = []) {
   $('#standings-body').innerHTML = rows.map((row) => `<tr><td>${escapeHtml(row.rank)}</td><td class="team-column">${escapeHtml(row.team)}</td><td>${escapeHtml(row.played)}</td><td>${escapeHtml(row.wins)}</td><td>${escapeHtml(row.draws)}</td><td>${escapeHtml(row.losses)}</td><td>${escapeHtml(row.goalsFor)}</td><td>${escapeHtml(row.goalsAgainst)}</td><td>${escapeHtml(row.goalDifference)}</td><td>${escapeHtml(row.points)}</td></tr>`).join('');
 }
-function render(data) { state.data = data; renderStatus(data.update); renderMatches(data.matches); renderStandings(data.standings); }
+function render(data) {
+  const league = LEAGUES[data?.league] ? data.league : state.selectedLeague;
+  state.selectedLeague = league;
+  state.data = data;
+  state.dataByLeague.set(league, data);
+  updateLeagueTabSelection(league);
+  renderStatus(data.update, league);
+  renderMatches(data.matches);
+  renderStandings(data.standings);
+  $('#empty-state').textContent = 'データを取得できていません';
+}
 
-async function loadData() {
+async function loadData(league = state.selectedLeague, { force = false } = {}) {
+  const cached = state.dataByLeague.get(league);
+  if (cached && !force) { render(cached); return cached; }
+  const requestToken = ++state.requestToken;
+  renderLeagueLoading(league);
   try {
-    const response = await fetch('/api/data', { headers: { Accept: 'application/json' } });
+    const response = await fetch(`/api/data?league=${encodeURIComponent(league)}`, { headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error('データの読み込みに失敗しました');
-    render(await response.json());
+    const data = await response.json();
+    if (requestToken !== state.requestToken || (data.league && data.league !== league)) return data;
+    render(data);
+    return data;
   } catch (error) {
-    renderStatus({ status: 'failure', message: error.message });
+    if (requestToken !== state.requestToken) return null;
+    renderStatus({ status: 'failure', message: error.message }, league);
+    $('#empty-state').textContent = `${leagueLabel(league)}のデータを取得できませんでした`;
     $('#empty-state').hidden = false;
     requestAnimationFrame(updatePageScrollState);
+    return null;
   }
 }
 async function refresh() {
@@ -320,13 +376,14 @@ async function refresh() {
   if (!window.confirm('試合予定・結果・順位表を更新します。よろしいですか？')) return;
   state.updating = true;
   const button = $('#refresh-button'); button.disabled = true; button.textContent = '更新中…';
-  renderStatus({ status: 'success', message: '公式サイトからデータを取得しています' });
+  const league = state.selectedLeague;
+  renderStatus({ status: 'success', message: `${leagueLabel(league)}の公式サイトからデータを取得しています` }, league);
   try {
-    const response = await fetch('/api/update', { method: 'POST', headers: { Accept: 'application/json' } });
+    const response = await fetch(`/api/update?league=${encodeURIComponent(league)}`, { method: 'POST', headers: { Accept: 'application/json' } });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || '更新に失敗しました');
     render(result.data);
-  } catch (error) { renderStatus({ status: 'failure', message: error.message }); }
+  } catch (error) { renderStatus({ status: 'failure', message: error.message }, league); }
   finally { state.updating = false; button.disabled = false; button.textContent = '手動更新'; }
 }
 
@@ -392,6 +449,29 @@ $('#standings-button').addEventListener('click', () => {
   else closeStandings();
 });
 $('#standings-backdrop').addEventListener('click', closeStandings);
+function selectLeague(league) {
+  if (!LEAGUES[league] || league === state.selectedLeague) return;
+  closeStandings();
+  loadData(league);
+}
+
+document.querySelectorAll('.league-tab').forEach((button) => {
+  button.addEventListener('click', () => selectLeague(button.dataset.league));
+  button.addEventListener('keydown', (event) => {
+    const tabs = [...document.querySelectorAll('.league-tab')];
+    const index = tabs.indexOf(button);
+    const nextIndex = event.key === 'ArrowRight' || event.key === 'ArrowDown'
+      ? (index + 1) % tabs.length
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+        ? (index - 1 + tabs.length) % tabs.length
+        : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    const next = tabs[nextIndex];
+    next.focus();
+    selectLeague(next.dataset.league);
+  });
+});
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeStandings(); });
 window.addEventListener('resize', () => {
   updateScrollState($('#date-nav'));
@@ -399,4 +479,4 @@ window.addEventListener('resize', () => {
   updateMatchDaysHeight();
   requestAnimationFrame(updatePageScrollState);
 });
-loadData();
+loadData('j1');

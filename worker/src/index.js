@@ -1,33 +1,66 @@
+const SEASON = '2026';
+const LEAGUE_DEFINITIONS = {
+  j1: { label: 'J1', schedulePath: 'j1', dataKey: 'j1-2026' },
+  j2: { label: 'J2', schedulePath: 'j2', dataKey: 'j2-2026' },
+  j3: { label: 'J3', schedulePath: 'j3', dataKey: 'j3-2026' }
+};
+
 export const CONFIG = {
-  season: '2026',
+  season: SEASON,
   league: 'j1',
   scheduleUrl: 'https://www.jleague.jp/j1/match/search-list/?category=j1&startdate=2026-01-01&enddate=2026-12-31',
   standingsUrl: 'https://www.jleague.jp/j1/standings/',
-  dataKey: 'j1-2026'
+  dataKey: LEAGUE_DEFINITIONS.j1.dataKey,
+  label: LEAGUE_DEFINITIONS.j1.label,
+  schedulePath: LEAGUE_DEFINITIONS.j1.schedulePath
 };
 
-export function scheduleUrls(year = CONFIG.season) {
+export const LEAGUE_KEYS = Object.keys(LEAGUE_DEFINITIONS);
+export const LEAGUES = Object.fromEntries(LEAGUE_KEYS.map((league) => [league, {
+  ...LEAGUE_DEFINITIONS[league],
+  season: SEASON,
+  league,
+  scheduleUrl: `https://www.jleague.jp/${LEAGUE_DEFINITIONS[league].schedulePath}/match/search-list/?category=${league}&startdate=${SEASON}-01-01&enddate=${SEASON}-12-31`,
+  standingsUrl: `https://www.jleague.jp/${LEAGUE_DEFINITIONS[league].schedulePath}/standings/`
+}]));
+
+export function getLeagueConfig(league = CONFIG.league) { return LEAGUES[league] || null; }
+
+export function scheduleUrls(year = CONFIG.season, config = CONFIG) {
   return Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
     const lastDay = new Date(Date.UTC(Number(year), month, 0)).getUTCDate();
     const first = `${year}-${String(month).padStart(2, '0')}-01`;
     const last = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
-    return `${CONFIG.scheduleUrl.split('&startdate=')[0]}&startdate=${first}&enddate=${last}`;
+    return `${config.scheduleUrl.split('&startdate=')[0]}&startdate=${first}&enddate=${last}`;
   });
 }
 
-const TEAM_NAMES = [
+const J1_TEAM_NAMES = [
   ['ＦＣ町田ゼルビア', '町田'], ['ヴィッセル神戸', '神戸'], ['鹿島アントラーズ', '鹿島'], ['柏レイソル', '柏'],
   ['サンフレッチェ広島', '広島'], ['ＦＣ東京', 'FC東京'], ['横浜Ｆ・マリノス', '横浜FM'], ['ファジアーノ岡山', '岡山'],
   ['セレッソ大阪', 'Ｃ大阪'], ['川崎フロンターレ', '川崎Ｆ'], ['水戸ホーリーホック', '水戸'], ['浦和レッズ', '浦和'],
   ['ガンバ大阪', 'Ｇ大阪'], ['名古屋グランパス', '名古屋'], ['京都サンガF.C.', '京都'], ['アビスパ福岡', '福岡'],
   ['清水エスパルス', '清水'], ['Ｖ・ファーレン長崎', '長崎'], ['東京ヴェルディ', '東京Ｖ'], ['ジェフユナイテッド千葉', '千葉']
 ];
+const OTHER_TEAM_NAMES = [
+  ['北海道コンサドーレ札幌', '札幌'], ['ヴァンラーレ八戸', '八戸'], ['モンテディオ山形', '山形'], ['いわきＦＣ', 'いわき'],
+  ['ＲＢ大宮アルディージャ', '大宮'], ['横浜ＦＣ', '横浜FC'], ['湘南ベルマーレ', '湘南'], ['カターレ富山', '富山'],
+  ['ベガルタ仙台', '仙台'], ['アルビレックス新潟', '新潟'], ['藤枝ＭＹＦＣ', '藤枝'], ['サガン鳥栖', '鳥栖'],
+  ['栃木シティ', '栃木Ｃ'], ['大分トリニータ', '大分'], ['徳島ヴォルティス', '徳島'], ['愛媛ＦＣ', '愛媛'],
+  ['ＦＣ今治', '今治'], ['レノファ山口ＦＣ', '山口'], ['ブラウブリッツ秋田', '秋田'], ['福島ユナイテッドＦＣ', '福島'],
+  ['鹿児島ユナイテッドＦＣ', '鹿児島'], ['ＦＣ琉球', '琉球'], ['ロアッソ熊本', '熊本'], ['ヴァンフォーレ甲府', '甲府'],
+  ['高知ユナイテッドＳＣ', '高知'], ['ＳＣ相模原', '相模原'], ['松本山雅ＦＣ', '松本'], ['カマタマーレ讃岐', '讃岐'],
+  ['ギラヴァンツ北九州', '北九州'], ['ザスパ群馬', '群馬'], ['ＦＣ岐阜', '岐阜'], ['ＦＣ大阪', 'FC大阪'],
+  ['ガイナーレ鳥取', '鳥取'], ['ＡＣ長野パルセイロ', '長野'], ['奈良クラブ', '奈良'], ['ツエーゲン金沢', '金沢'],
+  ['レイラック滋賀ＦＣ', '滋賀'], ['栃木ＳＣ', '栃木SC'], ['テゲバジャーロ宮崎', '宮崎'], ['鹿児島ユナイテッドFC', '鹿児島']
+];
+const TEAM_NAMES = [...J1_TEAM_NAMES, ...OTHER_TEAM_NAMES];
 const TEAM_LOOKUP = TEAM_NAMES.flatMap(([name, short]) => [[name, { name, short }], [name.replaceAll('Ｆ', 'F').replaceAll('Ｃ', 'C'), { name, short }], [short, { name, short }]]);
 const SOURCE_HEADERS = { 'User-Agent': 'sport-portal/1.0 (+https://www.jleague.jp/)' };
 
-export function emptyData(update = {}) {
-  return { schemaVersion: 1, league: CONFIG.league, season: CONFIG.season, matches: [], standings: [], update };
+export function emptyData(update = {}, config = CONFIG) {
+  return { schemaVersion: 1, league: config.league, season: config.season, matches: [], standings: [], update };
 }
 
 function textFromHtml(html) {
@@ -110,7 +143,7 @@ function parseLinkedMatches(html) {
   return matches;
 }
 
-export function parseScheduleHtml(html) {
+export function parseScheduleHtml(html, _config = CONFIG) {
   const explicit = parseExplicitMatches(html);
   const parsed = explicit.length ? explicit : parseLinkedMatches(html);
   const unique = new Map(parsed.map((match) => [`${match.date}-${match.home.short}-${match.away.short}-${match.kickoff}`, match]));
@@ -137,22 +170,24 @@ function validMatches(matches) {
 }
 function validStandings(standings) { return standings.length >= 2 && standings.every((row) => Number.isInteger(row.rank) && row.team); }
 
-export async function fetchFreshData(fetchImpl = fetch, now = new Date()) {
+export async function fetchFreshData(fetchImpl = fetch, now = new Date(), league = CONFIG.league) {
+  const config = getLeagueConfig(league);
+  if (!config) throw new Error(`未対応のリーグです: ${league}`);
   const schedulePages = [];
-  for (const url of scheduleUrls()) {
+  for (const url of scheduleUrls(config.season, config)) {
     const response = await fetchImpl(url, { headers: SOURCE_HEADERS, redirect: 'follow' });
     if (!response.ok) throw new Error(`公式サイトの応答エラー (${response.status}/200)`);
     schedulePages.push(await response.text());
   }
-  const standingsResponse = await fetchImpl(CONFIG.standingsUrl, { headers: SOURCE_HEADERS, redirect: 'follow' });
+  const standingsResponse = await fetchImpl(config.standingsUrl, { headers: SOURCE_HEADERS, redirect: 'follow' });
   if (!standingsResponse.ok) throw new Error(`公式サイトの応答エラー (200/${standingsResponse.status})`);
   const scheduleHtml = schedulePages.join('\n');
   const standingsHtml = await standingsResponse.text();
-  const matches = parseScheduleHtml(scheduleHtml);
+  const matches = parseScheduleHtml(scheduleHtml, config);
   const standings = parseStandingsHtml(standingsHtml);
   if (!validMatches(matches)) throw new Error('試合データを抽出できませんでした');
   if (!validStandings(standings)) throw new Error('順位表を抽出できませんでした');
-  return { schemaVersion: 1, league: CONFIG.league, season: CONFIG.season, matches, standings, update: { status: 'success', at: now.toISOString() } };
+  return { schemaVersion: 1, league: config.league, season: config.season, matches, standings, update: { status: 'success', at: now.toISOString() } };
 }
 
 function json(data, status = 200) { return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }); }
@@ -167,44 +202,52 @@ function authorized(request, env) {
 }
 function unauthorized() { return new Response('Authentication required', { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="sport-portal", charset="UTF-8"', 'Cache-Control': 'no-store' } }); }
 
-let activeUpdatePromise = null;
+const activeUpdatePromises = new Map();
 
-async function performUpdateInternal(env, now, fetchImpl) {
-  const previous = (await env.SPORTAL_DATA?.get(CONFIG.dataKey, 'json')) || emptyData();
+async function performUpdateInternal(env, now, fetchImpl, config) {
+  const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyData({}, config);
   try {
-    const data = await fetchFreshData(fetchImpl, now);
-    await env.SPORTAL_DATA.put(CONFIG.dataKey, JSON.stringify(data));
+    const data = await fetchFreshData(fetchImpl, now, config.league);
+    await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(data));
     return data;
   } catch (error) {
     const failed = { ...previous, update: { status: 'failure', at: now.toISOString(), message: error instanceof Error ? error.message : '更新に失敗しました' } };
-    await env.SPORTAL_DATA.put(CONFIG.dataKey, JSON.stringify(failed));
+    await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(failed));
     throw Object.assign(new Error(failed.update.message), { data: failed });
   }
 }
 
-export async function performUpdate(env, now = new Date(), fetchImpl = fetch) {
+export async function performUpdate(env, now = new Date(), fetchImpl = fetch, league = CONFIG.league) {
+  const config = getLeagueConfig(league);
+  if (!config) throw new Error(`未対応のリーグです: ${league}`);
   // A scheduled event and a manual request can share an isolate. Reuse the
   // in-flight operation so a failure cannot overwrite a newer successful write.
-  if (activeUpdatePromise) return activeUpdatePromise;
-  activeUpdatePromise = performUpdateInternal(env, now, fetchImpl);
-  try { return await activeUpdatePromise; }
-  finally { activeUpdatePromise = null; }
+  if (activeUpdatePromises.has(config.league)) return activeUpdatePromises.get(config.league);
+  const promise = performUpdateInternal(env, now, fetchImpl, config);
+  activeUpdatePromises.set(config.league, promise);
+  try { return await promise; }
+  finally { activeUpdatePromises.delete(config.league); }
 }
 
 export default {
   async fetch(request, env) {
     if (!authorized(request, env)) return unauthorized();
     const url = new URL(request.url);
-    if (url.pathname === '/api/data' && request.method === 'GET') return json((await env.SPORTAL_DATA.get(CONFIG.dataKey, 'json')) || emptyData());
+    const league = url.searchParams.get('league') || CONFIG.league;
+    const config = getLeagueConfig(league);
+    if (!config) return json({ error: `未対応のリーグです: ${league}` }, 400);
+    if (url.pathname === '/api/data' && request.method === 'GET') return json((await env.SPORTAL_DATA.get(config.dataKey, 'json')) || emptyData({}, config));
     if (url.pathname === '/api/status' && request.method === 'GET') {
-      const data = (await env.SPORTAL_DATA.get(CONFIG.dataKey, 'json')) || emptyData();
+      const data = (await env.SPORTAL_DATA.get(config.dataKey, 'json')) || emptyData({}, config);
       return json({ update: data.update, hasData: data.matches.length > 0 || data.standings.length > 0 });
     }
     if (url.pathname === '/api/update' && request.method === 'POST') {
-      try { return json({ data: await performUpdate(env) }); }
+      try { return json({ data: await performUpdate(env, new Date(), fetch, league) }); }
       catch (error) { return json({ error: error.message, data: error.data }, 502); }
     }
     return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
   },
-  async scheduled(_event, env, ctx) { ctx.waitUntil(performUpdate(env).catch(() => undefined)); }
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(Promise.allSettled(LEAGUE_KEYS.map((league) => performUpdate(env, new Date(), fetch, league))));
+  }
 };

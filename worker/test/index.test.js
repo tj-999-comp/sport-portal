@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { emptyData, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
+import { emptyData, getLeagueConfig, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
 import { onRequest as protectPagesRequest } from '../../functions/_middleware.js';
 import worker from '../src/index.js';
 
@@ -46,6 +46,20 @@ test('Worker protects data and update APIs with Basic auth', async () => {
   assert.deepEqual(await authenticated.json(), { update: {}, hasData: false });
 });
 
+test('league API requests use isolated empty payloads and reject unknown leagues', async () => {
+  const env = {
+    BASIC_AUTH_USER: 'owner',
+    BASIC_AUTH_PASSWORD: 'secret',
+    SPORTAL_DATA: { async get() { return null; }, async put() {} }
+  };
+  const auth = { Authorization: basicAuth('owner', 'secret') };
+  const j2 = await worker.fetch(new Request('https://example.test/api/data?league=j2', { headers: auth }), env);
+  assert.equal(j2.status, 200);
+  assert.deepEqual(await j2.json(), emptyData({}, getLeagueConfig('j2')));
+  const invalid = await worker.fetch(new Request('https://example.test/api/data?league=invalid', { headers: auth }), env);
+  assert.equal(invalid.status, 400);
+});
+
 test('static privacy controls prevent indexing', async () => {
   const robots = await readFile(new URL('../../app/robots.txt', import.meta.url), 'utf8');
   const headers = await readFile(new URL('../../app/_headers', import.meta.url), 'utf8');
@@ -71,6 +85,16 @@ test('portal root links to the J.League page and keeps the review page separate'
   assert.match(portal, /href="\/design-review\.html"/);
   assert.match(jLeague, /href="\/"/);
   assert.match(jLeague, /href="\/design-review\.html"/);
+});
+
+test('J.League page exposes accessible J1/J2/J3 tabs below the date navigation', async () => {
+  const html = await readFile(new URL('../../app/j-league/index.html', import.meta.url), 'utf8');
+  assert.match(html, /class="date-nav"[^>]*id="date-nav"/);
+  assert.match(html, /class="league-tabs"[^>]*role="tablist"/);
+  for (const league of ['j1', 'j2', 'j3']) {
+    assert.match(html, new RegExp(`role="tab"[^>]*data-league="${league}"`));
+  }
+  assert.match(html, /id="league-panel"[^>]*role="tabpanel"/);
 });
 
 test('STG Wrangler environment is isolated and manual-only by default', async () => {

@@ -57,6 +57,47 @@ const dateOptions = [
   ['アクセントバー', 'date-accent']
 ];
 
+const scoreOptions = [
+  ['勝敗見出し', 'score-result-heading'],
+  ['勝者帯', 'score-winner-band'],
+  ['勝者矢印', 'score-winner-arrow'],
+  ['トロフィー', 'score-trophy'],
+  ['WIN / LOSE', 'score-win-lose'],
+  ['勝者を上段', 'score-winner-top'],
+  ['勝利スタンプ', 'score-stamp'],
+  ['勝敗色分け', 'score-result-color'],
+  ['スコアボード式', 'score-board'],
+  ['勝者を主役', 'score-winner-focus']
+];
+
+const previousScoreOptions = [
+  ['横一列', 'score-inline'],
+  ['左右カラム', 'score-columns'],
+  ['中央スコア', 'score-center'],
+  ['スコアピル', 'score-pill'],
+  ['縦積みコンパクト', 'score-stacked'],
+  ['勝者ラベル', 'score-winner-label'],
+  ['勝敗バッジ', 'score-result-badge'],
+  ['勝者マーク', 'score-winner-mark'],
+  ['勝敗カラム', 'score-result-columns'],
+  ['勝者ハイライト', 'score-winner-highlight']
+];
+
+const scoreAlignmentOptions = [
+  ['左右端揃え・近接', 'alignment-outer'],
+  ['中央距離固定・近接', 'alignment-center'],
+  ['中央仕切り線・近接', 'alignment-divider']
+];
+
+const motionOptions = [
+  ['中央スナップ', 'motion-snap', '止まる位置を日付の中央に固定'],
+  ['1日ロック', 'motion-lock', '入力の勢いを受けても1日だけ進む'],
+  ['しきい値付き', 'motion-threshold', '小さな揺れでは日付を切り替えない'],
+  ['即時ページ送り', 'motion-direct', '入力を検知した瞬間に次の日へ'],
+  ['日付自由／試合1日', 'motion-split', '日付は連続、試合一覧は1日ずつ']
+];
+const motionSwipeThreshold = 72;
+
 const dates = [
   ['9/5', '土'],
   ['9/6', '日'],
@@ -99,9 +140,85 @@ function createDateOption([title, variant], index) {
   </article>`;
 }
 
+function createScoreOption([title, variant], index, label = '案') {
+  return `<article class="review-card score-card">
+    <div class="card-caption"><span>${label} ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+    <div class="score-preview ${variant}">
+      <p class="score-meta">18:00 · 第29節</p>
+      <p class="score-victory-note">浦和の勝利</p>
+      <div class="score-match">
+        <div class="score-team home winner">
+          <span class="score-marker" aria-hidden="true">✓</span>
+          <span class="score-result-label">勝者</span>
+          <strong>浦和</strong><b>2</b>
+        </div>
+        <span class="score-divider" aria-hidden="true">—</span>
+        <div class="score-team away loser">
+          <span class="score-result-label">敗者</span>
+          <span class="score-marker" aria-hidden="true">—</span>
+          <b>1</b><strong>鹿島</strong>
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function createScoreAlignmentOption([title, variant], index) {
+  return `<article class="review-card alignment-card">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+    <div class="alignment-preview ${variant}">
+      <p class="alignment-meta">18:00 · 第29節</p>
+      <div class="alignment-match">
+        <div class="alignment-side alignment-home winner">
+          <div class="alignment-team-line"><div class="alignment-name-block"><span class="alignment-role">Home</span><strong>浦和</strong></div><b>2</b></div>
+        </div>
+        <span class="alignment-divider-mark" aria-hidden="true">-</span>
+        <div class="alignment-side alignment-away loser">
+          <div class="alignment-team-line"><b>1</b><div class="alignment-name-block"><span class="alignment-role">Away</span><strong>鹿島</strong></div></div>
+        </div>
+      </div>
+      <p class="alignment-note">チーム名は外側、得点は中央寄り</p>
+    </div>
+  </article>`;
+}
+
+function createMotionOption([title, variant, description], index) {
+  const motionDates = ['9/5', '9/6', '9/7', '9/8', '9/9', '9/10', '9/11', '9/12', '9/13'];
+  const teamPairs = [['鹿島', '広島'], ['浦和', '神戸'], ['柏', '新潟'], ['川崎', 'G大阪'], ['東京', '清水'], ['横浜FM', '町田'], ['福岡', '名古屋'], ['京都', 'C大阪'], ['FC東京', '湘南'], ['磐田', '札幌']];
+  const pages = motionDates.map((date, dateIndex) => {
+    const matchCount = dateIndex % 2 === 0 ? 2 : 10;
+    const matches = teamPairs.slice(0, matchCount).map(([home, away], matchIndex) => `<div class="motion-match-row"><span>${home}</span><b>${matchIndex % 3 === 0 && dateIndex % 2 ? '2 — 1' : '— — —'}</b><span>${away}</span></div>`).join('');
+    return `<article class="motion-page" data-motion-page="${dateIndex}">
+      <div class="motion-page-head"><span>試合日</span><div><strong>${date}</strong><small>${matchCount}試合</small></div></div>
+      <div class="motion-match-list">${matches}</div>
+    </article>`;
+  }).join('');
+  const dateRail = motionDates.map((date, dateIndex) => `<button class="motion-date${dateIndex === 1 ? ' is-active' : ''}" type="button" data-motion-date="${dateIndex}" aria-label="${date}を表示"><span>${date}</span></button>`).join('');
+  return `<article class="review-card motion-card" data-motion-variant="${variant}">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong>${index === 4 ? '<em class="choice-tag">本命</em>' : ''}</div>
+    <div class="motion-preview ${variant}">
+      <div class="motion-date-rail" data-motion-date-rail>${dateRail}</div>
+      <div class="motion-window" data-motion-window>
+        <div class="motion-track" data-motion-track>${pages}</div>
+      </div>
+      <div class="motion-readout"><span data-motion-description>${description}</span><output data-motion-status>2 / ${motionDates.length}</output></div>
+      <div class="motion-controls">
+        <button type="button" data-motion-prev aria-label="前の日へ">←</button>
+        <span>横入力デモ</span>
+        <button type="button" data-motion-next aria-label="次の日へ">→</button>
+      </div>
+      <p class="motion-hint">左右にドラッグ / ホイール / 矢印</p>
+    </div>
+  </article>`;
+}
+
 document.querySelector('#league-options').innerHTML = leagueOptions.map(createLeagueOption).join('');
 document.querySelector('#navigation-options').innerHTML = navigationOptions.map(createNavigationOption).join('');
 document.querySelector('#date-options').innerHTML = dateOptions.map(createDateOption).join('');
+document.querySelector('#score-options').innerHTML = scoreOptions.map((option, index) => createScoreOption(option, index)).join('');
+document.querySelector('#score-history-options').innerHTML = previousScoreOptions.map((option, index) => createScoreOption(option, index, '旧案')).join('');
+document.querySelector('#score-alignment-options').innerHTML = scoreAlignmentOptions.map(createScoreAlignmentOption).join('');
+document.querySelector('#motion-options').innerHTML = motionOptions.map(createMotionOption).join('');
 
 document.querySelectorAll('.league-row').forEach((button) => {
   button.addEventListener('click', () => {
@@ -134,3 +251,103 @@ document.querySelectorAll('.date-options').forEach((group) => {
     });
   });
 });
+
+function setMotionIndex(card, nextIndex, behavior = 'smooth') {
+  const track = card.querySelector('[data-motion-track]');
+  const pages = track.querySelectorAll('.motion-page');
+  const index = Math.min(pages.length - 1, Math.max(0, nextIndex));
+  card.dataset.motionIndex = String(index);
+  track.style.setProperty('--motion-offset', `${index * -100}%`);
+  track.style.setProperty('--motion-drag', '0px');
+  card.querySelector('[data-motion-status]').textContent = `${index + 1} / ${pages.length}`;
+  card.querySelectorAll('.motion-date').forEach((date) => date.classList.toggle('is-active', Number(date.dataset.motionDate) === index));
+  if (behavior === 'auto') track.classList.add('is-immediate');
+  else track.classList.remove('is-immediate');
+  window.clearTimeout(card.motionImmediateTimer);
+  if (behavior === 'auto') card.motionImmediateTimer = window.setTimeout(() => track.classList.remove('is-immediate'), 30);
+}
+
+function setupMotionCard(card) {
+  const preview = card.querySelector('.motion-preview');
+  const track = card.querySelector('[data-motion-track]');
+  let pointerStart = null;
+  let pointerDelta = 0;
+  let pointerId = null;
+  let touchStart = null;
+  let touchDelta = 0;
+  let lockedUntil = 0;
+  const variant = card.dataset.motionVariant;
+  card.dataset.motionIndex = '1';
+
+  const moveByInput = (direction, behavior = 'smooth') => {
+    if (Date.now() < lockedUntil) return;
+    const current = Number(card.dataset.motionIndex || 1);
+    setMotionIndex(card, current + direction, behavior);
+    if (variant === 'motion-lock' || variant === 'motion-split') lockedUntil = Date.now() + 420;
+  };
+
+  preview.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch' || event.target.closest('button, [data-motion-date-rail]')) return;
+    pointerStart = event.clientX;
+    pointerDelta = 0;
+    pointerId = event.pointerId;
+  });
+  preview.addEventListener('pointermove', (event) => {
+    if (pointerStart === null || event.pointerId !== pointerId) return;
+    pointerDelta = event.clientX - pointerStart;
+    track.classList.add('is-dragging');
+    if (variant !== 'motion-direct') track.style.setProperty('--motion-drag', `${Math.max(-72, Math.min(72, pointerDelta))}px`);
+  });
+  const finishPointer = (event) => {
+    if (pointerStart === null || event.pointerId !== pointerId) return;
+    const threshold = variant === 'motion-threshold' ? motionSwipeThreshold : 24;
+    const direction = Math.abs(pointerDelta) >= threshold ? (pointerDelta < 0 ? 1 : -1) : 0;
+    track.classList.remove('is-dragging');
+    track.style.setProperty('--motion-drag', '0px');
+    pointerStart = null;
+    pointerDelta = 0;
+    pointerId = null;
+    if (direction) moveByInput(direction);
+  };
+  preview.addEventListener('pointerup', finishPointer);
+  preview.addEventListener('pointercancel', finishPointer);
+  preview.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 1 || event.target.closest('button, [data-motion-date-rail]')) return;
+    touchStart = event.touches[0].clientX;
+    touchDelta = 0;
+  }, { passive: true });
+  preview.addEventListener('touchmove', (event) => {
+    if (touchStart === null || event.touches.length !== 1) return;
+    touchDelta = event.touches[0].clientX - touchStart;
+    event.preventDefault();
+    track.classList.add('is-dragging');
+    if (variant !== 'motion-direct') track.style.setProperty('--motion-drag', `${Math.max(-72, Math.min(72, touchDelta))}px`);
+  }, { passive: false });
+  const finishTouch = () => {
+    if (touchStart === null) return;
+    const threshold = variant === 'motion-threshold' ? motionSwipeThreshold : 24;
+    const direction = Math.abs(touchDelta) >= threshold ? (touchDelta < 0 ? 1 : -1) : 0;
+    track.classList.remove('is-dragging');
+    track.style.setProperty('--motion-drag', '0px');
+    touchStart = null;
+    touchDelta = 0;
+    if (direction) moveByInput(direction);
+  };
+  preview.addEventListener('touchend', finishTouch, { passive: true });
+  preview.addEventListener('touchcancel', finishTouch, { passive: true });
+  preview.addEventListener('wheel', (event) => {
+    if (event.target.closest('[data-motion-date-rail]')) return;
+    const horizontalDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.shiftKey ? event.deltaY : 0;
+    if (!horizontalDelta) return;
+    event.preventDefault();
+    moveByInput(horizontalDelta > 0 ? 1 : -1, variant === 'motion-direct' ? 'auto' : 'smooth');
+  }, { passive: false });
+  card.querySelector('[data-motion-prev]').addEventListener('click', () => moveByInput(-1, variant === 'motion-direct' ? 'auto' : 'smooth'));
+  card.querySelector('[data-motion-next]').addEventListener('click', () => moveByInput(1, variant === 'motion-direct' ? 'auto' : 'smooth'));
+  card.querySelector('[data-motion-date-rail]').addEventListener('click', (event) => {
+    const date = event.target.closest('[data-motion-date]');
+    if (date) setMotionIndex(card, Number(date.dataset.motionDate), 'smooth');
+  });
+}
+
+document.querySelectorAll('.motion-card').forEach(setupMotionCard);

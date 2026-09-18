@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>スポーツポータル — v1.0.1 デザインレビュー</title>
-  <link rel="stylesheet" href="/design-review.css">
+  <link rel="stylesheet" href="/design-review.css?v=1.0.1-score-alignment-5">
 </head>
 <body>
   <main class="review-page">
@@ -22,10 +22,32 @@
     </header>
 
     <nav class="review-index" aria-label="レビューページ内目次">
-      <a href="#league">01 リーグ選択</a>
-      <a href="#navigation">02 下部メニュー</a>
-      <a href="#dates">03 日付UI</a>
+      <a href="#motion">02 横スクロールの動き</a>
+      <a href="#score-alignment">得点の列揃え 3案</a>
     </nav>
+
+    <section class="review-section motion-section" id="motion" aria-labelledby="motion-title">
+      <div class="section-heading">
+        <p class="section-number">02</p>
+        <div>
+          <h2 id="motion-title">横スクロールの動き</h2>
+          <p>日付は連続して動き、試合一覧は1回の横入力で1日だけ進む5案です。左右にドラッグするか、各案の矢印を押して動きを確認してください。</p>
+        </div>
+      </div>
+      <div class="motion-guide"><span class="motion-guide-dot"></span><span>現在位置</span><span class="motion-guide-line"></span><span>入力1回 = 1日</span></div>
+      <div class="review-grid motion-grid" id="motion-options"></div>
+    </section>
+
+    <section class="review-section score-alignment-section" id="score-alignment" aria-labelledby="score-alignment-title">
+      <div class="section-heading">
+        <p class="section-number">NEW</p>
+        <div>
+          <h2 id="score-alignment-title">得点表示の列揃え</h2>
+          <p>左側をHome、右側をAwayとしてチーム名の上に表示し、左右のチーム名・得点・ハイフンの距離を揃えた3案です。</p>
+        </div>
+      </div>
+      <div class="review-grid score-alignment-grid" id="score-alignment-options"></div>
+    </section>
 
     <details class="proposal-history">
       <summary>採用理由・過去提案の扱い</summary>
@@ -43,28 +65,22 @@
       <div class="review-grid league-grid" id="league-options"></div>
     </section>
 
-    <section class="review-section" id="navigation" aria-labelledby="navigation-title">
-      <div class="section-heading">
-        <p class="section-number">02</p>
-        <div>
-          <h2 id="navigation-title">下部3メニュー — 選択デザイン</h2>
-          <p>アイコンとラベルを大きくした、試合・順位・更新の20案です。各案のメニューをクリックして選択状態を切り替えられます。</p>
-        </div>
+    <details class="proposal-history score-current-history">
+      <summary>既存の得点表示10案を表示</summary>
+      <div class="history-content">
+        <section class="review-section" id="scores" aria-labelledby="scores-title">
+          <div class="section-heading">
+            <p class="section-number">02</p>
+            <div>
+              <h2 id="scores-title">得点表示</h2>
+              <p>これまでの案を整理し、どちらが勝ったかを最初に読み取れるようにした追加10案です。終了試合の表示を想定しています。</p>
+            </div>
+          </div>
+          <div class="review-grid score-grid" id="score-options"></div>
+        </section>
       </div>
-      <div class="review-grid navigation-grid" id="navigation-options"></div>
-    </section>
-
-    <section class="review-section" id="dates" aria-labelledby="dates-title">
-      <div class="section-heading">
-        <p class="section-number">03</p>
-        <div>
-          <h2 id="dates-title">リーグページの日付UI</h2>
-          <p>日付の情報量と選択状態を比較する20案です。日付をクリックすると、各案の選択状態を確認できます。</p>
-        </div>
-      </div>
-      <div class="review-grid dates-grid" id="date-options"></div>
-    </section>
+    </details>
   </main>
-  <script src="/design-review.js" type="module"></script>
+  <script src="/design-review.js?v=1.0.1-score-alignment-4" type="module"></script>
 </body>
 </html>

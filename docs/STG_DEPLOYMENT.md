@@ -53,6 +53,39 @@
 - STG WorkerにCron Triggerが設定されていない
 - PagesのService Bindingが本番Workerではなく `sport-portal-api-stg` を指している
 
+## STG受入チェック
+
+本番反映前は、対象コミットとSTG URLを固定して、次の順番で確認結果を記録する。
+
+1. 未認証でトップ、`/api/status`、`/api/data`、`/api/update` が401になる。
+2. 認証後に `/`、`/j-league/`、`/design-review.html` が200になる。
+3. `/api/status` が `success` または初回の空状態を返し、`/api/data` が画面表示に使えるJSONを返す。
+4. 手動更新の成功、取得失敗時の前回データ保持、同時更新時の単一実行を確認する。
+5. 日付選択、試合一覧の横移動、順位表、手動更新、トップへの戻る導線を確認する。
+6. iPhone相当幅、iPad相当幅、PC幅のFirefoxで、横溢れ・直接URL・リロード・戻る操作を確認する。
+7. `robots.txt`、HTMLのrobots meta、`X-Robots-Tag`、HTTPS、主要アセットの404なしを確認する。
+
+確認記録には、対象コミット、確認URL、確認日時、確認者、結果、既知の制約だけを残す。認証情報、KVの実データ、Secret値は記録しない。
+
+## 監視・障害対応
+
+| 対象 | 確認方法 | 異常時の切り分け |
+| --- | --- | --- |
+| Pages | Deploymentsの対象PreviewがActiveか、主要URLのHTTP応答を確認 | Pagesの対象コミット、Functions、Preview Secret、Service Bindingを確認 |
+| Worker | `sport-portal-api-stg` のVersion、Workersのエラー・リクエストを確認 | 認証、`APP_ORIGIN`、KV binding、取得元レスポンスを確認 |
+| KV | STG namespaceの `j1-2026` と `update.status` を確認 | 本番namespaceとIDを照合し、STG側だけを再投入 |
+| Cron | `env.stg.triggers.crons = []` とCloudflare設定を確認 | STGで自動実行が有効になっていれば無効化し、Production設定を変更しない |
+
+障害時は、まず認証・Pages→Worker Service Binding・Worker→STG KVの順に切り分ける。公式取得失敗だけの場合は、前回正常データを保持して失敗状態を確認する。
+
+## 切り戻し・Secret更新・データ再投入
+
+- PagesはDeploymentsから直前の成功Previewを再指定する。STGのブランチやProductionデプロイは変更しない。
+- WorkerはVersion Historyから直前の成功Versionを再デプロイする。KV namespaceは削除しない。
+- Secretを更新するときは、WorkerとPages Previewの両方を更新し、未認証401・認証後200を再確認する。
+- 初期データを再投入するときは、STG KVの `j1-2026` だけを対象にし、`/api/status` と画面表示を確認する。
+- 失敗時は対象コミット、CloudflareのVersion/Deployment、発生時刻、確認結果をIssueへ記録する。Secret値とKV実データは記録しない。
+
 ## 本番反映ルール
 
 STG Previewの確認だけでは本番反映の承認とはみなさない。利用者の明示承認を得るまで、`main`への反映、本番デプロイ、Production Secret・KVの変更、関連Issueのクローズを行わない。

@@ -251,6 +251,7 @@ button { color: inherit; font: inherit; }
 .alignment-divider .alignment-home { padding-right: 12px; }
 .alignment-divider .alignment-away { padding-left: 12px; }
 .alignment-divider .alignment-note { color: var(--ink); }
+.alignment-outer .alignment-team-line { align-items: end; }
 
 /* Horizontal motion review */
 .motion-section { padding-top: 52px; }

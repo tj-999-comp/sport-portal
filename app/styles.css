@@ -54,19 +54,22 @@ h1 { font-size: 12px; font-weight: 800; }
 .match-card:first-child { border-top: 0; padding-top: 2px; }
 .match-meta { align-items: center; color: var(--muted); display: flex; font-size: 10px; justify-content: space-between; margin-bottom: 5px; }
 .match-time { color: var(--ink); font-size: 12px; font-weight: 800; }
-.scoreline { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
-.team-row { align-items: center; display: flex; font-size: 14px; line-height: 1.45; min-width: 0; }
-.team-row.home { justify-content: flex-end; }
-.team-row.away { justify-content: flex-start; }
-.team-row.away .score { margin-right: 6px; order: -1; }
-.team-row.home .score { margin-left: 6px; }
+.scoreline { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.team-row { align-items: end; display: grid; font-size: 14px; gap: 2em; line-height: 1.45; min-width: 0; }
+.team-row.home { grid-template-columns: minmax(0, 1fr) auto; }
+.team-row.away { grid-template-columns: auto minmax(0, 1fr); }
+.team-name-block { display: grid; gap: 3px; min-width: 0; }
+.team-row.home .team-name-block { justify-self: end; text-align: left; }
+.team-row.away .team-name-block { justify-self: start; text-align: right; }
+.team-side-label { color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .06em; line-height: 1; }
 .score-divider { color: var(--muted); font-size: 16px; line-height: 1; }
-.team-row.winner { color: var(--accent); font-weight: 800; }
+.team-row.winner { font-weight: 800; }
 .team-row.winner .score { color: var(--accent); font-size: 16px; }
 .team-row.loser { color: #333; }
 .team-row.loser .score { color: #333; }
-.team-name { overflow: hidden; padding-right: 8px; text-overflow: ellipsis; white-space: nowrap; }
-.score { font-weight: 800; min-width: 20px; text-align: right; }
+.team-name { overflow: hidden; padding-right: 0; text-overflow: ellipsis; white-space: nowrap; }
+.score { align-self: end; font-weight: 800; min-width: 20px; text-align: right; }
+.score-placeholder { visibility: hidden; }
 .match-state { color: var(--muted); font-size: 12px; font-weight: 700; }
 .no-matches { color: var(--muted); margin: 0; padding: 22px 0; text-align: center; }
 .empty-state { color: var(--muted); padding: 32px 0; text-align: center; }

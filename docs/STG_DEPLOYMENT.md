@@ -13,7 +13,7 @@
 | KV binding | `SPORTAL_DATA` | `SPORTAL_DATA` |
 | KV namespace | 本番namespace | STG専用namespace |
 | Secret | Production Secret | STG用Secret |
-| Cron | 1日5回 | 初期は無効、手動更新のみ |
+| 定期更新 | GitHub Actionsで1日5回 | GitHub Actionsで1日5回 |
 
 実際に発行されたPreview URLが初期想定と異なる場合は、Cloudflare設定と `worker/wrangler.toml` の `env.stg.vars.APP_ORIGIN` を一致させる。
 
@@ -24,7 +24,7 @@
 - STG用KV namespace IDを設定
 - STGの `APP_ORIGIN` を分離
 - STGのCronを空配列にして、初期状態では自動取得しない構成に設定
-- Production設定のKV ID、Worker名、Cronを変更していない
+- Production設定のKV ID、Worker名を変更していない
 
 ## Cloudflare設定が必要になる箇所
 
@@ -48,9 +48,9 @@
 
 - STG URLが認証なしで401、正しい認証情報で200になる
 - `/api/status`、`/api/data`、`/api/update` がSTG Workerへ到達する
-- STG KVの `j1-2026` だけが更新され、本番KVが変更されない
+- STG KVの対象リーグキー（`j1-2026`、`j2-2026`、`j3-2026`）だけが更新され、本番KVが変更されない
 - `X-Robots-Tag: noindex`、robots.txt、HTTPSが有効である
-- STG WorkerにCron Triggerが設定されていない
+- STG WorkerにCron Triggerが設定されておらず、Actionsが`SPORTAL_STG_API_URL`を参照している
 - PagesのService Bindingが本番Workerではなく `sport-portal-api-stg` を指している
 
 ## STG受入チェック
@@ -73,8 +73,8 @@
 | --- | --- | --- |
 | Pages | Deploymentsの対象PreviewがActiveか、主要URLのHTTP応答を確認 | Pagesの対象コミット、Functions、Preview Secret、Service Bindingを確認 |
 | Worker | `sport-portal-api-stg` のVersion、Workersのエラー・リクエストを確認 | 認証、`APP_ORIGIN`、KV binding、取得元レスポンスを確認 |
-| KV | STG namespaceの `j1-2026` と `update.status` を確認 | 本番namespaceとIDを照合し、STG側だけを再投入 |
-| Cron | `env.stg.triggers.crons = []` とCloudflare設定を確認 | STGで自動実行が有効になっていれば無効化し、Production設定を変更しない |
+| KV | STG namespaceの対象リーグキーと `update.status` を確認 | 本番namespaceとIDを照合し、STG側だけを再投入 |
+| 定期更新 | `env.stg.triggers.crons = []` とActionsの接続先を確認 | `SPORTAL_STG_API_URL`、STG側の認証、Pages Service Bindingを確認 |
 
 障害時は、まず認証・Pages→Worker Service Binding・Worker→STG KVの順に切り分ける。公式取得失敗だけの場合は、前回正常データを保持して失敗状態を確認する。
 
@@ -83,7 +83,7 @@
 - PagesはDeploymentsから直前の成功Previewを再指定する。STGのブランチやProductionデプロイは変更しない。
 - WorkerはVersion Historyから直前の成功Versionを再デプロイする。KV namespaceは削除しない。
 - Secretを更新するときは、WorkerとPages Previewの両方を更新し、未認証401・認証後200を再確認する。
-- 初期データを再投入するときは、STG KVの `j1-2026` だけを対象にし、`/api/status` と画面表示を確認する。
+- 初期データを再投入するときは、対象リーグに対応するSTG KVキーだけを対象にし、`/api/status?league=...` と画面表示を確認する。
 - 失敗時は対象コミット、CloudflareのVersion/Deployment、発生時刻、確認結果をIssueへ記録する。Secret値とKV実データは記録しない。
 
 ## 本番反映ルール

@@ -10,7 +10,9 @@ binding = "SPORTAL_DATA"
 id = "60874002e24041be8154a96d3cbc974b"
 
 [triggers]
-crons = ["0 8 * * *", "0 10 * * *", "0 12 * * *", "0 13 * * *", "0 14 * * *"]
+# Production updates are triggered by GitHub Actions. Keep the Worker
+# request-driven so Cloudflare Cron Trigger limits do not apply here.
+crons = []
 
 # STG is deployed with `wrangler deploy --env stg` and uses isolated
 # resources. The KV ID must be filled after the STG namespace is created.

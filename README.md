@@ -24,7 +24,8 @@ work-records/
 
 - `app/`: Cloudflare Pagesへ配置する静的フロントエンド
 - `functions/_middleware.js`: Pagesの全URLへBasic認証を適用するミドルウェア
-- `worker/`: 公式サイト取得、KV保存、API、定期実行を担うCloudflare Worker
+- `worker/`: 公式サイト取得、KV保存、API、手動更新を担うCloudflare Worker。定期更新はGitHub Actionsで実行
+- `.github/workflows/update-league-data.yml`: J1/J2/J3のGitHub Actions定期更新
 - `DEPLOYMENT.md`: Pages・Worker・KV・Secretの公開手順
 - `docs/STG_DEPLOYMENT.md`: STG Preview・STG Worker・STG KVの分離手順
 - `docs/PORTAL_STRUCTURE.md`: ポータルトップとリーグ配下のURL構成

@@ -2,10 +2,18 @@
 
 ## 取得元
 
-- 試合日程・結果: <https://www.jleague.jp/j1/match/search-list/?category=j1>
-- 順位表: <https://www.jleague.jp/j1/standings/>
+- 試合日程・結果:
+  - J1: <https://www.jleague.jp/j1/match/search-list/?category=j1>
+  - J2: <https://www.jleague.jp/j2/match/search-list/?category=j2>
+  - J3: <https://www.jleague.jp/j3/match/search-list/?category=j3>
+- 順位表:
+  - J1: <https://www.jleague.jp/j1/standings/>
+  - J2: <https://www.jleague.jp/j2/standings/>
+  - J3: <https://www.jleague.jp/j3/standings/>
 
-いずれもJリーグ公式サイトのJ1ページであり、別のデータ源へ切り替えない。Workerでは対象シーズンを `2026` に固定し、日程ページへ `startdate` と `enddate` を付与して取得する。
+WorkerのAPIは `league=j1`、`league=j2`、`league=j3` をクエリで受け付ける。KVキーはリーグごとに `j1-2026`、`j2-2026`、`j3-2026` へ分離し、1リーグの取得失敗が他リーグのデータを上書きしない。
+
+いずれもJリーグ公式サイトの各リーグページであり、別のデータ源へ切り替えない。Workerでは対象シーズンを `2026` に固定し、日程ページへ `startdate` と `enddate` を付与して取得する。
 
 ## 抽出
 
@@ -14,6 +22,8 @@
 試合は、取得元にデータ属性付きのカードがある場合はカード属性を優先し、通常の公式試合リンクしかない場合は、日付見出し・節見出し・試合リンクの順序と公式チーム名から抽出する。終了、延期、中止、未開催は状態として保存し、ライブスコアは扱わない。
 
 公式の検索結果には上限があるため、Workerは1月から12月まで月単位の12区間を取得し、試合ID相当の日時・対戦カード・キックオフで重複を除去する。これによりシーズン全体を取得しつつ、1回の検索結果上限を超えない。
+
+定期更新の時間トリガーはCloudflare WorkerではなくGitHub Actionsで管理する。ActionsはJSTの `17:00 / 19:00 / 21:00 / 22:00 / 23:00` に各リーグへ独立した更新APIリクエストを送る。Workerは手動更新APIとデータ取得・保存・返却を担当し、本番Cron Triggerは使用しない。
 
 ## 変更時の確認
 

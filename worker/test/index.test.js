@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { emptyData, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
+import { emptyData, getLeagueConfig, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
 import { onRequest as protectPagesRequest } from '../../functions/_middleware.js';
 import worker from '../src/index.js';
 
@@ -46,6 +46,36 @@ test('Worker protects data and update APIs with Basic auth', async () => {
   assert.deepEqual(await authenticated.json(), { update: {}, hasData: false });
 });
 
+test('league API requests use isolated empty payloads and reject unknown leagues', async () => {
+  const env = {
+    BASIC_AUTH_USER: 'owner',
+    BASIC_AUTH_PASSWORD: 'secret',
+    SPORTAL_DATA: { async get() { return null; }, async put() {} }
+  };
+  const auth = { Authorization: basicAuth('owner', 'secret') };
+  const j2 = await worker.fetch(new Request('https://example.test/api/data?league=j2', { headers: auth }), env);
+  assert.equal(j2.status, 200);
+  assert.deepEqual(await j2.json(), emptyData({}, getLeagueConfig('j2')));
+  const invalid = await worker.fetch(new Request('https://example.test/api/data?league=invalid', { headers: auth }), env);
+  assert.equal(invalid.status, 400);
+});
+
+test('league definitions use separate official URLs and KV keys', () => {
+  for (const league of ['j1', 'j2', 'j3']) {
+    const config = getLeagueConfig(league);
+    assert.equal(config.league, league);
+    assert.equal(config.dataKey, `${league}-2026`);
+    assert.match(config.scheduleUrl, new RegExp(`/\\${league}/match/search-list/\\?category=${league}`));
+    assert.match(config.standingsUrl, new RegExp(`/\\${league}/standings/$`));
+  }
+});
+
+test('Worker has no Cloudflare scheduled handler', async () => {
+  const config = await readFile(new URL('../src/index.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(config, /async\s+scheduled\s*\(/);
+  assert.equal(worker.scheduled, undefined);
+});
+
 test('static privacy controls prevent indexing', async () => {
   const robots = await readFile(new URL('../../app/robots.txt', import.meta.url), 'utf8');
   const headers = await readFile(new URL('../../app/_headers', import.meta.url), 'utf8');
@@ -73,12 +103,41 @@ test('portal root links to the J.League page and keeps the review page separate'
   assert.match(jLeague, /href="\/design-review\.html"/);
 });
 
+test('J.League page exposes accessible J1/J2/J3 tabs below the date navigation', async () => {
+  const html = await readFile(new URL('../../app/j-league/index.html', import.meta.url), 'utf8');
+  assert.match(html, /class="date-nav"[^>]*id="date-nav"/);
+  assert.match(html, /class="league-tabs"[^>]*role="tablist"/);
+  for (const league of ['j1', 'j2', 'j3']) {
+    assert.match(html, new RegExp(`role="tab"[^>]*data-league="${league}"`));
+  }
+  assert.match(html, /id="league-panel"[^>]*role="tabpanel"/);
+});
+
 test('STG Wrangler environment is isolated and manual-only by default', async () => {
   const config = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
   assert.match(config, /\[env\.stg\]\s+name = "sport-portal-api-stg"/);
   assert.match(config, /\[env\.stg\.vars\]\s+APP_ORIGIN = "https:\/\/stg\.sport-portal\.pages\.dev"/);
   assert.match(config, /\[\[env\.stg\.kv_namespaces\]\][\s\S]*?binding = "SPORTAL_DATA"[\s\S]*?id = "a2ddffe1d704474db6ae5f7ba65c67b9"/);
   assert.match(config, /\[env\.stg\.triggers\]\s+crons = \[\]/);
+});
+
+test('Production and STG updates use GitHub Actions instead of Worker Cron', async () => {
+  const wrangler = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
+  const workflow = await readFile(new URL('../../.github/workflows/update-league-data.yml', import.meta.url), 'utf8');
+  assert.match(wrangler, /\[triggers\][\s\S]*?\ncrons = \[\]/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /matrix:\n\s+environment: \[production, stg\]\n\s+league: \[j1, j2, j3\]/);
+  for (const cron of ['0 8 * * *', '0 10 * * *', '0 12 * * *', '0 13 * * *', '0 14 * * *']) {
+    assert.match(workflow, new RegExp(`cron: '${cron.replaceAll('*', '\\*')}'`));
+  }
+  assert.match(workflow, /SPORTAL_API_URL/);
+  assert.match(workflow, /SPORTAL_STG_API_URL/);
+  assert.match(workflow, /vars\.SPORTAL_API_URL \|\| secrets\.SPORTAL_API_URL/);
+  assert.match(workflow, /vars\.SPORTAL_STG_API_URL \|\| secrets\.SPORTAL_STG_API_URL/);
+  assert.match(workflow, /SPORTAL_API_USER/);
+  assert.match(workflow, /SPORTAL_API_PASSWORD/);
+  assert.match(workflow, /api\/update\?league=/);
+  assert.match(workflow, /fail-fast: false/);
 });
 
 test('parses official-style schedule cards and keeps match states', () => {
@@ -107,6 +166,14 @@ test('uses the linked-card fallback used by the public schedule page', () => {
   assert.deepEqual([result[0].homeScore, result[0].awayScore], [0, 1]);
 });
 
+test('parses representative J2 and J3 team names from linked cards', () => {
+  const html = `<h2>2026/09/06 (日)</h2><a href="/match/j2/2026/090601/">18:00 KO北海道コンサドーレ札幌0試合終了1FC大阪</a><a href="/match/j3/2026/090602/">19:00 KOFC大阪奈良クラブ</a>`;
+  const result = parseScheduleHtml(html);
+  assert.equal(result.length, 2);
+  assert.deepEqual([result[0].home.short, result[0].away.short], ['札幌', 'FC大阪']);
+  assert.deepEqual([result[1].home.short, result[1].away.short], ['FC大阪', '奈良']);
+});
+
 test('parses current nested J.League match links and derives date from href', () => {
   const html = `<h2>2026/9/6 (日)</h2><a class="m-schedule__link" href="/match/j1/2026/090601/"><div data-match="true"><span>鹿島アントラーズ</span><p>18:00</p><span>浦和レッズ</span><span>2試合終了1</span></div></a>`;
   const result = parseScheduleHtml(html);
@@ -124,7 +191,7 @@ test('retains the previous payload when a refresh fails', async () => {
   assert.equal(writes[0].update.status, 'failure');
 });
 
-test('shares one in-flight update when manual and scheduled refreshes overlap', async () => {
+test('shares one in-flight update when repeated updates for one league overlap', async () => {
   const writes = [];
   let reads = 0;
   let requests = 0;
@@ -145,6 +212,21 @@ test('shares one in-flight update when manual and scheduled refreshes overlap', 
   assert.equal(requests, 1);
   assert.equal(writes.length, 1);
   assert.equal(writes[0].update.status, 'failure');
+});
+
+test('keeps failure data isolated to the requested league key', async () => {
+  const j2Data = { ...emptyData({ status: 'success', at: '2026-09-07T00:00:00.000Z' }, getLeagueConfig('j2')), matches: [{ id: 'j2-old' }], standings: [{ rank: 1, team: '札幌' }] };
+  const values = new Map([['j2-2026', j2Data]]);
+  const writes = [];
+  const env = { SPORTAL_DATA: {
+    async get(key) { return values.get(key) || null; },
+    async put(key, value) { writes.push({ key, data: JSON.parse(value) }); }
+  } };
+  await assert.rejects(() => performUpdate(env, new Date('2026-09-08T00:00:00.000Z'), async () => new Response('down', { status: 503 }), 'j2'));
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].key, 'j2-2026');
+  assert.deepEqual(writes[0].data.matches, j2Data.matches);
+  assert.equal(writes[0].data.league, 'j2');
 });
 
 test('returns a stable empty data shape before first update', () => {

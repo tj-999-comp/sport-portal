@@ -83,6 +83,12 @@ const previousScoreOptions = [
   ['勝者ハイライト', 'score-winner-highlight']
 ];
 
+const scoreAlignmentOptions = [
+  ['左右端揃え', 'alignment-outer'],
+  ['中央距離を固定', 'alignment-center'],
+  ['中央仕切り線', 'alignment-divider']
+];
+
 const motionOptions = [
   ['中央スナップ', 'motion-snap', '止まる位置を日付の中央に固定'],
   ['1日ロック', 'motion-lock', '入力の勢いを受けても1日だけ進む'],
@@ -160,6 +166,27 @@ function createScoreOption([title, variant], index, label = '案') {
   </article>`;
 }
 
+function createScoreAlignmentOption([title, variant], index) {
+  return `<article class="review-card alignment-card">
+    <div class="card-caption"><span>案 ${String(index + 1).padStart(2, '0')}</span><strong>${title}</strong></div>
+    <div class="alignment-preview ${variant}">
+      <p class="alignment-meta">18:00 · 第29節</p>
+      <div class="alignment-match">
+        <div class="alignment-side alignment-home">
+          <span class="alignment-role">Home</span>
+          <div class="alignment-team-line"><strong>浦和</strong><b>2</b></div>
+        </div>
+        <span class="alignment-divider-mark" aria-hidden="true">-</span>
+        <div class="alignment-side alignment-away">
+          <span class="alignment-role">Away</span>
+          <div class="alignment-team-line"><b>1</b><strong>鹿島</strong></div>
+        </div>
+      </div>
+      <p class="alignment-note">チーム名は外側、得点は中央寄り</p>
+    </div>
+  </article>`;
+}
+
 function createMotionOption([title, variant, description], index) {
   const motionDates = ['9/5', '9/6', '9/7', '9/8', '9/9', '9/10', '9/11', '9/12', '9/13'];
   const teamPairs = [['鹿島', '広島'], ['浦和', '神戸'], ['柏', '新潟'], ['川崎', 'G大阪'], ['東京', '清水'], ['横浜FM', '町田'], ['福岡', '名古屋'], ['京都', 'C大阪'], ['FC東京', '湘南'], ['磐田', '札幌']];
@@ -195,6 +222,7 @@ document.querySelector('#navigation-options').innerHTML = navigationOptions.map(
 document.querySelector('#date-options').innerHTML = dateOptions.map(createDateOption).join('');
 document.querySelector('#score-options').innerHTML = scoreOptions.map((option, index) => createScoreOption(option, index)).join('');
 document.querySelector('#score-history-options').innerHTML = previousScoreOptions.map((option, index) => createScoreOption(option, index, '旧案')).join('');
+document.querySelector('#score-alignment-options').innerHTML = scoreAlignmentOptions.map(createScoreAlignmentOption).join('');
 document.querySelector('#motion-options').innerHTML = motionOptions.map(createMotionOption).join('');
 
 document.querySelectorAll('.league-row').forEach((button) => {

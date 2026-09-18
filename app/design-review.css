@@ -43,6 +43,7 @@ button { color: inherit; font: inherit; }
 .league-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .navigation-grid, .dates-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.score-alignment-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .review-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .card-caption { display: flex; align-items: baseline; gap: 10px; padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
 .card-caption span { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
@@ -222,6 +223,32 @@ button { color: inherit; font: inherit; }
 .score-winner-focus .score-result-label { display: block; color: var(--accent); font-size: 9px; font-weight: 800; }
 .score-winner-focus .score-team.loser .score-result-label { color: #999; }
 
+/* Score alignment review */
+.alignment-preview { min-height: 164px; display: grid; align-content: center; gap: 16px; padding: 17px 16px 15px; background: #fff; }
+.alignment-meta, .alignment-note { margin: 0; color: var(--muted); font-size: 10px; }
+.alignment-note { padding-top: 11px; border-top: 1px solid var(--line); font-size: 9px; }
+.alignment-match { display: grid; grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr); gap: 10px; align-items: end; }
+.alignment-side { min-width: 0; }
+.alignment-role { display: block; margin-bottom: 6px; color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: .12em; line-height: 1; }
+.alignment-team-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; min-width: 0; }
+.alignment-away .alignment-team-line { grid-template-columns: auto minmax(0, 1fr); }
+.alignment-team-line strong { min-width: 0; overflow: hidden; font-size: 15px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.alignment-home .alignment-team-line strong { text-align: left; }
+.alignment-away .alignment-team-line strong { text-align: right; }
+.alignment-team-line b { color: var(--accent); font-size: 23px; line-height: 1; }
+.alignment-home .alignment-team-line b { text-align: right; }
+.alignment-away .alignment-team-line b { text-align: left; }
+.alignment-divider-mark { align-self: end; padding-bottom: 3px; color: var(--muted); font-size: 18px; line-height: 1; text-align: center; }
+.alignment-center .alignment-match { grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr); gap: 0; }
+.alignment-center .alignment-divider-mark { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; padding: 0; font-size: 15px; }
+.alignment-center .alignment-role { letter-spacing: .18em; }
+.alignment-divider .alignment-match { position: relative; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.alignment-divider .alignment-match::before { position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px solid var(--line); content: ""; }
+.alignment-divider .alignment-divider-mark { position: absolute; top: 50%; left: 50%; z-index: 1; display: grid; width: 24px; height: 24px; place-items: center; transform: translate(-50%, -8%); border-radius: 50%; background: #fff; font-size: 15px; }
+.alignment-divider .alignment-home { padding-right: 12px; }
+.alignment-divider .alignment-away { padding-left: 12px; }
+.alignment-divider .alignment-note { color: var(--ink); }
+
 /* Horizontal motion review */
 .motion-section { padding-top: 52px; }
 .motion-guide { display: flex; align-items: center; gap: 8px; margin: -8px 0 18px; color: var(--muted); font-size: 11px; }
@@ -279,7 +306,7 @@ button { color: inherit; font: inherit; }
   .review-page { width: min(100% - 24px, 520px); padding-top: 22px; }
   .review-header { gap: 14px; }.review-header h1 { font-size: 28px; }.review-lede { font-size: 13px; }.review-meta { font-size: 10px; }
   .review-section { padding-top: 48px; }.section-heading { grid-template-columns: 32px 1fr; gap: 9px; }.section-heading h2 { font-size: 22px; }.section-heading p:last-child { font-size: 12px; }
-  .league-grid, .navigation-grid, .dates-grid, .score-grid { grid-template-columns: 1fr; }
-  .navigation-grid, .dates-grid, .score-grid { gap: 12px; }
+  .league-grid, .navigation-grid, .dates-grid, .score-grid, .score-alignment-grid { grid-template-columns: 1fr; }
+  .navigation-grid, .dates-grid, .score-grid, .score-alignment-grid { gap: 12px; }
   .motion-grid { grid-template-columns: 1fr; gap: 12px; }
 }

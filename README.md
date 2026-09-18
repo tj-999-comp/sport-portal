@@ -26,6 +26,8 @@ work-records/
 - `functions/_middleware.js`: Pagesの全URLへBasic認証を適用するミドルウェア
 - `worker/`: 公式サイト取得、KV保存、API、定期実行を担うCloudflare Worker
 - `DEPLOYMENT.md`: Pages・Worker・KV・Secretの公開手順
+- `docs/STG_DEPLOYMENT.md`: STG Preview・STG Worker・STG KVの分離手順
+- `docs/PORTAL_STRUCTURE.md`: ポータルトップとリーグ配下のURL構成
 
 ローカル検証は `npm test` と `npm run test:syntax` で実行できます。
 
@@ -66,7 +68,7 @@ Pull Requestまたはpush時に、`validate.yml` が命名、Markdown、metadata
 
 `work-records/md/**` または `work-records/metadata/**` を `main`へpushすると、`Request publish` workflowが自動起動します。変更されたrecordのbasenameを抽出し、固定commit SHAとともに公開リポジトリの受入workflowを起動します。複数recordを含むpushにも対応します。アプリ本体だけのpushでは作業記録の公開処理は起動しません。
 
-再公開や復旧が必要な場合は、Actionsの `Request work-record publish` workflowを手動実行し、固定 `source_commit_sha` と対象recordのbasenameを指定します。公開側のPages反映成功後にSlack通知が行われます。
+再公開や復旧が必要な場合は、Actionsの `Request publish` workflowを手動実行し、対象recordのbasenameを指定します。
 
 公開前に、公開リポジトリ側でsource registry登録、disabled dry-run、固定commitによる手動E2Eを完了させてください。Actions Variableに `PUBLISH_APP_ID`、Actions Secretに `PUBLISH_APP_PRIVATE_KEY` を登録します。秘密鍵をファイルやmetadataへ保存しないでください。
 

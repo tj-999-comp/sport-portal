@@ -28,7 +28,12 @@ button { color: inherit; font: inherit; }
 .review-index a:hover, .review-index a:focus-visible { color: var(--accent); }
 .proposal-history { margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .proposal-history summary { cursor: pointer; color: var(--ink); font-weight: 700; }
-.proposal-history p { max-width: 720px; margin: 10px 0 0; }
+.score-history { margin-top: 18px; }
+.score-history .review-grid { margin-top: 18px; }
+.history-content h2 { margin: 16px 0 0; color: var(--ink); font-size: 16px; }
+.history-content p { max-width: 720px; margin: 10px 0 0; }
+.history-content ul { max-width: 720px; margin: 10px 0 0; padding-left: 20px; }
+.history-content li + li { margin-top: 4px; }
 
 .review-section { padding-top: 64px; scroll-margin-top: 20px; }
 .section-heading { display: grid; grid-template-columns: 42px 1fr; gap: 16px; margin-bottom: 24px; }
@@ -43,6 +48,8 @@ button { color: inherit; font: inherit; }
 .card-caption { display: flex; align-items: baseline; gap: 10px; padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
 .card-caption span { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
 .card-caption strong { font-size: 12px; }
+.card-caption .choice-tag { margin-left: auto; padding: 3px 6px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 9px; font-style: normal; font-weight: 700; letter-spacing: .04em; }
+.review-card.chosen { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
 /* League interaction review */
 .league-preview { display: grid; min-height: 116px; place-items: center; padding: 18px 28px; background: #fff; }
@@ -296,6 +303,7 @@ button { color: inherit; font: inherit; }
 
 @media (max-width: 860px) {
   .navigation-grid, .dates-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {

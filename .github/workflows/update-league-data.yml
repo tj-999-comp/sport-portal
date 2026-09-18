@@ -40,7 +40,6 @@ concurrency:
 
 jobs:
   update:
-    if: github.event_name == 'schedule' || ((inputs.environment == 'all' || inputs.environment == matrix.environment) && (inputs.league == 'all' || inputs.league == matrix.league))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -50,6 +49,7 @@ jobs:
         league: [j1, j2, j3]
     steps:
       - name: Update ${{ matrix.environment }} ${{ matrix.league }}
+        if: github.event_name == 'schedule' || ((inputs.environment == 'all' || inputs.environment == matrix.environment) && (inputs.league == 'all' || inputs.league == matrix.league))
         env:
           PRODUCTION_API_URL: ${{ vars.SPORTAL_API_URL || secrets.SPORTAL_API_URL }}
           STG_API_URL: ${{ vars.SPORTAL_STG_API_URL || secrets.SPORTAL_STG_API_URL }}

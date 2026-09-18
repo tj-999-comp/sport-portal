@@ -1,4 +1,4 @@
-# STG環境構築手順
+# STG環境構築・受入手順
 
 ## 方針
 
@@ -17,18 +17,18 @@
 
 実際に発行されたPreview URLが初期想定と異なる場合は、Cloudflare設定と `worker/wrangler.toml` の `env.stg.vars.APP_ORIGIN` を一致させる。
 
-## リポジトリ側で準備済みの内容
+## リポジトリ側の設定
 
 - Worker名を `sport-portal-api-stg` に分離
 - STG用の `SPORTAL_DATA` bindingを定義
 - STG用KV namespace IDを設定
 - STGの `APP_ORIGIN` を分離
-- STGのCronを空配列にして、初期状態では自動取得しない構成に設定
+- STGのWorker Cronを空配列にし、定期更新はProductionと同じくGitHub Actionsで実行する構成に設定
 - Production設定のKV ID、Worker名を変更していない
 
-## Cloudflare設定が必要になる箇所
+## 初回構築時に必要なCloudflare設定
 
-以下はCloudflareアカウントのリソース作成・Secret登録が必要なため、ローカル作業だけでは完了できない。
+以下はCloudflareアカウントのリソース作成・Secret登録が必要なため、ローカル作業だけでは完了しない。現在のSTG環境では設定・デプロイ済みであり、再構築や設定変更時の確認項目として扱う。
 
 1. Cloudflare KVでSTG用namespaceを作成し、namespace IDを取得する。
 2. `worker/wrangler.toml` のSTG用KV namespace IDが、作成したnamespaceのIDと一致することを確認する。
@@ -55,7 +55,7 @@
 
 ## STG受入チェック
 
-本番反映前は、対象コミットとSTG URLを固定して、次の順番で確認結果を記録する。
+対象コミットとSTG URLを固定して、次の順番で確認結果を記録する。J2/J3対応では作業順序の誤りによりIssue #45をIssue #44より先に完了し、本番反映後に#44の受入・文書整理を行っている。これは今回の経緯であり、今後の変更では本番反映前にこのチェックを完了させる。
 
 1. 未認証でトップ、`/api/status`、`/api/data`、`/api/update` が401になる。
 2. 認証後に `/`、`/j-league/`、`/design-review.html` が200になる。
@@ -88,7 +88,9 @@
 
 ## 本番反映ルール
 
-STG Previewの確認だけでは本番反映の承認とはみなさない。利用者の明示承認を得るまで、`main`への反映、本番デプロイ、Production Secret・KVの変更、関連Issueのクローズを行わない。
+STG Previewの確認だけでは本番反映の承認とはみなさない。今後の変更では、利用者の明示承認を得るまで、`main`への反映、本番デプロイ、Production Secret・KVの変更、関連Issueのクローズを行わない。
+
+今回のJ2/J3対応では、作業順序の誤りにより#45の実装・本番反映が#44のテスト・ドキュメント・STG受入整理に先行した。Productionを切り戻すのではなく、#44で受入結果、既知の制約、経緯を事後記録して状態を整合させる。
 
 ## 参照
 

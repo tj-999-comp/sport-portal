@@ -172,12 +172,12 @@ function createScoreAlignmentOption([title, variant], index) {
     <div class="alignment-preview ${variant}">
       <p class="alignment-meta">18:00 · 第29節</p>
       <div class="alignment-match">
-        <div class="alignment-side alignment-home">
+        <div class="alignment-side alignment-home winner">
           <span class="alignment-role">Home</span>
           <div class="alignment-team-line"><strong>浦和</strong><b>2</b></div>
         </div>
         <span class="alignment-divider-mark" aria-hidden="true">-</span>
-        <div class="alignment-side alignment-away">
+        <div class="alignment-side alignment-away loser">
           <span class="alignment-role">Away</span>
           <div class="alignment-team-line"><b>1</b><strong>鹿島</strong></div>
         </div>

@@ -64,7 +64,7 @@ h1 { font-size: 12px; font-weight: 800; }
 .team-row.away .score { grid-column: 7; grid-row: 1; }
 .score-divider { grid-column: 5; grid-row: 1; color: var(--muted); font-size: 16px; line-height: 1; }
 .team-row.winner { font-weight: 800; }
-.team-row.winner .score { color: var(--accent); font-size: 16px; }
+.team-row.winner .score { color: var(--accent); }
 .team-row.loser { color: #333; }
 .team-row.loser .score { color: #333; }
 .team-name { overflow: hidden; padding-right: 0; text-overflow: ellipsis; white-space: nowrap; }

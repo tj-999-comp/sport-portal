@@ -7,7 +7,7 @@
   <meta name="description" content="2026年プロ野球の試合予定・結果と順位情報を確認するページ">
   <title>スポーツポータル | 2026 NPB</title>
   <link rel="stylesheet" href="/styles.css?v=1.0.2-league-tabs-1">
-  <link rel="stylesheet" href="/npb.css?v=npb-phase-2">
+  <link rel="stylesheet" href="/npb.css?v=npb-phase-3">
 </head>
 <body class="npb-theme">
   <main class="npb-shell">
@@ -40,7 +40,7 @@
 
     <nav class="npb-bottom-nav" aria-label="操作">
       <button type="button" id="npb-refresh"><span aria-hidden="true">↻</span><small>手動更新</small></button>
-      <button type="button" id="npb-standings-open"><span aria-hidden="true">▦</span><small>順位表</small></button>
+      <button type="button" id="npb-standings-open" aria-label="順位表を開く" aria-controls="npb-standings-modal" aria-expanded="false"><span aria-hidden="true">▦</span><small>順位</small></button>
     </nav>
   </main>
 
@@ -59,6 +59,6 @@
       <div id="npb-modal-content" class="npb-modal-content"></div>
     </div>
   </section>
-  <script type="module" src="/npb.js?v=npb-phase-2"></script>
+  <script type="module" src="/npb.js?v=npb-phase-3"></script>
 </body>
 </html>

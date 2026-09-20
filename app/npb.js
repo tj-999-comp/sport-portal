@@ -89,12 +89,23 @@ function renderGame(match) {
 }
 
 function centerDate(date, behavior = 'auto') {
-  const chip = [...$('#npb-date-nav').querySelectorAll('[data-date]')].find((button) => button.dataset.date === date);
+  const nav = $('#npb-date-nav');
+  const chip = [...nav.querySelectorAll('[data-date]')].find((button) => button.dataset.date === date);
   if (chip) {
     chip.setAttribute('aria-current', 'date');
-    $('#npb-date-nav').querySelectorAll('[data-date]').forEach((button) => { if (button !== chip) button.removeAttribute('aria-current'); });
-    chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
+    nav.querySelectorAll('[data-date]').forEach((button) => { if (button !== chip) button.removeAttribute('aria-current'); });
+    const navRect = nav.getBoundingClientRect();
+    const chipRect = chip.getBoundingClientRect();
+    const targetLeft = nav.scrollLeft + chipRect.left - navRect.left - (nav.clientWidth - chipRect.width) / 2;
+    nav.scrollTo({ left: Math.max(0, targetLeft), behavior });
   }
+}
+
+function setDaysHeight(date = state.selectedDate) {
+  const root = $('#npb-days');
+  root.style.height = 'auto';
+  const panel = date ? [...root.children].find((item) => item.dataset.date === date) : null;
+  if (panel) root.style.height = `${panel.offsetHeight}px`;
 }
 
 function selectDate(date, behavior = 'smooth', syncCarousel = true) {
@@ -103,9 +114,15 @@ function selectDate(date, behavior = 'smooth', syncCarousel = true) {
   state.selectedByLeague[state.league] = date;
   $('#npb-selected-date').textContent = fullDateLabel(date);
   centerDate(date, behavior);
+  setDaysHeight(date);
   if (!syncCarousel) return;
-  const panel = [...$('#npb-days').children].find((item) => item.dataset.date === date);
-  panel?.scrollIntoView({ block: 'nearest', inline: 'start', behavior });
+  const root = $('#npb-days');
+  const panel = [...root.children].find((item) => item.dataset.date === date);
+  if (panel) {
+    const rootRect = root.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    root.scrollTo({ left: Math.max(0, root.scrollLeft + panelRect.left - rootRect.left), behavior });
+  }
 }
 
 function renderMatches() {
@@ -145,7 +162,10 @@ function renderMatches() {
     }, 100);
   };
   if (selected) requestAnimationFrame(() => selectDate(selected, 'auto'));
+  else setDaysHeight(null);
 }
+
+window.addEventListener('resize', () => setDaysHeight());
 
 function render(data) {
   state.data = data;
@@ -193,17 +213,40 @@ function setModal(open) {
   const modal = $('#npb-standings-modal');
   const panel = modal.querySelector('.npb-modal-panel');
   if (open) {
+    window.clearTimeout(modalHideTimer);
+    window.cancelAnimationFrame(modalOpenFrame);
+    modalClosing = false;
+    modalOpenedFrom = document.activeElement;
     state.modalLeague = state.league;
     renderModalContent();
+    setStandingsButton(true);
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => { modal.classList.add('is-open'); panel.focus(); });
+    modalOpenFrame = requestAnimationFrame(() => { modal.classList.add('is-open'); panel.focus(); });
   } else {
+    if (modal.hidden || modalClosing) return;
+    window.cancelAnimationFrame(modalOpenFrame);
+    modalClosing = true;
+    setStandingsButton(false);
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
-    window.setTimeout(() => { modal.hidden = true; }, 360);
-    $('#npb-standings-open').focus();
+    modalHideTimer = window.setTimeout(() => { modal.hidden = true; modalClosing = false; }, 360);
+    modalOpenedFrom?.focus();
   }
+}
+
+let modalOpenedFrom = null;
+let modalHideTimer = null;
+let modalOpenFrame = null;
+let modalClosing = false;
+
+function setStandingsButton(open) {
+  const button = $('#npb-standings-open');
+  button.classList.toggle('is-open', open);
+  button.setAttribute('aria-label', open ? '順位表を閉じる' : '順位表を開く');
+  button.setAttribute('aria-expanded', String(open));
+  button.querySelector('span').textContent = open ? '×' : '▦';
+  button.querySelector('small').textContent = open ? '閉じる' : '順位';
 }
 
 function teamName(team) { return team?.short || team?.name || '未確定'; }
@@ -344,7 +387,7 @@ document.querySelectorAll('[data-npb-league]').forEach((button) => {
   });
 });
 $('#npb-refresh').addEventListener('click', refresh);
-$('#npb-standings-open').addEventListener('click', () => setModal(true));
+$('#npb-standings-open').addEventListener('click', () => setModal($('#npb-standings-modal').hidden || modalClosing));
 $('#npb-modal-close').addEventListener('click', () => setModal(false));
 $('#npb-modal-backdrop').addEventListener('click', () => setModal(false));
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setModal(false); });

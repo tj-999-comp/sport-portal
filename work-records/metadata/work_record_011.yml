@@ -1,0 +1,11 @@
+schema_version: 1
+title: 'Jリーグのリーグタブとリーグ別表示のSTG受入完了'
+date: "2026-09-18"
+project_id: sport-portal
+tags:
+  - j-league
+  - league-tabs
+  - stg
+  - acceptance
+  - deployment
+publish: true

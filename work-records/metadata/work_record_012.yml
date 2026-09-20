@@ -1,0 +1,12 @@
+schema_version: 1
+title: 'J1・J2・J3のGitHub Actions定期更新を本番反映'
+date: "2026-09-18"
+project_id: sport-portal
+tags:
+  - j-league
+  - github-actions
+  - production
+  - stg
+  - acceptance
+  - deployment
+publish: true

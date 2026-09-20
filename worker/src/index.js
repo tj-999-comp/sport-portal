@@ -57,6 +57,7 @@ const OTHER_TEAM_NAMES = [
 ];
 const TEAM_NAMES = [...J1_TEAM_NAMES, ...OTHER_TEAM_NAMES];
 const TEAM_LOOKUP = TEAM_NAMES.flatMap(([name, short]) => [[name, { name, short }], [name.replaceAll('Ｆ', 'F').replaceAll('Ｃ', 'C'), { name, short }], [short, { name, short }]]);
+const TEAM_SEARCH_NAMES = [...new Set(TEAM_NAMES.flatMap(([name]) => [name, name.replaceAll('Ｆ', 'F').replaceAll('Ｃ', 'C')]))];
 const SOURCE_HEADERS = { 'User-Agent': 'sport-portal/1.0 (+https://www.jleague.jp/)' };
 
 export function emptyData(update = {}, config = CONFIG) {
@@ -131,7 +132,7 @@ function parseLinkedMatches(html) {
     if (!currentDate) continue;
     const currentMatchday = marker.match(/第\s*(\d+)\s*節/)?.[1] || null;
     const time = plain.match(/(\d{1,2}:\d{2})\s*(?:KO)?/i)?.[1] || null;
-    const teamPositions = TEAM_NAMES.map(([name]) => ({ name, index: plain.indexOf(name) })).filter((item) => item.index >= 0).sort((a, b) => a.index - b.index);
+    const teamPositions = TEAM_SEARCH_NAMES.map((name) => ({ name, index: plain.indexOf(name) })).filter((item) => item.index >= 0).sort((a, b) => a.index - b.index);
     if (teamPositions.length < 2) continue;
     const home = teamFrom(teamPositions[0].name);
     const away = teamFrom(teamPositions[1].name);
@@ -220,8 +221,8 @@ async function performUpdateInternal(env, now, fetchImpl, config) {
 export async function performUpdate(env, now = new Date(), fetchImpl = fetch, league = CONFIG.league) {
   const config = getLeagueConfig(league);
   if (!config) throw new Error(`未対応のリーグです: ${league}`);
-  // A scheduled event and a manual request can share an isolate. Reuse the
-  // in-flight operation so a failure cannot overwrite a newer successful write.
+  // A manual request can be repeated while the first update is in flight.
+  // Reuse the promise per league so a failure cannot overwrite a newer write.
   if (activeUpdatePromises.has(config.league)) return activeUpdatePromises.get(config.league);
   const promise = performUpdateInternal(env, now, fetchImpl, config);
   activeUpdatePromises.set(config.league, promise);
@@ -246,8 +247,5 @@ export default {
       catch (error) { return json({ error: error.message, data: error.data }, 502); }
     }
     return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
-  },
-  async scheduled(_event, env, ctx) {
-    ctx.waitUntil(Promise.allSettled(LEAGUE_KEYS.map((league) => performUpdate(env, new Date(), fetch, league))));
   }
 };

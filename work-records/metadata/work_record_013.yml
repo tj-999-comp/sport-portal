@@ -1,0 +1,10 @@
+schema_version: 1
+title: 'Issue #44のテスト・ドキュメント・STG受入整理'
+date: "2026-09-18"
+project_id: sport-portal
+tags:
+  - j-league
+  - acceptance
+  - stg
+  - documentation
+publish: true

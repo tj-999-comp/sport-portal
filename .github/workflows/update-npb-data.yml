@@ -1,0 +1,86 @@
+name: Update NPB data
+
+on:
+  # GitHub Actions cron uses UTC. These are JST 15:00 and 17:00 through 23:00.
+  schedule:
+    - cron: '0 6 * * *'
+    - cron: '0 8 * * *'
+    - cron: '0 9 * * *'
+    - cron: '0 10 * * *'
+    - cron: '0 11 * * *'
+    - cron: '0 12 * * *'
+    - cron: '0 13 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to update
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - production
+          - stg
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sport-portal-npb-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [production, stg]
+    steps:
+      - name: Update NPB data on ${{ matrix.environment }}
+        if: github.event_name == 'schedule' || inputs.environment == 'all' || inputs.environment == matrix.environment
+        env:
+          PRODUCTION_API_URL: ${{ vars.SPORTAL_API_URL || secrets.SPORTAL_API_URL }}
+          STG_API_URL: ${{ vars.SPORTAL_STG_API_URL || secrets.SPORTAL_STG_API_URL }}
+          API_USER: ${{ secrets.SPORTAL_API_USER }}
+          API_PASSWORD: ${{ secrets.SPORTAL_API_PASSWORD }}
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          set -euo pipefail
+          if [[ "$ENVIRONMENT" == "production" ]]; then
+            API_BASE_URL="$PRODUCTION_API_URL"
+          else
+            API_BASE_URL="$STG_API_URL"
+          fi
+          test -n "$API_BASE_URL"
+          test -n "$API_USER"
+          test -n "$API_PASSWORD"
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+          update_url="${API_BASE_URL%/}/api/npb/update"
+          http_code="$(curl \
+            --silent \
+            --show-error \
+            --location \
+            --user "$API_USER:$API_PASSWORD" \
+            --request POST \
+            --header 'Accept: application/json' \
+            --connect-timeout 15 \
+            --max-time 300 \
+            --retry 2 \
+            --retry-delay 5 \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            "$update_url")"
+
+          if [[ "$http_code" != 2* ]]; then
+            error_message="$(jq -r '.error // "HTTP request failed"' "$response_file" 2>/dev/null || true)"
+            echo "${ENVIRONMENT} NPB update failed (HTTP ${http_code}): ${error_message}" >&2
+            exit 1
+          fi
+
+          jq -e '.data.sport == "npb" and .data.update.status == "success"' "$response_file" >/dev/null
+          echo "${ENVIRONMENT} NPB update completed successfully"

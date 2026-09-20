@@ -1,3 +1,5 @@
+import { emptyNpbData, performNpbUpdate } from './npb.js';
+
 const SEASON = '2026';
 const LEAGUE_DEFINITIONS = {
   j1: { label: 'J1', schedulePath: 'j1', dataKey: 'j1-2026' },
@@ -204,6 +206,7 @@ function authorized(request, env) {
 function unauthorized() { return new Response('Authentication required', { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="sport-portal", charset="UTF-8"', 'Cache-Control': 'no-store' } }); }
 
 const activeUpdatePromises = new Map();
+let activeNpbUpdatePromise = null;
 
 async function performUpdateInternal(env, now, fetchImpl, config) {
   const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyData({}, config);
@@ -234,6 +237,18 @@ export default {
   async fetch(request, env) {
     if (!authorized(request, env)) return unauthorized();
     const url = new URL(request.url);
+    if (url.pathname === '/api/npb/data' && request.method === 'GET') {
+      return json((await env.SPORTAL_DATA.get('npb-2026', 'json')) || emptyNpbData());
+    }
+    if (url.pathname === '/api/npb/status' && request.method === 'GET') {
+      const data = (await env.SPORTAL_DATA.get('npb-2026', 'json')) || emptyNpbData();
+      return json({ update: data.update, hasData: data.matches.length > 0 || data.standings.central.rows.length > 0 || data.standings.pacific.rows.length > 0 });
+    }
+    if (url.pathname === '/api/npb/update' && request.method === 'POST') {
+      if (!activeNpbUpdatePromise) activeNpbUpdatePromise = performNpbUpdate(env, new Date(), fetch).finally(() => { activeNpbUpdatePromise = null; });
+      try { return json({ data: await activeNpbUpdatePromise }); }
+      catch (error) { return json({ error: error.message, data: error.data }, 502); }
+    }
     const league = url.searchParams.get('league') || CONFIG.league;
     const config = getLeagueConfig(league);
     if (!config) return json({ error: `未対応のリーグです: ${league}` }, 400);

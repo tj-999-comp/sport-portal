@@ -121,6 +121,35 @@ test('all league pages expose the shared themed header and page selector', async
   assert.match(headerNav, /window\.location\.assign/);
 });
 
+test('league selectors omit the top option and keep the portal home link', async () => {
+  for (const directory of ['j-league', 'npb', 'b-league', 'nba']) {
+    const html = await readFile(new URL(`../../app/${directory}/index.html`, import.meta.url), 'utf8');
+    assert.doesNotMatch(html, /<option value="\/">トップ<\/option>/);
+    assert.match(html, /href="\/"/);
+  }
+});
+
+test('NPB scroll surfaces use the J.League scroll state and gesture model', async () => {
+  const npbCss = await readFile(new URL('../../app/npb.css', import.meta.url), 'utf8');
+  const npbJs = await readFile(new URL('../../app/npb.js', import.meta.url), 'utf8');
+  const jLeagueCss = await readFile(new URL('../../app/styles.css', import.meta.url), 'utf8');
+  for (const selector of ['.npb-date-nav.is-scrollable', '.npb-days.is-scrollable', '.npb-days.is-dragging', '.npb-modal-tabs.is-scrollable']) {
+    assert.match(npbCss, new RegExp(selector.replaceAll('.', '\\.') + '\\s*\\{'));
+  }
+  assert.match(npbCss, /\.npb-days \{[^}]*overflow-x: hidden[^}]*touch-action: pan-y/);
+  assert.match(jLeagueCss, /\.match-days \{[^}]*overflow-x: hidden[^}]*touch-action: pan-y/);
+  for (const functionName of ['handleNpbDaysWheel', 'handleNpbDaysPointerDown', 'handleNpbDaysTouchStart', 'updatePageScrollState']) {
+    assert.match(npbJs, new RegExp(`function ${functionName}\\(`));
+  }
+});
+
+test('portal league cards use their concept colors', async () => {
+  const html = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../../app/portal.css', import.meta.url), 'utf8');
+  for (const theme of ['j-league', 'npb', 'b-league', 'nba']) assert.match(html, new RegExp(`league-card--${theme}`));
+  for (const color of ['#d51b76', '#18365f', '#111', '#1769c2']) assert.match(css, new RegExp(`--card-accent: ${color}`));
+});
+
 test('J.League page exposes accessible J1/J2/J3 tabs below the date navigation', async () => {
   const html = await readFile(new URL('../../app/j-league/index.html', import.meta.url), 'utf8');
   assert.match(html, /class="date-nav"[^>]*id="date-nav"/);

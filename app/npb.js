@@ -1,5 +1,15 @@
 const $ = (selector) => document.querySelector(selector);
 const state = { data: null, league: 'central', modalLeague: 'central', modalTab: 'standings', selectedDate: null, selectedByLeague: {}, updating: false, scrollTimer: null };
+let dateNavScrollTimer = null;
+let daysWheelUnlockTimer = null;
+let daysWheelResetTimer = null;
+let daysWheelLocked = false;
+let daysWheelDelta = 0;
+let daysSwipeUnlockTimer = null;
+let daysSwipeLocked = false;
+let daysPointer = null;
+let daysTouch = null;
+const daysSwipeThreshold = 72;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -52,6 +62,42 @@ function updateTabs() {
   document.title = `スポーツポータル | 2026 ${state.league === 'central' ? 'セ・リーグ' : 'パ・リーグ'}`;
 }
 
+function updateScrollState(element) {
+  element.classList.toggle('is-scrollable', element.scrollWidth > element.clientWidth + 1);
+}
+
+function updateNpbScrollSurfaces() {
+  document.querySelectorAll('#npb-date-nav, #npb-days, .npb-modal-tabs').forEach(updateScrollState);
+}
+
+function updatePageScrollState() {
+  const root = document.documentElement;
+  const needsScroll = root.scrollHeight > root.clientHeight + 1;
+  root.classList.toggle('page-is-scrollable', needsScroll);
+}
+
+function settleDateNavSelection() {
+  const nav = $('#npb-date-nav');
+  if (!nav.classList.contains('is-scrollable') || !nav.clientWidth) return;
+  const navRect = nav.getBoundingClientRect();
+  const center = navRect.left + navRect.width / 2;
+  const closest = [...nav.querySelectorAll('[data-date]')].reduce((current, chip) => {
+    const chipRect = chip.getBoundingClientRect();
+    const distance = Math.abs(chipRect.left + chipRect.width / 2 - center);
+    return !current || distance < current.distance ? { chip, distance } : current;
+  }, null)?.chip;
+  if (!closest) return;
+  const chipRect = closest.getBoundingClientRect();
+  const targetLeft = nav.scrollLeft + chipRect.left - navRect.left - (nav.clientWidth - chipRect.width) / 2;
+  if (closest.dataset.date !== state.selectedDate) selectDate(closest.dataset.date, 'auto', false);
+  nav.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' });
+}
+
+function syncDateSelectionFromDateNav() {
+  window.clearTimeout(dateNavScrollTimer);
+  dateNavScrollTimer = window.setTimeout(settleDateNavSelection, 120);
+}
+
 function statusText(match) {
   if (match.status === 'finished') return '試合終了';
   if (match.status === 'cancelled') return '中止';
@@ -94,6 +140,7 @@ function centerDate(date, behavior = 'auto') {
   if (chip) {
     chip.setAttribute('aria-current', 'date');
     nav.querySelectorAll('[data-date]').forEach((button) => { if (button !== chip) button.removeAttribute('aria-current'); });
+    if (!nav.classList.contains('is-scrollable')) return;
     const navRect = nav.getBoundingClientRect();
     const chipRect = chip.getBoundingClientRect();
     const targetLeft = nav.scrollLeft + chipRect.left - navRect.left - (nav.clientWidth - chipRect.width) / 2;
@@ -106,6 +153,7 @@ function setDaysHeight(date = state.selectedDate) {
   root.style.height = 'auto';
   const panel = date ? [...root.children].find((item) => item.dataset.date === date) : null;
   if (panel) root.style.height = `${panel.offsetHeight}px`;
+  requestAnimationFrame(updatePageScrollState);
 }
 
 function selectDate(date, behavior = 'smooth', syncCarousel = true) {
@@ -123,6 +171,137 @@ function selectDate(date, behavior = 'smooth', syncCarousel = true) {
     const panelRect = panel.getBoundingClientRect();
     root.scrollTo({ left: Math.max(0, root.scrollLeft + panelRect.left - rootRect.left), behavior });
   }
+}
+
+function rootToClosestNpbDayIndex(root, scrollLeft) {
+  return [...root.children].reduce((closestIndex, child, index) => {
+    const closestDistance = Math.abs((root.children[closestIndex].offsetLeft - root.offsetLeft) - scrollLeft);
+    const distance = Math.abs((child.offsetLeft - root.offsetLeft) - scrollLeft);
+    return distance < closestDistance ? index : closestIndex;
+  }, 0);
+}
+
+function syncDateSelectionFromDays() {
+  const root = $('#npb-days');
+  if (!root.children.length || !root.clientWidth) return;
+  const index = rootToClosestNpbDayIndex(root, root.scrollLeft);
+  const date = root.children[index]?.dataset.date;
+  if (date && date !== state.selectedDate) selectDate(date, 'auto', false);
+}
+
+function isNpbGestureSurface(target) {
+  const element = target instanceof Element ? target : target?.parentElement;
+  return Boolean(element?.closest('main')) && !element.closest('.app-header, .npb-date-nav, .npb-bottom-nav, .npb-modal, button, a');
+}
+
+function handleNpbDaysWheel(event) {
+  const root = $('#npb-days');
+  if (!root.classList.contains('is-scrollable')) return;
+  const horizontalDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.shiftKey ? event.deltaY : 0;
+  if (!horizontalDelta) return;
+  event.preventDefault();
+  daysWheelDelta += horizontalDelta;
+  window.clearTimeout(daysWheelResetTimer);
+  daysWheelResetTimer = window.setTimeout(() => { daysWheelDelta = 0; }, 160);
+  if (daysWheelLocked || Math.abs(daysWheelDelta) < daysSwipeThreshold) return;
+  const currentIndex = rootToClosestNpbDayIndex(root, root.scrollLeft);
+  const direction = daysWheelDelta > 0 ? 1 : -1;
+  const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+  daysWheelDelta = 0;
+  if (nextIndex === currentIndex) return;
+  daysWheelLocked = true;
+  root.scrollTo({ left: root.children[nextIndex].offsetLeft - root.offsetLeft, behavior: 'smooth' });
+  window.clearTimeout(daysWheelUnlockTimer);
+  daysWheelUnlockTimer = window.setTimeout(() => { daysWheelLocked = false; }, 420);
+}
+
+function handleNpbDaysPointerDown(event) {
+  const root = $('#npb-days');
+  if (!isNpbGestureSurface(event.target) || daysSwipeLocked || event.pointerType === 'touch') return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  daysPointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, startScroll: root.scrollLeft, horizontal: false };
+}
+
+function handleNpbDaysPointerMove(event) {
+  if (!daysPointer || event.pointerId !== daysPointer.id) return;
+  const root = $('#npb-days');
+  const deltaX = event.clientX - daysPointer.startX;
+  const deltaY = event.clientY - daysPointer.startY;
+  if (!daysPointer.horizontal && Math.abs(deltaX) <= Math.abs(deltaY)) return;
+  if (!daysPointer.horizontal) {
+    daysPointer.horizontal = true;
+    root.setPointerCapture(event.pointerId);
+    root.classList.add('is-dragging');
+  }
+  event.preventDefault();
+  const limitedDelta = Math.max(-72, Math.min(72, deltaX));
+  root.scrollLeft = daysPointer.startScroll - limitedDelta;
+}
+
+function finishNpbDaysPointer(event) {
+  if (!daysPointer || event.pointerId !== daysPointer.id) return;
+  const root = $('#npb-days');
+  const deltaX = event.clientX - daysPointer.startX;
+  const currentIndex = rootToClosestNpbDayIndex(root, daysPointer.startScroll);
+  const direction = Math.abs(deltaX) >= daysSwipeThreshold ? (deltaX < 0 ? 1 : -1) : 0;
+  if (daysPointer.horizontal) {
+    event.preventDefault();
+    const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+    root.classList.remove('is-dragging');
+    daysSwipeLocked = true;
+    window.clearTimeout(daysSwipeUnlockTimer);
+    daysSwipeUnlockTimer = window.setTimeout(() => { daysSwipeLocked = false; }, 520);
+    root.scrollTo({ left: root.children[nextIndex].offsetLeft - root.offsetLeft, behavior: 'smooth' });
+  }
+  if (root.hasPointerCapture(event.pointerId)) root.releasePointerCapture(event.pointerId);
+  daysPointer = null;
+}
+
+function handleNpbDaysTouchStart(event) {
+  const root = $('#npb-days');
+  if (!isNpbGestureSurface(event.target) || daysSwipeLocked || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  daysTouch = { startX: touch.clientX, startY: touch.clientY, startScroll: root.scrollLeft, horizontal: false };
+}
+
+function handleNpbDaysTouchMove(event) {
+  if (!daysTouch || event.touches.length !== 1) return;
+  const root = $('#npb-days');
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - daysTouch.startX;
+  const deltaY = touch.clientY - daysTouch.startY;
+  if (!daysTouch.horizontal && Math.abs(deltaX) <= Math.abs(deltaY)) return;
+  daysTouch.horizontal = true;
+  event.preventDefault();
+  root.classList.add('is-dragging');
+  const limitedDelta = Math.max(-72, Math.min(72, deltaX));
+  root.scrollLeft = daysTouch.startScroll - limitedDelta;
+}
+
+function finishNpbDaysTouch(event) {
+  if (!daysTouch) return;
+  const root = $('#npb-days');
+  const touch = event.changedTouches?.[0];
+  const deltaX = touch ? touch.clientX - daysTouch.startX : 0;
+  if (daysTouch.horizontal) {
+    event.preventDefault();
+    const currentIndex = rootToClosestNpbDayIndex(root, daysTouch.startScroll);
+    const direction = Math.abs(deltaX) >= daysSwipeThreshold ? (deltaX < 0 ? 1 : -1) : 0;
+    const nextIndex = Math.min(root.children.length - 1, Math.max(0, currentIndex + direction));
+    root.classList.remove('is-dragging');
+    daysSwipeLocked = true;
+    window.clearTimeout(daysSwipeUnlockTimer);
+    daysSwipeUnlockTimer = window.setTimeout(() => { daysSwipeLocked = false; }, 520);
+    root.scrollTo({ left: root.children[nextIndex].offsetLeft - root.offsetLeft, behavior: 'smooth' });
+  }
+  root.classList.remove('is-dragging');
+  daysTouch = null;
+}
+
+function cancelNpbDaysTouch() {
+  if (!daysTouch) return;
+  $('#npb-days').classList.remove('is-dragging');
+  daysTouch = null;
 }
 
 function renderMatches() {
@@ -144,28 +323,26 @@ function renderMatches() {
     const parsed = new Date(`${date}T00:00:00+09:00`);
     return `<button class="npb-date-chip" type="button" data-date="${escapeHtml(date)}"${date === selected ? ' aria-current="date"' : ''}><small>${escapeHtml(`${parsed.getMonth() + 1}月`)}</small><strong>${parsed.getDate()}</strong><span>${escapeHtml(weekdayLabel(date))}</span></button>`;
   }).join('');
-  $('#npb-date-nav').querySelectorAll('[data-date]').forEach((button) => button.addEventListener('click', () => selectDate(button.dataset.date)));
+  const dateNav = $('#npb-date-nav');
+  dateNav.querySelectorAll('[data-date]').forEach((button) => button.addEventListener('click', () => selectDate(button.dataset.date, 'auto')));
+  dateNav.onscroll = syncDateSelectionFromDateNav;
+  updateScrollState(dateNav);
   root.innerHTML = dates.map((date) => `<section class="npb-day" data-date="${escapeHtml(date)}" aria-label="${escapeHtml(fullDateLabel(date))}"><div class="npb-day-list">${byDate.get(date).map(renderGame).join('')}</div></section>`).join('');
   $('#npb-empty').hidden = dates.length > 0;
   $('#npb-empty').textContent = state.data?.matches?.length ? `${state.league === 'central' ? 'セ・リーグ' : 'パ・リーグ'}の試合データはありません` : 'データを取得できていません';
   if (!dates.length) root.innerHTML = '<p class="npb-no-matches">このリーグの試合予定はありません</p>';
-  root.onscroll = () => {
-    window.clearTimeout(state.scrollTimer);
-    state.scrollTimer = window.setTimeout(() => {
-      const panels = [...root.querySelectorAll('.npb-day')];
-      if (!panels.length) return;
-      const closest = panels.reduce((best, panel) => {
-        const distance = Math.abs(panel.getBoundingClientRect().left - root.getBoundingClientRect().left);
-        return !best || distance < best.distance ? { panel, distance } : best;
-      }, null)?.panel;
-      if (closest && closest.dataset.date !== state.selectedDate) selectDate(closest.dataset.date, 'auto', false);
-    }, 100);
-  };
+  root.onscroll = syncDateSelectionFromDays;
+  updateScrollState(root);
+  updateNpbScrollSurfaces();
   if (selected) requestAnimationFrame(() => selectDate(selected, 'auto'));
   else setDaysHeight(null);
 }
 
-window.addEventListener('resize', () => setDaysHeight());
+window.addEventListener('resize', () => {
+  setDaysHeight();
+  updateNpbScrollSurfaces();
+  updatePageScrollState();
+});
 
 function render(data) {
   state.data = data;
@@ -343,8 +520,9 @@ function renderModalContent() {
   }
   content.innerHTML = state.modalTab === 'standings' ? renderStandingsTable()
     : state.modalTab === 'interleague' ? renderInterleagueStandings()
-      : state.modalTab === 'cs' ? renderCs()
+        : state.modalTab === 'cs' ? renderCs()
         : renderJapanSeries();
+  updateNpbScrollSurfaces();
 }
 
 document.querySelectorAll('[data-npb-modal-tab]').forEach((button) => {
@@ -382,4 +560,16 @@ $('#npb-refresh').addEventListener('click', refresh);
 $('#npb-standings-open').addEventListener('click', () => setModal($('#npb-standings-modal').hidden || modalClosing));
 $('#npb-modal-backdrop').addEventListener('click', () => setModal(false));
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setModal(false); });
+const npbDays = $('#npb-days');
+npbDays.addEventListener('wheel', handleNpbDaysWheel, { passive: false });
+document.addEventListener('pointerdown', handleNpbDaysPointerDown);
+document.addEventListener('pointermove', handleNpbDaysPointerMove);
+document.addEventListener('pointerup', finishNpbDaysPointer);
+document.addEventListener('pointercancel', finishNpbDaysPointer);
+document.addEventListener('touchstart', handleNpbDaysTouchStart, { passive: true });
+document.addEventListener('touchmove', handleNpbDaysTouchMove, { passive: false });
+document.addEventListener('touchend', finishNpbDaysTouch, { passive: false });
+document.addEventListener('touchcancel', cancelNpbDaysTouch, { passive: true });
+updateNpbScrollSurfaces();
+updatePageScrollState();
 loadData();

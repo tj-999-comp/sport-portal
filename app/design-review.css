@@ -30,6 +30,16 @@ button { color: inherit; font: inherit; }
 .proposal-history summary { cursor: pointer; color: var(--ink); font-weight: 700; }
 .score-history { margin-top: 18px; }
 .score-history .review-grid { margin-top: 18px; }
+.proposal-archive { margin-top: 28px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
+.proposal-archive > summary { padding: 16px 0; cursor: pointer; color: var(--ink); font-size: 13px; font-weight: 800; }
+.proposal-archive-content { display: flex; flex-direction: column; padding-bottom: 18px; }
+.archive-intro { order: 0; margin: 0 0 4px; color: var(--muted); font-size: 12px; }
+.proposal-archive-content > .score-alignment-section { order: 1; }
+.proposal-archive-content > .motion-section { order: 2; }
+.proposal-archive-content > .score-current-history { order: 3; }
+.proposal-archive-content > .score-history { order: 4; }
+.proposal-archive-content > .proposal-history:not(.score-current-history):not(.score-history) { order: 5; }
+.archive-date { margin: 8px 0 0 !important; color: var(--accent) !important; font-size: 11px !important; font-weight: 700; letter-spacing: .03em; }
 .history-content h2 { margin: 16px 0 0; color: var(--ink); font-size: 16px; }
 .history-content p { max-width: 720px; margin: 10px 0 0; }
 .history-content ul { max-width: 720px; margin: 10px 0 0; padding-left: 20px; }
@@ -44,6 +54,7 @@ button { color: inherit; font: inherit; }
 .navigation-grid, .dates-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .score-alignment-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.npb-standings-review-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .review-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .card-caption { display: flex; align-items: baseline; gap: 10px; padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
 .card-caption span { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
@@ -253,6 +264,23 @@ button { color: inherit; font: inherit; }
 .alignment-divider .alignment-note { color: var(--ink); }
 .alignment-outer .alignment-team-line { align-items: end; }
 
+/* NPB standings width review */
+.standings-proposal .card-caption { min-height: 47px; }
+.standings-mini { padding: 14px 12px 12px; background: #fff; color: var(--ink); font-size: 11px; }
+.standings-mini-head, .standings-mini p { display: grid; grid-template-columns: 28px minmax(0, 1fr) 42px; align-items: center; gap: 7px; margin: 0; }
+.standings-mini-head { padding-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; }
+.standings-mini p { min-height: 30px; border-top: 1px solid var(--line); }
+.standings-mini p b { text-align: center; }.standings-mini p span { text-align: right; }
+.proposal-quiet .standings-mini { padding-right: 7px; padding-left: 7px; }
+.proposal-rule .standings-mini-head { border-bottom: 2px solid var(--ink); }
+.proposal-rule .standings-mini p { border-top: 0; border-bottom: 1px solid var(--line); }
+.proposal-rank-band .standings-mini p b { align-self: stretch; display: grid; place-items: center; background: var(--accent); color: #fff; }
+.proposal-rank-band .standings-mini p { gap: 7px; }
+.proposal-soft-row .standings-mini p:nth-child(odd) { background: var(--soft); }
+.proposal-minimal .standings-mini { padding: 8px 5px; }
+.proposal-minimal .standings-mini-head { padding-bottom: 4px; font-size: 8px; }
+.proposal-minimal .standings-mini p { min-height: 26px; border-top-color: #ececf0; font-size: 10px; }
+
 /* Horizontal motion review */
 .motion-section { padding-top: 52px; }
 .motion-guide { display: flex; align-items: center; gap: 8px; margin: -8px 0 18px; color: var(--muted); font-size: 11px; }
@@ -304,13 +332,14 @@ button { color: inherit; font: inherit; }
 @media (max-width: 860px) {
   .navigation-grid, .dates-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .npb-standings-review-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {
   .review-page { width: min(100% - 24px, 520px); padding-top: 22px; }
   .review-header { gap: 14px; }.review-header h1 { font-size: 28px; }.review-lede { font-size: 13px; }.review-meta { font-size: 10px; }
   .review-section { padding-top: 48px; }.section-heading { grid-template-columns: 32px 1fr; gap: 9px; }.section-heading h2 { font-size: 22px; }.section-heading p:last-child { font-size: 12px; }
-  .league-grid, .navigation-grid, .dates-grid, .score-grid, .score-alignment-grid { grid-template-columns: 1fr; }
-  .navigation-grid, .dates-grid, .score-grid, .score-alignment-grid { gap: 12px; }
+  .league-grid, .navigation-grid, .dates-grid, .score-grid, .score-alignment-grid, .npb-standings-review-grid { grid-template-columns: 1fr; }
+  .navigation-grid, .dates-grid, .score-grid, .score-alignment-grid, .npb-standings-review-grid { gap: 12px; }
   .motion-grid { grid-template-columns: 1fr; gap: 12px; }
 }

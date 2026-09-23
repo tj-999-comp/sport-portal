@@ -259,7 +259,7 @@ function modalLeagueSwitcher() {
 function renderStandingsTable() {
   const rows = state.data?.standings?.[state.modalLeague]?.rows || [];
   if (!rows.length) return '<p class="npb-modal-empty">順位表を取得できていません</p>';
-  return `${modalLeagueSwitcher()}<div class="npb-table-wrap" tabindex="0" aria-label="${modalLeagueLabel()}順位表"><table class="npb-data-table npb-standing-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.rank)}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${escapeHtml(row.gamesBehind == null ? '—' : Number(row.gamesBehind).toFixed(1))}</td><td>${remainingGames(row, 143)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `${modalLeagueSwitcher()}<div class="npb-table-wrap npb-standing-wrap" tabindex="0" aria-label="${modalLeagueLabel()}順位表"><table class="npb-data-table npb-standing-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.rank)}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${escapeHtml(row.gamesBehind == null ? '—' : Number(row.gamesBehind).toFixed(1))}</td><td>${remainingGames(row, 143)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function remainingGames(row, totalGames) {
@@ -275,7 +275,7 @@ function renderInterleagueStandings() {
   const rows = [...new Map(allRows.filter((row) => row?.team?.code).map((row) => [row.team.code, row])).values()]
     .sort((a, b) => Number(b.winPercentage || 0) - Number(a.winPercentage || 0) || Number(b.wins || 0) - Number(a.wins || 0) || Number(a.losses || 0) - Number(b.losses || 0));
   if (!rows.length) return '<p class="npb-modal-empty">交流戦の順位表を取得できていません</p>';
-  return `<div class="npb-table-wrap" tabindex="0" aria-label="交流戦順位表"><table class="npb-data-table npb-standing-table npb-interleague-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>残試合数</th></tr></thead><tbody>${rows.map((row, index) => `<tr><td>${index + 1}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${remainingGames(row, 18)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="npb-table-wrap npb-standing-wrap" tabindex="0" aria-label="交流戦順位表"><table class="npb-data-table npb-standing-table npb-interleague-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>残試合数</th></tr></thead><tbody>${rows.map((row, index) => `<tr><td>${index + 1}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${remainingGames(row, 18)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function actualPostseasonGames(category, league, stage = null) {

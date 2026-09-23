@@ -243,14 +243,13 @@ let modalClosing = false;
 function setStandingsButton(open) {
   const button = $('#npb-standings-open');
   button.classList.toggle('is-open', open);
-  button.setAttribute('aria-label', open ? '順位表を閉じる' : '順位表を開く');
+  button.setAttribute('aria-label', open ? '各種順位を閉じる' : '各種順位を開く');
   button.setAttribute('aria-expanded', String(open));
   button.querySelector('span').textContent = open ? '×' : '▦';
-  button.querySelector('small').textContent = open ? '閉じる' : '順位';
+  button.querySelector('small').textContent = open ? '閉じる' : '各種順位';
 }
 
 function teamName(team) { return team?.short || team?.name || '未確定'; }
-function recordLabel(record) { return record ? `${record.wins}勝${record.losses}敗` : '—'; }
 function modalLeagueLabel(league = state.modalLeague) { return league === 'central' ? 'セ・リーグ' : 'パ・リーグ'; }
 
 function modalLeagueSwitcher() {
@@ -260,27 +259,23 @@ function modalLeagueSwitcher() {
 function renderStandingsTable() {
   const rows = state.data?.standings?.[state.modalLeague]?.rows || [];
   if (!rows.length) return '<p class="npb-modal-empty">順位表を取得できていません</p>';
-  return `${modalLeagueSwitcher()}<div class="npb-table-wrap" tabindex="0" aria-label="${modalLeagueLabel()}順位表"><table class="npb-data-table npb-standing-table"><thead><tr><th>順位</th><th>球団</th><th>試合</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.rank)}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.played ?? '—')}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${escapeHtml(row.gamesBehind == null ? '—' : Number(row.gamesBehind).toFixed(1))}</td></tr>`).join('')}</tbody></table></div>`;
+  return `${modalLeagueSwitcher()}<div class="npb-table-wrap" tabindex="0" aria-label="${modalLeagueLabel()}順位表"><table class="npb-data-table npb-standing-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.rank)}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${escapeHtml(row.gamesBehind == null ? '—' : Number(row.gamesBehind).toFixed(1))}</td><td>${remainingGames(row, 143)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
-function renderInterleague(data) {
-  const rows = data?.interleague || [];
-  if (!rows.length) return '';
-  const opponents = rows[0]?.records || [];
-  return `<h3 class="npb-table-heading">交流戦成績</h3><div class="npb-table-wrap" tabindex="0" aria-label="${modalLeagueLabel()}交流戦成績"><table class="npb-data-table npb-matrix-table"><thead><tr><th>球団</th>${opponents.map((item) => `<th>${escapeHtml(item.team)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr><th>${escapeHtml(teamName(row.team))}</th>${opponents.map((opponent) => { const value = row.records.find((record) => record.code === opponent.code); return `<td>${escapeHtml(recordLabel(value?.record))}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`;
+function remainingGames(row, totalGames) {
+  const played = Number(row?.played);
+  return Number.isFinite(played) ? escapeHtml(Math.max(0, totalGames - played)) : '—';
 }
 
-function renderHeadToHead() {
-  const data = state.data?.standings?.[state.modalLeague];
-  const rows = data?.headToHead || [];
-  if (!rows.length) return `${modalLeagueSwitcher()}<p class="npb-modal-empty">対戦成績を取得できていません</p>`;
-  const teams = rows.map((row) => row.team);
-  const table = `<div class="npb-table-wrap" tabindex="0" aria-label="${modalLeagueLabel()}球団間の対戦成績"><table class="npb-data-table npb-matrix-table"><thead><tr><th>球団</th>${teams.map((team) => `<th>${escapeHtml(teamName(team))}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr><th>${escapeHtml(teamName(row.team))}</th>${teams.map((opponent) => {
-    if (opponent.code === row.team.code) return '<td class="diagonal">—</td>';
-    const item = row.records.find((record) => record.code === opponent.code);
-    return `<td>${escapeHtml(recordLabel(item?.record))}</td>`;
-  }).join('')}</tr>`).join('')}</tbody></table></div>`;
-  return `${modalLeagueSwitcher()}<p class="npb-table-note">各球団の公式チーム勝敗表に掲載されている通算対戦成績です。</p>${table}${renderInterleague(data)}`;
+function renderInterleagueStandings() {
+  const allRows = [
+    ...(state.data?.standings?.central?.interleague || []),
+    ...(state.data?.standings?.pacific?.interleague || [])
+  ];
+  const rows = [...new Map(allRows.filter((row) => row?.team?.code).map((row) => [row.team.code, row])).values()]
+    .sort((a, b) => Number(b.winPercentage || 0) - Number(a.winPercentage || 0) || Number(b.wins || 0) - Number(a.wins || 0) || Number(a.losses || 0) - Number(b.losses || 0));
+  if (!rows.length) return '<p class="npb-modal-empty">交流戦の順位表を取得できていません</p>';
+  return `<div class="npb-table-wrap" tabindex="0" aria-label="交流戦順位表"><table class="npb-data-table npb-standing-table npb-interleague-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>残試合数</th></tr></thead><tbody>${rows.map((row, index) => `<tr><td>${index + 1}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${remainingGames(row, 18)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function actualPostseasonGames(category, league, stage = null) {
@@ -346,7 +341,7 @@ function renderModalContent() {
     return;
   }
   content.innerHTML = state.modalTab === 'standings' ? renderStandingsTable()
-    : state.modalTab === 'headToHead' ? renderHeadToHead()
+    : state.modalTab === 'interleague' ? renderInterleagueStandings()
       : state.modalTab === 'cs' ? renderCs()
         : renderJapanSeries();
   content.querySelectorAll('[data-modal-league]').forEach((button) => button.addEventListener('click', () => {

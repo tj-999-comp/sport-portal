@@ -7,7 +7,7 @@
   <meta name="description" content="2026年プロ野球の試合予定・結果と順位情報を確認するページ">
   <title>スポーツポータル | 2026 NPB</title>
   <link rel="stylesheet" href="/styles.css?v=1.0.2-league-tabs-1">
-  <link rel="stylesheet" href="/npb.css?v=npb-phase-3">
+  <link rel="stylesheet" href="/npb.css?v=npb-phase-4">
 </head>
 <body class="npb-theme">
   <main class="npb-shell">
@@ -40,7 +40,7 @@
 
     <nav class="npb-bottom-nav" aria-label="操作">
       <button type="button" id="npb-refresh"><span aria-hidden="true">↻</span><small>手動更新</small></button>
-      <button type="button" id="npb-standings-open" aria-label="順位表を開く" aria-controls="npb-standings-modal" aria-expanded="false"><span aria-hidden="true">▦</span><small>順位</small></button>
+      <button type="button" id="npb-standings-open" aria-label="各種順位を開く" aria-controls="npb-standings-modal" aria-expanded="false"><span aria-hidden="true">▦</span><small>各種順位</small></button>
     </nav>
   </main>
 
@@ -49,16 +49,15 @@
     <div class="npb-modal-panel" tabindex="-1">
       <div class="npb-modal-grabber" aria-hidden="true"></div>
       <button type="button" class="npb-modal-close" id="npb-modal-close" aria-label="順位表を閉じる">×</button>
-      <h2 class="npb-modal-title">NPBデータ</h2>
       <nav class="npb-modal-tabs" role="tablist" aria-label="NPB情報">
         <button type="button" role="tab" aria-selected="true" data-npb-modal-tab="standings">順位表</button>
-        <button type="button" role="tab" aria-selected="false" data-npb-modal-tab="headToHead">星取表</button>
+        <button type="button" role="tab" aria-selected="false" data-npb-modal-tab="interleague">交流戦順位</button>
         <button type="button" role="tab" aria-selected="false" data-npb-modal-tab="cs">クライマックスシリーズ</button>
         <button type="button" role="tab" aria-selected="false" data-npb-modal-tab="japanSeries">日本シリーズ</button>
       </nav>
       <div id="npb-modal-content" class="npb-modal-content"></div>
     </div>
   </section>
-  <script type="module" src="/npb.js?v=npb-phase-3"></script>
+  <script type="module" src="/npb.js?v=npb-phase-4"></script>
 </body>
 </html>

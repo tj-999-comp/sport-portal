@@ -69,9 +69,9 @@
 .npb-modal-tabs button { min-height: 38px; flex: 0 0 auto; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 800; padding: 8px 9px; white-space: nowrap; }
 .npb-modal-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--accent); }
 .npb-modal-content { min-height: 0; flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
-.npb-modal-leagues { display: flex; gap: 5px; margin: 0 0 12px; }
-.npb-modal-leagues button { min-height: 32px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 700; padding: 5px 13px; }
-.npb-modal-leagues button[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.npb-modal-leagues { display: flex; gap: 0; margin: 0 0 12px; border-bottom: 1px solid var(--line); }
+.npb-modal-leagues button { min-height: 38px; flex: 1 1 50%; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 800; padding: 8px 9px 9px; }
+.npb-modal-leagues button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--accent); }
 .npb-table-note, .npb-modal-empty { margin: 0 0 12px; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .npb-table-heading { margin: 18px 0 8px; font-size: 13px; }
 .npb-table-wrap { width: 100%; min-height: 0; overflow: auto; border: 1px solid var(--line); border-radius: 12px; overscroll-behavior: none; scroll-snap-type: both mandatory; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; padding: 0 0 4px; }

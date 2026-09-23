@@ -54,7 +54,7 @@ button { color: inherit; font: inherit; }
 .navigation-grid, .dates-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .score-alignment-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.npb-standings-review-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.npb-standings-review-grid { grid-template-columns: 1fr; gap: 18px; }
 .review-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .card-caption { display: flex; align-items: baseline; gap: 10px; padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
 .card-caption span { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
@@ -266,6 +266,14 @@ button { color: inherit; font: inherit; }
 
 /* NPB standings width review */
 .standings-proposal .card-caption { min-height: 47px; }
+.standings-full-wrap { overflow-x: auto; padding: 0 14px 14px; }
+.standings-full-table { width: 680px; min-width: 680px; border-collapse: collapse; table-layout: fixed; font-size: 12px; white-space: nowrap; }
+.standings-full-table th, .standings-full-table td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.standings-full-table th { color: var(--muted); font-size: 10px; font-weight: 700; }
+.standings-full-table th:first-child, .standings-full-table td:first-child { text-align: center; }
+.standings-full-table th:nth-child(2), .standings-full-table td:nth-child(2) { width: var(--review-team-width, 6em); min-width: var(--review-team-width, 6em); max-width: var(--review-team-width, 6em); text-align: left; font-weight: 700; }
+.standings-full-table tr:last-child td { border-bottom: 0; }
+.width-55 { --review-team-width: 5.5em; }.width-60 { --review-team-width: 6em; }.width-65 { --review-team-width: 6.5em; }.width-70 { --review-team-width: 7em; }.width-75 { --review-team-width: 7.5em; }
 .standings-mini { padding: 14px 12px 12px; background: #fff; color: var(--ink); font-size: 11px; }
 .standings-mini-head, .standings-mini p { display: grid; grid-template-columns: 28px minmax(0, 1fr) 42px; align-items: center; gap: 7px; margin: 0; }
 .standings-mini-head { padding-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; }
@@ -332,7 +340,7 @@ button { color: inherit; font: inherit; }
 @media (max-width: 860px) {
   .navigation-grid, .dates-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .npb-standings-review-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .npb-standings-review-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>スポーツポータル — v1.0.2 デザインレビュー</title>
-  <link rel="stylesheet" href="/design-review.css?v=1.0.2-npb-standings-1">
+  <link rel="stylesheet" href="/design-review.css?v=1.0.2-npb-standings-2">
 </head>
 <body>
   <main class="review-page">
@@ -32,29 +32,29 @@
         <p class="section-number">NEW</p>
         <div>
           <h2 id="npb-standings-title">NPB順位表の幅と余白</h2>
-          <p>順位表の横幅を抑え、外枠を使わずに読みやすくする5案です。球団名は8文字程度を基準にしています。</p>
+          <p>案02の下線スタイルをベースに、実際の順位表全体を表示して球団列の幅だけを変えた5案です。</p>
         </div>
       </div>
       <div class="review-grid npb-standings-review-grid">
-        <article class="review-card standings-proposal proposal-quiet">
-          <div class="card-caption"><span>01</span><strong>余白を詰める</strong></div>
-          <div class="standings-mini"><div class="standings-mini-head"><b>順位</b><b>球団</b><b>勝率</b></div><p><b>1</b><strong>阪神</strong><span>.667</span></p><p><b>2</b><strong>巨人</strong><span>.611</span></p><p><b>3</b><strong>広島</strong><span>.556</span></p></div>
+        <article class="review-card standings-proposal proposal-rule proposal-full-width width-55">
+          <div class="card-caption"><span>02-A</span><strong>球団列 5.5文字幅</strong></div>
+          <div class="standings-full-wrap"><table class="standings-full-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody><tr><td>1</td><td>阪神</td><td>72</td><td>36</td><td>3</td><td>.667</td><td>—</td><td>32</td></tr><tr><td>2</td><td>巨人</td><td>66</td><td>42</td><td>3</td><td>.611</td><td>6.0</td><td>32</td></tr><tr><td>3</td><td>広島</td><td>60</td><td>48</td><td>3</td><td>.556</td><td>12.0</td><td>32</td></tr><tr><td>4</td><td>DeNA</td><td>54</td><td>54</td><td>3</td><td>.500</td><td>18.0</td><td>32</td></tr><tr><td>5</td><td>ヤクルト</td><td>45</td><td>63</td><td>3</td><td>.417</td><td>27.0</td><td>32</td></tr><tr><td>6</td><td>中日</td><td>39</td><td>69</td><td>3</td><td>.361</td><td>33.0</td><td>32</td></tr></tbody></table></div>
         </article>
-        <article class="review-card standings-proposal proposal-rule">
-          <div class="card-caption"><span>02</span><strong>下線だけで区切る</strong></div>
-          <div class="standings-mini"><div class="standings-mini-head"><b>順位</b><b>球団</b><b>勝率</b></div><p><b>1</b><strong>阪神</strong><span>.667</span></p><p><b>2</b><strong>巨人</strong><span>.611</span></p><p><b>3</b><strong>広島</strong><span>.556</span></p></div>
+        <article class="review-card standings-proposal proposal-rule proposal-full-width width-60">
+          <div class="card-caption"><span>02-B</span><strong>球団列 6文字幅</strong></div>
+          <div class="standings-full-wrap"><table class="standings-full-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody><tr><td>1</td><td>阪神</td><td>72</td><td>36</td><td>3</td><td>.667</td><td>—</td><td>32</td></tr><tr><td>2</td><td>巨人</td><td>66</td><td>42</td><td>3</td><td>.611</td><td>6.0</td><td>32</td></tr><tr><td>3</td><td>広島</td><td>60</td><td>48</td><td>3</td><td>.556</td><td>12.0</td><td>32</td></tr><tr><td>4</td><td>DeNA</td><td>54</td><td>54</td><td>3</td><td>.500</td><td>18.0</td><td>32</td></tr><tr><td>5</td><td>ヤクルト</td><td>45</td><td>63</td><td>3</td><td>.417</td><td>27.0</td><td>32</td></tr><tr><td>6</td><td>中日</td><td>39</td><td>69</td><td>3</td><td>.361</td><td>33.0</td><td>32</td></tr></tbody></table></div>
         </article>
-        <article class="review-card standings-proposal proposal-rank-band">
-          <div class="card-caption"><span>03</span><strong>順位を強調する</strong></div>
-          <div class="standings-mini"><div class="standings-mini-head"><b>順位</b><b>球団</b><b>勝率</b></div><p><b>1</b><strong>阪神</strong><span>.667</span></p><p><b>2</b><strong>巨人</strong><span>.611</span></p><p><b>3</b><strong>広島</strong><span>.556</span></p></div>
+        <article class="review-card standings-proposal proposal-rule proposal-full-width width-65">
+          <div class="card-caption"><span>02-C</span><strong>球団列 6.5文字幅</strong></div>
+          <div class="standings-full-wrap"><table class="standings-full-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody><tr><td>1</td><td>阪神</td><td>72</td><td>36</td><td>3</td><td>.667</td><td>—</td><td>32</td></tr><tr><td>2</td><td>巨人</td><td>66</td><td>42</td><td>3</td><td>.611</td><td>6.0</td><td>32</td></tr><tr><td>3</td><td>広島</td><td>60</td><td>48</td><td>3</td><td>.556</td><td>12.0</td><td>32</td></tr><tr><td>4</td><td>DeNA</td><td>54</td><td>54</td><td>3</td><td>.500</td><td>18.0</td><td>32</td></tr><tr><td>5</td><td>ヤクルト</td><td>45</td><td>63</td><td>3</td><td>.417</td><td>27.0</td><td>32</td></tr><tr><td>6</td><td>中日</td><td>39</td><td>69</td><td>3</td><td>.361</td><td>33.0</td><td>32</td></tr></tbody></table></div>
         </article>
-        <article class="review-card standings-proposal proposal-soft-row">
-          <div class="card-caption"><span>04</span><strong>行の背景で整理する</strong></div>
-          <div class="standings-mini"><div class="standings-mini-head"><b>順位</b><b>球団</b><b>勝率</b></div><p><b>1</b><strong>阪神</strong><span>.667</span></p><p><b>2</b><strong>巨人</strong><span>.611</span></p><p><b>3</b><strong>広島</strong><span>.556</span></p></div>
+        <article class="review-card standings-proposal proposal-rule proposal-full-width width-70">
+          <div class="card-caption"><span>02-D</span><strong>球団列 7文字幅</strong></div>
+          <div class="standings-full-wrap"><table class="standings-full-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody><tr><td>1</td><td>阪神</td><td>72</td><td>36</td><td>3</td><td>.667</td><td>—</td><td>32</td></tr><tr><td>2</td><td>巨人</td><td>66</td><td>42</td><td>3</td><td>.611</td><td>6.0</td><td>32</td></tr><tr><td>3</td><td>広島</td><td>60</td><td>48</td><td>3</td><td>.556</td><td>12.0</td><td>32</td></tr><tr><td>4</td><td>DeNA</td><td>54</td><td>54</td><td>3</td><td>.500</td><td>18.0</td><td>32</td></tr><tr><td>5</td><td>ヤクルト</td><td>45</td><td>63</td><td>3</td><td>.417</td><td>27.0</td><td>32</td></tr><tr><td>6</td><td>中日</td><td>39</td><td>69</td><td>3</td><td>.361</td><td>33.0</td><td>32</td></tr></tbody></table></div>
         </article>
-        <article class="review-card standings-proposal proposal-minimal">
-          <div class="card-caption"><span>05</span><strong>最小構成</strong></div>
-          <div class="standings-mini"><div class="standings-mini-head"><b>順位</b><b>球団</b><b>勝率</b></div><p><b>1</b><strong>阪神</strong><span>.667</span></p><p><b>2</b><strong>巨人</strong><span>.611</span></p><p><b>3</b><strong>広島</strong><span>.556</span></p></div>
+        <article class="review-card standings-proposal proposal-rule proposal-full-width width-75">
+          <div class="card-caption"><span>02-E</span><strong>球団列 7.5文字幅</strong></div>
+          <div class="standings-full-wrap"><table class="standings-full-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody><tr><td>1</td><td>阪神</td><td>72</td><td>36</td><td>3</td><td>.667</td><td>—</td><td>32</td></tr><tr><td>2</td><td>巨人</td><td>66</td><td>42</td><td>3</td><td>.611</td><td>6.0</td><td>32</td></tr><tr><td>3</td><td>広島</td><td>60</td><td>48</td><td>3</td><td>.556</td><td>12.0</td><td>32</td></tr><tr><td>4</td><td>DeNA</td><td>54</td><td>54</td><td>3</td><td>.500</td><td>18.0</td><td>32</td></tr><tr><td>5</td><td>ヤクルト</td><td>45</td><td>63</td><td>3</td><td>.417</td><td>27.0</td><td>32</td></tr><tr><td>6</td><td>中日</td><td>39</td><td>69</td><td>3</td><td>.361</td><td>33.0</td><td>32</td></tr></tbody></table></div>
         </article>
       </div>
     </section>
@@ -162,6 +162,6 @@
       </div>
     </details>
   </main>
-  <script src="/design-review.js?v=1.0.2-npb-standings-1" type="module"></script>
+  <script src="/design-review.js?v=1.0.2-npb-standings-2" type="module"></script>
 </body>
 </html>

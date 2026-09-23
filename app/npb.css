@@ -81,9 +81,9 @@
 .npb-data-table thead th { position: sticky; top: 0; z-index: 1; background: #fff; color: var(--muted); font-size: 10px; }
 .npb-data-table tbody tr:last-child th, .npb-data-table tbody tr:last-child td { border-bottom: 0; }
 .npb-data-table .team-cell, .npb-data-table tbody th { text-align: left; font-weight: 800; }
-.npb-standing-table { width: 100%; min-width: 500px; }
+.npb-standing-table { width: 100%; min-width: 500px; table-layout: fixed; }
 .npb-standing-table th, .npb-standing-table td { padding: 8px 5px; }
-.npb-standing-table th:nth-child(2), .npb-standing-table td:nth-child(2) { width: calc(8em + 10px); min-width: calc(8em + 10px); max-width: calc(8em + 10px); }
+.npb-standing-table th:nth-child(2), .npb-standing-table td:nth-child(2) { width: 6em; min-width: 6em; max-width: 6em; }
 .npb-matrix-table { min-width: 640px; }
 .npb-matrix-table th:first-child { position: sticky; left: 0; z-index: 2; background: #fff; }
 .npb-matrix-table td.diagonal { color: var(--muted); text-align: center; }

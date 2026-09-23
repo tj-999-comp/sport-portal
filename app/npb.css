@@ -93,6 +93,13 @@
 .npb-standing-table th:nth-child(7), .npb-standing-table td:nth-child(7) { padding-right: 1em; }
 .npb-standing-table th:nth-child(8), .npb-standing-table td:nth-child(8) { width: 5em; padding-left: 1em; text-align: center; }
 .npb-standing-table th:nth-child(2), .npb-standing-table td:nth-child(2) { width: 5.5em; min-width: 5.5em; max-width: 5.5em; }
+.npb-standing-table th:first-child, .npb-standing-table td:first-child { padding-left: 0; padding-right: .75em; }
+.npb-standing-table th:nth-child(2), .npb-standing-table td:nth-child(2) { padding-left: .75em; padding-right: 1em; }
+.npb-standing-table th:nth-child(3), .npb-standing-table td:nth-child(3) { padding-left: 1em; padding-right: .75em; }
+.npb-standing-table th:nth-child(4), .npb-standing-table td:nth-child(4), .npb-standing-table th:nth-child(5), .npb-standing-table td:nth-child(5) { padding-left: .75em; padding-right: .75em; }
+.npb-standing-table th:nth-child(6), .npb-standing-table td:nth-child(6) { padding-left: .75em; padding-right: .75em; }
+.npb-standing-table th:nth-child(7), .npb-standing-table td:nth-child(7) { padding-left: .75em; padding-right: 1em; }
+.npb-standing-table th:nth-child(8), .npb-standing-table td:nth-child(8) { padding-left: 1em; padding-right: 0; }
 .npb-matrix-table { min-width: 640px; }
 .npb-matrix-table th:first-child { position: sticky; left: 0; z-index: 2; background: #fff; }
 .npb-matrix-table td.diagonal { color: var(--muted); text-align: center; }

@@ -252,14 +252,15 @@ function setStandingsButton(open) {
 function teamName(team) { return team?.short || team?.name || '未確定'; }
 function modalLeagueLabel(league = state.modalLeague) { return league === 'central' ? 'セ・リーグ' : 'パ・リーグ'; }
 
-function modalLeagueSwitcher() {
-  return `<nav class="npb-modal-leagues" role="tablist" aria-label="リーグ"><button type="button" role="tab" data-modal-league="central" aria-selected="${state.modalLeague === 'central'}">セ・リーグ</button><button type="button" role="tab" data-modal-league="pacific" aria-selected="${state.modalLeague === 'pacific'}">パ・リーグ</button></nav>`;
+function renderStandingsLeagueTable(league) {
+  const rows = state.data?.standings?.[league]?.rows || [];
+  const label = modalLeagueLabel(league);
+  if (!rows.length) return `<section class="npb-standings-league"><h3>${label}</h3><p class="npb-modal-empty">順位表を取得できていません</p></section>`;
+  return `<section class="npb-standings-league"><h3>${label}</h3><div class="npb-table-wrap npb-standing-wrap" tabindex="0" aria-label="${label}順位表"><table class="npb-data-table npb-standing-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.rank)}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${escapeHtml(row.gamesBehind == null ? '—' : Number(row.gamesBehind).toFixed(1))}</td><td>${remainingGames(row, 143)}</td></tr>`).join('')}</tbody></table></div></section>`;
 }
 
 function renderStandingsTable() {
-  const rows = state.data?.standings?.[state.modalLeague]?.rows || [];
-  if (!rows.length) return '<p class="npb-modal-empty">順位表を取得できていません</p>';
-  return `${modalLeagueSwitcher()}<div class="npb-table-wrap npb-standing-wrap" tabindex="0" aria-label="${modalLeagueLabel()}順位表"><table class="npb-data-table npb-standing-table"><thead><tr><th>順位</th><th>球団</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.rank)}</td><td class="team-cell">${escapeHtml(teamName(row.team))}</td><td>${escapeHtml(row.wins ?? '—')}</td><td>${escapeHtml(row.losses ?? '—')}</td><td>${escapeHtml(row.draws ?? '—')}</td><td>${escapeHtml(row.winPercentage ?? '—')}</td><td>${escapeHtml(row.gamesBehind == null ? '—' : Number(row.gamesBehind).toFixed(1))}</td><td>${remainingGames(row, 143)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="npb-standings-stack">${renderStandingsLeagueTable('central')}${renderStandingsLeagueTable('pacific')}</div>`;
 }
 
 function remainingGames(row, totalGames) {
@@ -344,10 +345,6 @@ function renderModalContent() {
     : state.modalTab === 'interleague' ? renderInterleagueStandings()
       : state.modalTab === 'cs' ? renderCs()
         : renderJapanSeries();
-  content.querySelectorAll('[data-modal-league]').forEach((button) => button.addEventListener('click', () => {
-    state.modalLeague = button.dataset.modalLeague;
-    renderModalContent();
-  }));
 }
 
 document.querySelectorAll('[data-npb-modal-tab]').forEach((button) => {
@@ -383,7 +380,6 @@ document.querySelectorAll('[data-npb-league]').forEach((button) => {
 });
 $('#npb-refresh').addEventListener('click', refresh);
 $('#npb-standings-open').addEventListener('click', () => setModal($('#npb-standings-modal').hidden || modalClosing));
-$('#npb-modal-close').addEventListener('click', () => setModal(false));
 $('#npb-modal-backdrop').addEventListener('click', () => setModal(false));
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setModal(false); });
 loadData();

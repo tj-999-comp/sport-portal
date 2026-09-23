@@ -103,6 +103,24 @@ test('portal root links to the J.League page and keeps the review page separate'
   assert.match(jLeague, /href="\/design-review\.html"/);
 });
 
+test('all league pages expose the shared themed header and page selector', async () => {
+  const pages = [
+    ['j-league', 'Jリーグ'],
+    ['npb', 'NPB'],
+    ['b-league', 'Bリーグ'],
+    ['nba', 'NBA'],
+  ];
+  for (const [directory, label] of pages) {
+    const html = await readFile(new URL(`../../app/${directory}/index.html`, import.meta.url), 'utf8');
+    assert.match(html, /class="(?:site-header|portal-header)"/);
+    assert.match(html, /class="page-switcher"[^>]*data-page-switcher/);
+    assert.match(html, new RegExp(`<option value="\/${directory}\/" selected>${label}<\\/option>`));
+    assert.match(html, /src="\/header-nav\.js/);
+  }
+  const headerNav = await readFile(new URL('../../app/header-nav.js', import.meta.url), 'utf8');
+  assert.match(headerNav, /window\.location\.assign/);
+});
+
 test('J.League page exposes accessible J1/J2/J3 tabs below the date navigation', async () => {
   const html = await readFile(new URL('../../app/j-league/index.html', import.meta.url), 'utf8');
   assert.match(html, /class="date-nav"[^>]*id="date-nav"/);

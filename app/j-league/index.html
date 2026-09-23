@@ -13,7 +13,17 @@
     <header class="app-header">
       <div class="site-header">
         <div class="brand-lockup"><h1><a class="brand-link" href="/">スポーツポータル</a></h1></div>
-        <div class="header-meta"><a class="header-link" href="/design-review.html">レビュー</a><span class="version-badge">v1.0.0 STG</span></div>
+        <a class="header-link" href="/design-review.html">レビュー</a>
+        <label class="page-switcher-wrap">
+          <span class="sr-only">ページを選択</span>
+          <select class="page-switcher" data-page-switcher aria-label="ページを選択">
+            <option value="/">トップ</option>
+            <option value="/j-league/" selected>Jリーグ</option>
+            <option value="/npb/">NPB</option>
+            <option value="/b-league/">Bリーグ</option>
+            <option value="/nba/">NBA</option>
+          </select>
+        </label>
       </div>
 
       <section class="date-section" aria-labelledby="selected-date">
@@ -59,5 +69,6 @@
     </div>
   </section>
   <script src="/app.js?v=1.0.2-league-tabs-1" type="module"></script>
+  <script src="/header-nav.js?v=1.0.0" defer></script>
 </body>
 </html>

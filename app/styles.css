@@ -21,7 +21,7 @@ button { color: inherit; font: inherit; }
 
 .page-shell { min-height: 100dvh; max-width: 720px; margin: 0 auto; padding: 14px 16px 110px; }
 .app-header { position: sticky; top: 0; z-index: 5; margin: -14px -16px 0; padding: 14px 16px 0; background: #fff; }
-.site-header { align-items: center; background: var(--paper); border: 1px solid #f0f1f3; border-radius: 999px; box-shadow: rgba(0, 0, 0, .05) 0 2px 8px; display: flex; justify-content: space-between; min-height: 34px; padding: 7px 10px; }
+.site-header { align-items: center; background: var(--paper); border: 1px solid #f0f1f3; border-left: 4px solid var(--accent); border-radius: 8px 999px 999px 8px; box-shadow: rgba(0, 0, 0, .05) 0 2px 8px; display: flex; justify-content: space-between; min-height: 36px; padding: 7px 12px; }
 .brand-lockup { align-items: center; display: flex; }
 h1, h2, p { margin: 0; }
 h1 { font-size: 12px; font-weight: 800; }
@@ -29,6 +29,12 @@ h1 { font-size: 12px; font-weight: 800; }
 .brand-link:hover, .brand-link:focus-visible, .header-link:hover, .header-link:focus-visible { color: var(--accent); }
 .header-meta { align-items: center; color: var(--fog); display: flex; font-size: 10px; gap: 10px; letter-spacing: .12em; }
 .version-badge { color: var(--fog); font-size: 10px; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
+.page-switcher-wrap { position: relative; align-items: center; color: var(--fog); display: inline-flex; }
+.page-switcher-wrap::after { color: var(--accent); content: "⌄"; font-size: 12px; margin-left: 5px; pointer-events: none; }
+.page-switcher { appearance: none; background: transparent; border: 0; border-radius: 4px; color: inherit; cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; letter-spacing: .08em; outline-offset: 3px; padding: 4px 0; }
+.page-switcher:hover, .page-switcher:focus-visible { color: var(--accent); }
+.page-switcher:focus-visible { outline: 2px solid var(--accent); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
 .date-section { padding: 12px 0 10px; background: #fff; }
 .date-section .status-strip { margin: 0 0 12px; border-top: 0; border-bottom: 1px solid var(--line); min-height: 24px; padding: 0 2px 9px; }

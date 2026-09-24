@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="description" content="2026-27年Bリーグの試合予定・結果と順位情報を確認するページ">
-  <title>スポーツポータル | 2026-27 Bプレミア</title>
-  <link rel="stylesheet" href="/styles.css?v=b-league-1">
-  <link rel="stylesheet" href="/sport-themes.css?v=b-league-1">
-  <link rel="stylesheet" href="/b-league.css?v=b-league-1">
+  <title>スポーツポータル | 2026-27 B.PREMIER</title>
+  <link rel="stylesheet" href="/styles.css?v=b-league-2">
+  <link rel="stylesheet" href="/sport-themes.css?v=b-league-2">
+  <link rel="stylesheet" href="/b-league.css?v=b-league-2">
 </head>
 <body class="b-league-theme">
   <main class="page-shell">
@@ -22,19 +22,19 @@
         <h2 class="selected-date" id="selected-date">2026-27シーズン</h2>
         <nav class="date-nav" id="date-nav" aria-label="試合日"></nav>
         <nav class="league-tabs" role="tablist" aria-label="Bリーグカテゴリー">
-          <button class="league-tab active" type="button" role="tab" aria-selected="true" aria-controls="league-panel" data-league="premier">Bプレミア</button>
-          <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="one" tabindex="-1">Bワン</button>
-          <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="next" tabindex="-1">Bネクスト</button>
+          <button class="league-tab active" type="button" role="tab" aria-selected="true" aria-controls="league-panel" data-league="premier">B.PREMIER</button>
+          <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="one" tabindex="-1">B.ONE</button>
+          <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="next" tabindex="-1">B.NEXT</button>
         </nav>
       </section>
     </header>
-    <section class="matches-section" id="league-panel" role="tabpanel" tabindex="-1" aria-label="Bプレミアの試合日程・結果"><div class="match-days" id="match-days" tabindex="0" aria-label="試合日ごとの一覧"></div><p class="empty-state" id="empty-state" hidden>データを取得できていません</p></section>
+    <section class="matches-section" id="league-panel" role="tabpanel" tabindex="-1" aria-label="B.PREMIERの試合日程・結果"><div class="match-days" id="match-days" tabindex="0" aria-label="試合日ごとの一覧"></div><p class="empty-state" id="empty-state" hidden>データを取得できていません</p></section>
     <nav class="bottom-nav" aria-label="操作"><button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button><button id="standings-button" type="button" aria-label="順位表を開く" aria-controls="standings-sheet" aria-expanded="false"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button></nav>
   </main>
   <section class="standings-sheet" id="standings-sheet" role="dialog" aria-modal="true" aria-label="Bリーグ順位情報" aria-hidden="true" hidden>
     <button class="sheet-backdrop" id="standings-backdrop" type="button" aria-label="順位情報を閉じる"></button>
     <div class="standings-sheet-panel" id="standings-panel" tabindex="-1"><div class="modal-grabber" aria-hidden="true"></div><nav class="b-modal-tabs" role="tablist" aria-label="Bリーグ順位情報"><button class="b-modal-tab active" role="tab" aria-selected="true" data-modal-tab="standings">順位表</button><button class="b-modal-tab" role="tab" aria-selected="false" data-modal-tab="wildcard">ワイルドカード</button><button class="b-modal-tab" role="tab" aria-selected="false" data-modal-tab="playoffs">プレーオフ</button></nav><div class="b-modal-content" id="modal-content"></div></div>
   </section>
-  <script type="module" src="/b-league.js?v=b-league-1"></script><script src="/header-nav.js?v=1.0.0" defer></script>
+  <script type="module" src="/b-league.js?v=b-league-2"></script><script src="/header-nav.js?v=1.0.0" defer></script>
 </body>
 </html>

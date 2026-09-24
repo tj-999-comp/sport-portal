@@ -53,7 +53,13 @@ jobs:
           if [[ "$ENVIRONMENT" == "production" ]]; then API_BASE_URL="$PRODUCTION_API_URL"; else API_BASE_URL="$STG_API_URL"; fi
           test -n "$API_BASE_URL"; test -n "$API_USER"; test -n "$API_PASSWORD"
           response_file="$(mktemp)"; trap 'rm -f "$response_file"' EXIT
-          http_code="$(curl --silent --show-error --location --user "$API_USER:$API_PASSWORD" --request POST --header 'Accept: application/json' --connect-timeout 15 --max-time 600 --retry 2 --retry-delay 5 --output "$response_file" --write-out '%{http_code}' "${API_BASE_URL%/}/api/b-league/update?league=${LEAGUE}")"
-          if [[ "$http_code" != 2* ]]; then jq -r '.error // "HTTP request failed"' "$response_file" >&2; exit 1; fi
-          jq -e --arg league "$LEAGUE" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "success"' "$response_file" >/dev/null
+          for part in $(seq 0 8); do
+            http_code="$(curl --silent --show-error --location --user "$API_USER:$API_PASSWORD" --request POST --header 'Accept: application/json' --connect-timeout 15 --max-time 180 --retry 2 --retry-delay 5 --output "$response_file" --write-out '%{http_code}' "${API_BASE_URL%/}/api/b-league/update?league=${LEAGUE}&part=${part}")"
+            if [[ "$http_code" != 2* ]]; then jq -r '.error // "HTTP request failed"' "$response_file" >&2; exit 1; fi
+            if [[ "$part" == 8 ]]; then
+              jq -e --arg league "$LEAGUE" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "success"' "$response_file" >/dev/null
+            else
+              jq -e --arg league "$LEAGUE" --argjson part "$part" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "partial" and .data.update.part == $part' "$response_file" >/dev/null
+            fi
+          done
           echo "${ENVIRONMENT}/${LEAGUE} B.League update completed successfully"

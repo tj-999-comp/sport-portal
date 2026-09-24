@@ -1,11 +1,15 @@
 .b-league-theme { --accent:#111; --accent-soft:#ededed; --muted:#666; --line:#d6d6d6; }
-.b-modal-tabs { display:flex; gap:4px; overflow-x:auto; border-bottom:1px solid var(--line); margin:0 -20px 10px; padding:0 20px; scrollbar-width:none; }
-.b-modal-tab { flex:1 0 auto; min-height:40px; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--muted); font-size:12px; font-weight:800; cursor:pointer; padding:8px 10px; }
+.b-modal-tabs { display:flex; flex:0 0 auto; gap:3px; overflow-x:hidden; margin:0 -4px 12px; border-bottom:1px solid var(--line); scrollbar-width:none; }
+.b-modal-tabs.is-scrollable { overflow-x:auto; }
+.b-modal-tabs::-webkit-scrollbar { display:none; }
+.b-modal-tab { flex:0 0 auto; min-height:38px; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--muted); font-size:11px; font-weight:800; cursor:pointer; padding:8px 9px; white-space:nowrap; }
 .b-modal-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
 .b-modal-tab:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
-.b-modal-content { min-height:0; overflow:auto; padding-bottom:12px; }
+.b-modal-content { min-height:0; flex:1 1 auto; overflow:auto; overscroll-behavior:none; scroll-snap-type:both mandatory; touch-action:pan-x pan-y; -webkit-overflow-scrolling:touch; padding-bottom:12px; }
 .b-modal-content h3 { margin:16px 0 8px; font-size:15px; }
 .b-modal-content h4 { margin:12px 0 6px; font-size:13px; }
+.b-modal-content > :first-child h3 { margin-top:0; }
+.b-modal-content .table-wrap { width:100%; flex:none; overflow-x:auto; overflow-y:visible; scroll-snap-type:both mandatory; }
 .b-zone-table { min-width:680px; }
 .b-zone-table th, .b-zone-table td { padding:9px 6px; }
 .b-zone-table td.team-column { max-width:150px; }

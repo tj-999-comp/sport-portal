@@ -113,6 +113,68 @@ export function parseStandingsHtml(html, { league = 'premier' } = {}) {
   return { zones: ordered, wildcard, status: ordered.length ? 'success' : 'unavailable' };
 }
 
+function teamKey(value) { return htmlText(value).replace(/[\s　・.]/g, '').toLowerCase(); }
+
+export function applyMatchResultsToStandings(standings, matches, { league = 'premier' } = {}) {
+  if (!standings?.zones?.length) return standings;
+  const rows = standings.zones.flatMap((zone) => zone.rows || []);
+  if (rows.some((row) => Number.isInteger(row.wins) || Number.isInteger(row.losses))) return standings;
+  const stats = new Map();
+  const getStats = (team) => {
+    const key = teamKey(team);
+    if (!stats.has(key)) stats.set(key, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0 });
+    return stats.get(key);
+  };
+  for (const match of matches || []) {
+    const home = match.home?.short || match.home?.name;
+    const away = match.away?.short || match.away?.name;
+    if (!home || !away) continue;
+    const homeStats = getStats(home);
+    const awayStats = getStats(away);
+    if (match.status === 'finished' && Number.isInteger(match.homeScore) && Number.isInteger(match.awayScore)) {
+      homeStats.pointsFor += match.homeScore;
+      homeStats.pointsAgainst += match.awayScore;
+      awayStats.pointsFor += match.awayScore;
+      awayStats.pointsAgainst += match.homeScore;
+      if (match.homeScore > match.awayScore) { homeStats.wins += 1; awayStats.losses += 1; }
+      else if (match.awayScore > match.homeScore) { awayStats.wins += 1; homeStats.losses += 1; }
+    } else if (match.status === 'scheduled') {
+      homeStats.remaining += 1;
+      awayStats.remaining += 1;
+    }
+  }
+  const zones = standings.zones.map((zone) => {
+    const enriched = (zone.rows || []).map((row, index) => {
+      const stat = stats.get(teamKey(row.team)) || { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0 };
+      const played = stat.wins + stat.losses;
+      return {
+        ...row,
+        _sourceIndex: index,
+        rank: null,
+        wins: stat.wins,
+        losses: stat.losses,
+        winPercentage: played ? (stat.wins / played).toFixed(3).replace(/^0/, '') : null,
+        gamesBehind: null,
+        pointsFor: stat.pointsFor,
+        pointsAgainst: stat.pointsAgainst,
+        pointDifference: stat.pointsFor - stat.pointsAgainst,
+        played,
+        remaining: stat.remaining
+      };
+    });
+    enriched.sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.pointDifference - a.pointDifference || a._sourceIndex - b._sourceIndex);
+    const leader = enriched.find((row) => row.played > 0);
+    const ranked = enriched.map((row, index) => ({
+      ...row,
+      rank: index + 1,
+      gamesBehind: leader && row.played > 0 ? Number(((leader.wins - row.wins + row.losses - leader.losses) / 2).toFixed(1)) : null
+    }));
+    return { ...zone, rows: ranked.map(({ _sourceIndex, ...row }) => row) };
+  });
+  const wildcard = league === 'premier' ? zones.flatMap((zone) => zone.rows).filter((row) => row.rank > 3) : league === 'one' ? zones.flatMap((zone) => zone.rows).filter((row) => row.rank > 2) : [];
+  return { ...standings, zones, wildcard, derived: true };
+}
+
 async function getText(fetchImpl, url) { const response = await fetchImpl(url, { headers: HEADERS, redirect: 'follow' }); if (!response.ok) throw new Error(`Bリーグ公式サイトの応答エラー (${response.status})`); return response.text(); }
 async function getJson(fetchImpl, url) { const response = await fetchImpl(url, { headers: HEADERS, redirect: 'follow' }); if (!response.ok) throw new Error(`Bリーグ日程JSONの応答エラー (${response.status})`); return response.json(); }
 async function getJsonWithRetry(fetchImpl, url) {
@@ -152,7 +214,8 @@ export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(),
   for (const [year, month] of months) matchPages.push(await fetchMonthMatches(fetchImpl, year, month, config));
   const matches = unique(matchPages.flat(), (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
   const standingsHtml = includeStandings ? await getText(fetchImpl, `${STANDINGS}?tab=${config.tab}&year=${START_YEAR}`) : null;
-  const standings = standingsHtml ? parseStandingsHtml(standingsHtml, { league }) : { zones: [], wildcard: [], status: 'partial' };
+  const parsedStandings = standingsHtml ? parseStandingsHtml(standingsHtml, { league }) : { zones: [], wildcard: [], status: 'partial' };
+  const standings = applyMatchResultsToStandings(parsedStandings, matches, { league });
   if (!allowEmptyMatches && !matches.length) throw new Error('Bリーグの試合日程を抽出できませんでした');
   if (includeStandings && standings.status !== 'success') throw new Error('Bリーグの順位表を抽出できませんでした');
   return { schemaVersion: 1, sport: 'b-league', league, season: SEASON, matches, standings, postseason: { status: 'unavailable', rounds: [], note: 'ポストシーズンの日程・結果は公式発表の取得範囲を確認中です' }, update: { status: 'success', at: now.toISOString() } };

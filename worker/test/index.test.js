@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { emptyData, getLeagueConfig, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
 import { onRequest as protectPagesRequest } from '../../functions/_middleware.js';
 import worker from '../src/index.js';
-import { emptyBLeagueData, parseScheduleHtml as parseBLeagueScheduleHtml, parseStandingsHtml as parseBLeagueStandingsHtml, BLEAGUES } from '../src/b_league.js';
+import { applyMatchResultsToStandings, emptyBLeagueData, parseScheduleHtml as parseBLeagueScheduleHtml, parseStandingsHtml as parseBLeagueStandingsHtml, BLEAGUES } from '../src/b_league.js';
 
 function basicAuth(user, password) {
   return `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`;
@@ -244,6 +244,21 @@ test('parses numeric B.League standings results', () => {
   const result = parseBLeagueStandingsHtml(html, { league: 'premier' });
   assert.equal(result.status, 'success');
   assert.deepEqual(result.zones[0].rows[0], { rank: 1, team: '宇都宮', wins: 45, losses: 15, winPercentage: '.750', gamesBehind: null, pointsFor: 5130, pointsAgainst: 4801, pointDifference: 329, played: 60, remaining: null });
+});
+
+test('derives B.League standings from finished results when official stats are not published', () => {
+  const standings = { zones: [{ name: '東地区', rows: [{ rank: null, team: 'A東京' }, { rank: null, team: '琉球' }] }], wildcard: [], status: 'success' };
+  const result = applyMatchResultsToStandings(standings, [
+    { status: 'finished', home: { short: 'A東京' }, away: { short: '琉球' }, homeScore: 84, awayScore: 73 },
+    { status: 'finished', home: { short: 'A東京' }, away: { short: '琉球' }, homeScore: 74, awayScore: 85 },
+    { status: 'scheduled', home: { short: 'A東京' }, away: { short: '琉球' } }
+  ], { league: 'premier' });
+  assert.deepEqual(result.zones[0].rows.map((row) => ({ team: row.team, rank: row.rank, wins: row.wins, losses: row.losses, played: row.played, remaining: row.remaining })), [
+    { team: 'A東京', rank: 1, wins: 1, losses: 1, played: 2, remaining: 1 },
+    { team: '琉球', rank: 2, wins: 1, losses: 1, played: 2, remaining: 1 }
+  ]);
+  assert.equal(result.zones[0].rows[0].pointDifference, 0);
+  assert.equal(result.zones[0].rows[0].gamesBehind, 0);
 });
 
 test('B.League categories have isolated keys and stable empty data shapes', () => {

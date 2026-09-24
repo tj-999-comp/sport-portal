@@ -72,7 +72,8 @@ export function parseScheduleHtml(html, { year = 2026, month = 9, day = null, le
     const allScores = scores.length >= 2 ? scores : pointNumbers.slice(0, 2);
     const homeScore = Number.isInteger(allScores[0]) ? allScores[0] : null;
     const awayScore = Number.isInteger(allScores[1]) ? allScores[1] : null;
-    matches.push({ id, date: seasonDate(year, month, Number(day || text.match(/(?:^|\s)(\d{1,2})日/)?.[1] || 1)), league, home: { short: teams[0], name: teams[0] }, away: { short: teams[1], name: teams[1] }, kickoff, venue, matchday: text.match(/第\s*(\d+)\s*節/)?.[1] || null, status: parseStatus(text, homeScore, awayScore), homeScore, awayScore, competition: text.match(/(B\.PREMIER|B\.ONE|B\.NEXT|プレーオフ|ファイナル)/i)?.[1] || 'レギュラーシーズン' });
+    const status = parseStatus(text, homeScore, awayScore);
+    matches.push({ id, date: seasonDate(year, month, Number(day || text.match(/(?:^|\s)(\d{1,2})日/)?.[1] || 1)), league, home: { short: teams[0], name: teams[0] }, away: { short: teams[1], name: teams[1] }, kickoff, venue, matchday: text.match(/第\s*(\d+)\s*節/)?.[1] || null, status, homeScore: status === 'finished' ? homeScore : null, awayScore: status === 'finished' ? awayScore : null, competition: text.match(/(B\.PREMIER|B\.ONE|B\.NEXT|プレーオフ|ファイナル)/i)?.[1] || 'レギュラーシーズン' });
   }
   return matches;
 }

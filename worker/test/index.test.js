@@ -230,6 +230,22 @@ test('accepts official B.League standings before rankings are published', () => 
   assert.equal(result.zones[0].rows[0].team, '北海道');
 });
 
+test('parses B.League final scores and winner data from official game cards', () => {
+  const html = `<li class="list-item" id="506389"><div class="game"><span class="team home"><span class="team-name">A東京</span></span><span class="point"><span class="number home-score gr"><span>74</span></span><span class="hifun"></span><span class="number away-score"><span>85</span></span></span><span class="team away"><span class="team-name">琉球</span></span></div><div class="info"><div class="info-arena"><span>東京都 | トヨタA</span><span>14:05</span></div><div class="info-scorestate"><span>FINAL</span></div></div></li>`;
+  const result = parseBLeagueScheduleHtml(html, { year: 2026, month: 9, day: 23, league: 'premier' });
+  assert.equal(result.length, 1);
+  assert.equal(result[0].status, 'finished');
+  assert.equal(result[0].homeScore, 74);
+  assert.equal(result[0].awayScore, 85);
+});
+
+test('parses numeric B.League standings results', () => {
+  const html = `<h3>東地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th><th>得点</th><th>失点</th><th>得失点差</th><th>ホーム</th><th>アウェー</th><th>過去5試合</th><th>連勝/連敗</th><th>試合数</th></tr><tr><td>1</td><td><span>宇都宮ブレックス</span> <span>宇都宮</span></td><td>45</td><td>15</td><td>.750</td><td>--</td><td>5130</td><td>4801</td><td>329</td><td>22-8</td><td>23-7</td><td>4-1</td><td>L1</td><td>60</td></tr></table>`;
+  const result = parseBLeagueStandingsHtml(html, { league: 'premier' });
+  assert.equal(result.status, 'success');
+  assert.deepEqual(result.zones[0].rows[0], { rank: 1, team: '宇都宮', wins: 45, losses: 15, winPercentage: '.750', gamesBehind: null, pointsFor: 5130, pointsAgainst: 4801, pointDifference: 329, played: 60, remaining: null });
+});
+
 test('B.League categories have isolated keys and stable empty data shapes', () => {
   for (const league of ['premier', 'one', 'next']) {
     assert.equal(BLEAGUES[league].dataKey, `b-${league}-2026-27`);

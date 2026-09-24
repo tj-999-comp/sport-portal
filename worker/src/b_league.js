@@ -66,12 +66,14 @@ export function parseScheduleHtml(html, { year = 2026, month = 9, day = null, le
     const arenaText = htmlText(arena);
     const kickoff = arenaText.match(/\b(\d{1,2}:\d{2})\b/)?.[1] || null;
     const venue = arenaText.replace(/\b\d{1,2}:\d{2}\b/g, '').replace(/^\s*\|\s*/, '').trim() || null;
-    const scores = [...block.matchAll(/(?:home-score|home[^>]*score)[^>]*>(?:\s*<[^>]+>)*\s*(\d+)/gi)].map((item) => Number(item[1]));
+    const scoreFor = (side) => {
+      const scoreBlock = block.match(new RegExp(`<span\\b[^>]*class=["'][^"']*\\b${side}-score\\b[^"']*["'][^>]*>([\\s\\S]*?)<\\/span>`, 'i'))?.[1] || '';
+      return number(htmlText(scoreBlock));
+    };
     const pointText = block.match(/class=["'][^"']*point[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] || '';
     const pointNumbers = [...htmlText(pointText).matchAll(/\d+/g)].map((item) => Number(item[0]));
-    const allScores = scores.length >= 2 ? scores : pointNumbers.slice(0, 2);
-    const homeScore = Number.isInteger(allScores[0]) ? allScores[0] : null;
-    const awayScore = Number.isInteger(allScores[1]) ? allScores[1] : null;
+    const homeScore = scoreFor('home') ?? (Number.isInteger(pointNumbers[0]) ? pointNumbers[0] : null);
+    const awayScore = scoreFor('away') ?? (Number.isInteger(pointNumbers[1]) ? pointNumbers[1] : null);
     const status = parseStatus(text, homeScore, awayScore);
     matches.push({ id, date: seasonDate(year, month, Number(day || text.match(/(?:^|\s)(\d{1,2})日/)?.[1] || 1)), league, home: { short: teams[0], name: teams[0] }, away: { short: teams[1], name: teams[1] }, kickoff, venue, matchday: text.match(/第\s*(\d+)\s*節/)?.[1] || null, status, homeScore: status === 'finished' ? homeScore : null, awayScore: status === 'finished' ? awayScore : null, competition: text.match(/(B\.PREMIER|B\.ONE|B\.NEXT|プレーオフ|ファイナル)/i)?.[1] || 'レギュラーシーズン' });
   }

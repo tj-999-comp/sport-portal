@@ -113,6 +113,17 @@ export function parseStandingsHtml(html, { league = 'premier' } = {}) {
 
 async function getText(fetchImpl, url) { const response = await fetchImpl(url, { headers: HEADERS, redirect: 'follow' }); if (!response.ok) throw new Error(`Bリーグ公式サイトの応答エラー (${response.status})`); return response.text(); }
 async function getJson(fetchImpl, url) { const response = await fetchImpl(url, { headers: HEADERS, redirect: 'follow' }); if (!response.ok) throw new Error(`Bリーグ日程JSONの応答エラー (${response.status})`); return response.json(); }
+async function getJsonWithRetry(fetchImpl, url) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try { return await getJson(fetchImpl, url); }
+    catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+  throw lastError;
+}
 
 async function fetchMonthMatches(fetchImpl, year, month, config) {
   const monthUrl = `${SCHEDULE}?year=${year}&mon=${String(month).padStart(2, '0')}&day=all&tab=${config.tab}`;
@@ -124,10 +135,8 @@ async function fetchMonthMatches(fetchImpl, year, month, config) {
     pages.push(...await Promise.all(batch.map(async (date) => {
       const day = Number(date.slice(-2));
       const url = `${SCHEDULE}?data_format=json&year=${year}&mon=${String(month).padStart(2, '0')}&day=${day}&event=&club=&tab=${config.tab}&ha=&fb=&index=0`;
-      try {
-        const json = await getJson(fetchImpl, url);
-        return (json.topics || []).map((topic) => parseScheduleHtml(topic, { year, month, day, league: config.league }));
-      } catch { return []; }
+      const json = await getJsonWithRetry(fetchImpl, url);
+      return (json.topics || []).map((topic) => parseScheduleHtml(topic, { year, month, day, league: config.league }));
     })));
   }
   return pages.flat(2);

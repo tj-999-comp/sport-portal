@@ -7,7 +7,7 @@
   <meta name="description" content="2026年プロ野球の試合予定・結果と順位情報を確認するページ">
   <title>スポーツポータル | 2026 NPB</title>
   <link rel="stylesheet" href="/styles.css?v=1.0.2-header-1">
-  <link rel="stylesheet" href="/npb.css?v=npb-phase-4">
+  <link rel="stylesheet" href="/npb.css?v=npb-unified-60">
 </head>
 <body class="npb-theme">
   <main class="npb-shell">
@@ -34,14 +34,10 @@
         </div>
         <h2 id="npb-selected-date" class="npb-selected-date">2026年</h2>
         <nav id="npb-date-nav" class="npb-date-nav" aria-label="試合日"></nav>
-        <nav class="npb-league-tabs" role="tablist" aria-label="リーグ">
-          <button type="button" role="tab" aria-selected="true" data-npb-league="central">セ・リーグ</button>
-          <button type="button" role="tab" aria-selected="false" data-npb-league="pacific">パ・リーグ</button>
-        </nav>
       </section>
     </header>
 
-    <section class="npb-main" role="tabpanel" tabindex="-1" aria-label="NPBの日程・結果">
+    <section class="npb-main" aria-label="NPBの日程・結果">
       <div id="npb-days" class="npb-days" aria-label="日付ごとの試合一覧"></div>
       <p id="npb-empty" class="npb-empty" hidden>データを取得できていません</p>
     </section>
@@ -64,7 +60,7 @@
       <div id="npb-modal-content" class="npb-modal-content"></div>
     </div>
   </section>
-  <script type="module" src="/npb.js?v=npb-phase-4"></script>
+  <script type="module" src="/npb.js?v=npb-unified-60"></script>
   <script src="/header-nav.js?v=1.0.0" defer></script>
 </body>
 </html>

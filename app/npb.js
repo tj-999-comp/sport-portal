@@ -60,8 +60,8 @@ function renderDayMatches(matches) {
           : match.league === 'interleague' ? 'interleague' : 'other';
     groups.get(key).matches.push(match);
   }
-  return [...groups.values()].filter((group) => group.matches.length).map((group) =>
-    `<section class="npb-day-league" aria-label="${group.label}"><h3>${group.label}</h3><div class="npb-day-list">${group.matches.map(renderGame).join('')}</div></section>`
+  return [...groups].filter(([, group]) => group.matches.length).map(([key, group]) =>
+    `<section class="npb-day-league${['central', 'pacific'].includes(key) ? ` npb-day-league--${key}` : ''}" aria-label="${group.label}"><h3>${group.label}</h3><div class="npb-day-list">${group.matches.map(renderGame).join('')}</div></section>`
   ).join('');
 }
 
@@ -329,7 +329,7 @@ function renderMatches() {
   dateNav.querySelectorAll('[data-date]').forEach((button) => button.addEventListener('click', () => selectDate(button.dataset.date, 'auto')));
   dateNav.onscroll = syncDateSelectionFromDateNav;
   updateScrollState(dateNav);
-  root.innerHTML = dates.map((date) => `<section class="npb-day" data-date="${escapeHtml(date)}" aria-label="${escapeHtml(fullDateLabel(date))}">${renderDayMatches(byDate.get(date))}</section>`).join('');
+  root.innerHTML = dates.map((date) => `<section class="npb-day" data-date="${escapeHtml(date)}" aria-label="${escapeHtml(fullDateLabel(date))}"><div class="npb-day-inner">${renderDayMatches(byDate.get(date))}</div></section>`).join('');
   $('#npb-empty').hidden = dates.length > 0;
   $('#npb-empty').textContent = '試合データを取得できていません';
   root.onscroll = syncDateSelectionFromDays;

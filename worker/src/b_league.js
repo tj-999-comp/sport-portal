@@ -97,6 +97,11 @@ export function parseStandingsHtml(html, { league = 'premier' } = {}) {
     const rows = parseTableRows(table);
     if (rows.length) zones.push({ name, rows });
   }
+  if (!zones.length && league === 'next') {
+    const table = html.match(/<table\b[^>]*class=["'][^"']*table-standings[^"']*["'][\s\S]*?<\/table>/i)?.[0];
+    const rows = table ? parseTableRows(table) : [];
+    if (rows.length) zones.push({ name: '1地区', rows });
+  }
   const known = BLEAGUES[league]?.zones || [];
   const ordered = known.map((name) => zones.find((zone) => zone.name.includes(name))).filter(Boolean);
   const allRows = ordered.flatMap((zone) => zone.rows);

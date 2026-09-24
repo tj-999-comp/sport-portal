@@ -40,7 +40,6 @@
 .b-note { color:var(--muted); font-size:12px; line-height:1.65; }
 .b-playoff-card { border-top:1px solid var(--line); padding:10px 0; }
 .b-playoff-card strong { display:block; margin-bottom:4px; }
-.b-league-theme .league-tab.active { color:#111; border-bottom-color:#111; }
 .b-league-theme .status-indicator.success { background:#111; }
 .b-league-theme .date-chip.active { color:#111; border-color:#111; }
 .b-league-theme .date-chip.active small, .b-league-theme .date-chip.active span { color:#111; }

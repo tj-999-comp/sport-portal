@@ -6,9 +6,9 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="description" content="J1・J2・J3リーグの試合予定・結果・順位表を確認するスポーツポータル">
   <title>スポーツポータル | 2026 J1</title>
-  <link rel="stylesheet" href="/styles.css?v=1.0.2-league-tabs-1">
+  <link rel="stylesheet" href="/styles.css?v=league-tabs-bottom-1">
 </head>
-<body>
+<body class="league-page">
   <main class="page-shell">
     <header class="app-header">
       <div class="site-header">
@@ -34,11 +34,6 @@
         </section>
         <h2 class="selected-date" id="selected-date">2026年9月6日</h2>
         <nav class="date-nav" id="date-nav" aria-label="日付"></nav>
-        <nav class="league-tabs" id="league-tabs" aria-label="リーグ" role="tablist">
-          <button class="league-tab active" id="league-tab-j1" type="button" role="tab" aria-selected="true" aria-controls="league-panel" tabindex="0" data-league="j1">J1</button>
-          <button class="league-tab" id="league-tab-j2" type="button" role="tab" aria-selected="false" aria-controls="league-panel" tabindex="-1" data-league="j2">J2</button>
-          <button class="league-tab" id="league-tab-j3" type="button" role="tab" aria-selected="false" aria-controls="league-panel" tabindex="-1" data-league="j3">J3</button>
-        </nav>
       </section>
     </header>
 
@@ -47,10 +42,17 @@
       <p class="empty-state" id="empty-state" hidden>データを取得できていません</p>
     </section>
 
-    <nav class="bottom-nav" aria-label="操作">
-      <button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button>
-      <button id="standings-button" type="button" aria-label="順位表を開く" aria-controls="standings-sheet" aria-expanded="false"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button>
-    </nav>
+    <div class="bottom-controls">
+      <nav class="league-tabs" id="league-tabs" aria-label="リーグ" role="tablist">
+        <button class="league-tab active" id="league-tab-j1" type="button" role="tab" aria-selected="true" aria-controls="league-panel" tabindex="0" data-league="j1">J1</button>
+        <button class="league-tab" id="league-tab-j2" type="button" role="tab" aria-selected="false" aria-controls="league-panel" tabindex="-1" data-league="j2">J2</button>
+        <button class="league-tab" id="league-tab-j3" type="button" role="tab" aria-selected="false" aria-controls="league-panel" tabindex="-1" data-league="j3">J3</button>
+      </nav>
+      <nav class="bottom-nav" aria-label="操作">
+        <button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button>
+        <button id="standings-button" type="button" aria-label="順位表を開く" aria-controls="standings-sheet" aria-expanded="false"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button>
+      </nav>
+    </div>
   </main>
 
   <section class="standings-sheet" id="standings-sheet" role="dialog" aria-modal="true" aria-label="順位表" aria-hidden="true" hidden>

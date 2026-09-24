@@ -18,6 +18,7 @@ const MONTHS = [
   [2026, 9], [2026, 10], [2026, 11], [2026, 12],
   [2027, 1], [2027, 2], [2027, 3], [2027, 4], [2027, 5]
 ];
+export const B_UPDATE_PARTS = MONTHS.length;
 
 function htmlText(value) {
   return String(value ?? '').replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#x3000;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/[\s\u3000]+/g, ' ').trim();
@@ -127,28 +128,47 @@ async function fetchMonthMatches(fetchImpl, year, month, config) {
   return pages.flat(2);
 }
 
-export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(), league = 'premier') {
+export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(), league = 'premier', { monthIndexes = null, includeStandings = true } = {}) {
   const config = BLEAGUES[league];
   if (!config) throw new Error(`未対応のBリーグカテゴリーです: ${league}`);
   const matchPages = [];
-  for (const [year, month] of MONTHS) matchPages.push(await fetchMonthMatches(fetchImpl, year, month, config));
+  const months = monthIndexes ? monthIndexes.map((index) => MONTHS[index]).filter(Boolean) : MONTHS;
+  for (const [year, month] of months) matchPages.push(await fetchMonthMatches(fetchImpl, year, month, config));
   const matches = unique(matchPages.flat(), (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
-  const standingsHtml = await getText(fetchImpl, `${STANDINGS}?tab=${config.tab}&year=${START_YEAR}`);
-  const standings = parseStandingsHtml(standingsHtml, { league });
+  const standingsHtml = includeStandings ? await getText(fetchImpl, `${STANDINGS}?tab=${config.tab}&year=${START_YEAR}`) : null;
+  const standings = standingsHtml ? parseStandingsHtml(standingsHtml, { league }) : { zones: [], wildcard: [], status: 'partial' };
   if (!matches.length) throw new Error('Bリーグの試合日程を抽出できませんでした');
-  if (standings.status !== 'success') throw new Error('Bリーグの順位表を抽出できませんでした');
+  if (includeStandings && standings.status !== 'success') throw new Error('Bリーグの順位表を抽出できませんでした');
   return { schemaVersion: 1, sport: 'b-league', league, season: SEASON, matches, standings, postseason: { status: 'unavailable', rounds: [], note: 'ポストシーズンの日程・結果は公式発表の取得範囲を確認中です' }, update: { status: 'success', at: now.toISOString() } };
 }
 
-export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fetch, league = 'premier') {
+export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fetch, league = 'premier', { part = null, totalParts = B_UPDATE_PARTS } = {}) {
   const config = BLEAGUES[league];
   if (!config) throw new Error(`未対応のBリーグカテゴリーです: ${league}`);
   const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyBLeagueData(league);
+  const isPartitioned = Number.isInteger(part);
+  if (isPartitioned && (part < 0 || part >= totalParts)) throw new Error(`Bリーグ更新パートが不正です: ${part}`);
+  const partialKey = `${config.dataKey}:part:${part}`;
   try {
-    const data = await fetchFreshBLeagueData(fetchImpl, now, league);
+    if (isPartitioned && part === 0) await Promise.all(Array.from({ length: totalParts }, (_, index) => env.SPORTAL_DATA.delete(`${config.dataKey}:part:${index}`)));
+    const data = await fetchFreshBLeagueData(fetchImpl, now, league, { monthIndexes: isPartitioned ? [part] : null, includeStandings: !isPartitioned || part === totalParts - 1 });
+    if (isPartitioned && part < totalParts - 1) {
+      await env.SPORTAL_DATA.put(partialKey, JSON.stringify({ matches: data.matches }));
+      return { ...data, standings: { zones: [], wildcard: [], status: 'partial' }, update: { status: 'partial', part, totalParts, at: now.toISOString() } };
+    }
+    if (isPartitioned) {
+      const partials = await Promise.all(Array.from({ length: totalParts - 1 }, (_, index) => env.SPORTAL_DATA.get(`${config.dataKey}:part:${index}`, 'json')));
+      const matches = unique([...(partials.flatMap((item) => item?.matches || [])), ...data.matches], (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
+      if (!matches.length) throw new Error('Bリーグの分割更新結果が空です');
+      const complete = { ...data, matches, update: { status: 'success', at: now.toISOString() } };
+      await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(complete));
+      await Promise.all(Array.from({ length: totalParts }, (_, index) => env.SPORTAL_DATA.delete(`${config.dataKey}:part:${index}`)));
+      return complete;
+    }
     await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(data));
     return data;
   } catch (error) {
+    if (isPartitioned) throw Object.assign(new Error(error instanceof Error ? error.message : 'Bリーグ更新に失敗しました'), { data: previous });
     const failed = { ...previous, update: { status: 'failure', at: now.toISOString(), message: error instanceof Error ? error.message : 'Bリーグ更新に失敗しました' } };
     await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(failed));
     throw Object.assign(new Error(failed.update.message), { data: failed });

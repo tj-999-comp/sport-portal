@@ -1,5 +1,5 @@
 import { emptyNpbData, performNpbUpdate } from './npb.js';
-import { BLEAGUES, BLEAGUE_KEYS, emptyBLeagueData, performBLeagueUpdate } from './b_league.js';
+import { B_UPDATE_PARTS, BLEAGUES, BLEAGUE_KEYS, emptyBLeagueData, performBLeagueUpdate } from './b_league.js';
 
 const SEASON = '2026';
 const LEAGUE_DEFINITIONS = {
@@ -265,8 +265,12 @@ export default {
     if (url.pathname === '/api/b-league/update' && request.method === 'POST') {
       const league = url.searchParams.get('league') || 'premier';
       if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
-      if (!activeBLeagueUpdatePromises.has(league)) activeBLeagueUpdatePromises.set(league, performBLeagueUpdate(env, new Date(), fetch, league).finally(() => activeBLeagueUpdatePromises.delete(league)));
-      try { return json({ data: await activeBLeagueUpdatePromises.get(league) }); }
+      const rawPart = url.searchParams.get('part');
+      const part = rawPart === null ? null : Number(rawPart);
+      if (rawPart !== null && (!Number.isInteger(part) || part < 0 || part >= B_UPDATE_PARTS)) return json({ error: `Bリーグ更新パートが不正です: ${rawPart}` }, 400);
+      const updateKey = `${league}:${part === null ? 'full' : part}`;
+      if (!activeBLeagueUpdatePromises.has(updateKey)) activeBLeagueUpdatePromises.set(updateKey, performBLeagueUpdate(env, new Date(), fetch, league, { part, totalParts: B_UPDATE_PARTS }).finally(() => activeBLeagueUpdatePromises.delete(updateKey)));
+      try { return json({ data: await activeBLeagueUpdatePromises.get(updateKey) }); }
       catch (error) { return json({ error: error.message, data: error.data }, 502); }
     }
     const league = url.searchParams.get('league') || CONFIG.league;

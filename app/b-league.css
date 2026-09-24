@@ -33,8 +33,9 @@
 .b-zone-table th:nth-child(8), .b-zone-table td:nth-child(8), .b-zone-table th:nth-child(9), .b-zone-table td:nth-child(9) { padding-left:.75em; padding-right:.75em; }
 .b-zone-table th:nth-child(10), .b-zone-table td:nth-child(10) { padding-left:1em; padding-right:0; }
 .b-zone-table td.team-column { font-weight:700; text-align:center; }
-.b-zone-table th:first-child, .b-zone-table td:first-child { position:sticky; left:0; z-index:3; background-color:#fff !important; }
-.b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { position:sticky; left:calc(3em - 1px); z-index:2; background-color:#fff !important; box-shadow:-1px 0 0 #fff, 2px 0 0 var(--line); }
+.b-zone-table th:first-child, .b-zone-table td:first-child { position:sticky; left:0; z-index:3; background-color:#fff !important; box-shadow:1px 0 0 #fff; }
+.b-zone-table th:first-child::after, .b-zone-table td:first-child::after { position:absolute; top:-1px; right:-1px; bottom:-1px; width:1px; background:#fff; content:""; pointer-events:none; }
+.b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { position:sticky; left:3em; z-index:2; background-color:#fff !important; box-shadow:none; }
 .b-league-theme .team-row.loser .score { font-weight:400; }
 .b-league-theme .match-meta.match-venue { justify-content:center; }
 .b-note { color:var(--muted); font-size:12px; line-height:1.65; }

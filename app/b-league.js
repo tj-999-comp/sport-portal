@@ -248,7 +248,7 @@ function cancelMatchDaysTouch() { if (!matchTouch) return; $('#match-days').clas
 
 function table(rows, title) {
   if (!rows?.length) return `<p class="b-note">${esc(title)}の順位情報は公式未発表です。</p>`;
-  return `<h3>${esc(title)}</h3><div class="table-wrap b-standing-wrap" tabindex="0" aria-label="${esc(title)}順位表"><table class="b-zone-table"><thead><tr><th>順位</th><th class="team-column">クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th><th>残試合数</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${esc(row.rank)}</td><td class="team-column">${esc(row.team)}</td><td>${esc(row.wins)}</td><td>${esc(row.losses)}</td><td>${esc(row.winPercentage)}</td><td>${esc(row.gamesBehind)}</td><td>${esc(row.remaining)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<h3>${esc(title)}</h3><div class="table-wrap b-standing-wrap" tabindex="0" aria-label="${esc(title)}順位表"><table class="b-zone-table"><thead><tr><th>順位</th><th class="team-column">クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>得失点差</th><th>差</th><th>直近5試合</th><th>連勝/連敗</th><th>残試合数</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${esc(row.rank)}</td><td class="team-column">${esc(row.team)}</td><td>${esc(row.wins)}</td><td>${esc(row.losses)}</td><td>${esc(row.winPercentage)}</td><td>${esc(row.pointDifference)}</td><td>${esc(row.gamesBehind)}</td><td>${esc(row.recentForm)}</td><td>${esc(row.streak)}</td><td>${esc(row.remaining)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function renderModal() {
   const content = $('#modal-content');

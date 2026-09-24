@@ -86,7 +86,7 @@ function parseTableRows(table) {
   for (const row of table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
     const cells = [...row[1].matchAll(/<(?:td|th)\b[^>]*>([\s\S]*?)<\/(?:td|th)>/gi)].map((cell) => htmlText(cell[1]));
     if (cells.length < 6 || !cells[1] || cells[1] === 'クラブ') continue;
-    rows.push({ rank: /^\d+$/.test(cells[0]) ? Number(cells[0]) : null, team: parseTeamName(cells[1]), wins: number(cells[2]), losses: number(cells[3]), winPercentage: cells[4] === '-' ? null : cells[4], gamesBehind: cells[5] === '-' ? null : number(cells[5]), pointsFor: number(cells[6]), pointsAgainst: number(cells[7]), pointDifference: number(cells[8]), played: number(cells[13]), remaining: null });
+    rows.push({ rank: /^\d+$/.test(cells[0]) ? Number(cells[0]) : null, team: parseTeamName(cells[1]), wins: number(cells[2]), losses: number(cells[3]), winPercentage: cells[4] === '-' ? null : cells[4], gamesBehind: cells[5] === '-' ? null : number(cells[5]), pointsFor: number(cells[6]), pointsAgainst: number(cells[7]), pointDifference: number(cells[8]), recentForm: ['-', '--'].includes(cells[11]) ? null : (cells[11] || null), streak: ['-', '--'].includes(cells[12]) ? null : (cells[12] || null), played: number(cells[13]), remaining: null });
   }
   return rows;
 }
@@ -122,7 +122,7 @@ export function applyMatchResultsToStandings(standings, matches, { league = 'pre
   const stats = new Map();
   const getStats = (team) => {
     const key = teamKey(team);
-    if (!stats.has(key)) stats.set(key, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0 });
+    if (!stats.has(key)) stats.set(key, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0, results: [] });
     return stats.get(key);
   };
   for (const match of matches || []) {
@@ -136,8 +136,8 @@ export function applyMatchResultsToStandings(standings, matches, { league = 'pre
       homeStats.pointsAgainst += match.awayScore;
       awayStats.pointsFor += match.awayScore;
       awayStats.pointsAgainst += match.homeScore;
-      if (match.homeScore > match.awayScore) { homeStats.wins += 1; awayStats.losses += 1; }
-      else if (match.awayScore > match.homeScore) { awayStats.wins += 1; homeStats.losses += 1; }
+      if (match.homeScore > match.awayScore) { homeStats.wins += 1; awayStats.losses += 1; homeStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'W' }); awayStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'L' }); }
+      else if (match.awayScore > match.homeScore) { awayStats.wins += 1; homeStats.losses += 1; homeStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'L' }); awayStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'W' }); }
     } else if (match.status === 'scheduled') {
       homeStats.remaining += 1;
       awayStats.remaining += 1;
@@ -145,8 +145,12 @@ export function applyMatchResultsToStandings(standings, matches, { league = 'pre
   }
   const zones = standings.zones.map((zone) => {
     const enriched = (zone.rows || []).map((row, index) => {
-      const stat = stats.get(teamKey(row.team)) || { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0 };
+      const stat = stats.get(teamKey(row.team)) || { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0, results: [] };
       const played = stat.wins + stat.losses;
+      const recent = [...stat.results].sort((a, b) => a.key.localeCompare(b.key)).slice(-5);
+      const recentWins = recent.filter((item) => item.result === 'W').length;
+      const lastResult = [...stat.results].sort((a, b) => a.key.localeCompare(b.key)).at(-1)?.result;
+      const streakCount = lastResult ? [...stat.results].sort((a, b) => a.key.localeCompare(b.key)).reverse().findIndex((item) => item.result !== lastResult) : -1;
       return {
         ...row,
         _sourceIndex: index,
@@ -158,6 +162,8 @@ export function applyMatchResultsToStandings(standings, matches, { league = 'pre
         pointsFor: stat.pointsFor,
         pointsAgainst: stat.pointsAgainst,
         pointDifference: stat.pointsFor - stat.pointsAgainst,
+        recentForm: recent.length ? `${recentWins}-${recent.length - recentWins}` : null,
+        streak: lastResult ? `${lastResult}${streakCount < 0 ? stat.results.length : streakCount}` : null,
         played,
         remaining: stat.remaining
       };

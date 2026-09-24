@@ -19,15 +19,22 @@
 .b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3), .b-zone-table th:nth-child(4), .b-zone-table td:nth-child(4), .b-zone-table th:nth-child(5), .b-zone-table td:nth-child(5) { width:3em; }
 .b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3) { padding-right:1em; }
 .b-zone-table th:nth-child(4), .b-zone-table td:nth-child(4), .b-zone-table th:nth-child(5), .b-zone-table td:nth-child(5) { padding-left:1em; }
-.b-zone-table th:nth-child(6), .b-zone-table td:nth-child(6) { width:4em; padding-right:.75em; text-align:left; }
-.b-zone-table th:nth-child(7), .b-zone-table td:nth-child(7) { width:5em; padding-left:1em; padding-right:0; text-align:center; }
+.b-zone-table th:nth-child(6), .b-zone-table td:nth-child(6) { width:5em; padding-right:.75em; text-align:center; }
+.b-zone-table th:nth-child(7), .b-zone-table td:nth-child(7) { width:4em; padding-left:1em; padding-right:.75em; text-align:center; }
+.b-zone-table th:nth-child(8), .b-zone-table td:nth-child(8) { width:5em; padding-left:.75em; padding-right:.75em; text-align:center; }
+.b-zone-table th:nth-child(9), .b-zone-table td:nth-child(9) { width:5em; padding-left:.75em; padding-right:.75em; text-align:center; }
+.b-zone-table th:nth-child(10), .b-zone-table td:nth-child(10) { width:5em; padding-left:1em; padding-right:0; text-align:center; }
 .b-zone-table th:first-child, .b-zone-table td:first-child { padding-left:0; padding-right:0; }
 .b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { padding-left:0; padding-right:1.5em; }
 .b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3) { padding-left:1.5em; padding-right:.75em; }
 .b-zone-table th:nth-child(4), .b-zone-table td:nth-child(4), .b-zone-table th:nth-child(5), .b-zone-table td:nth-child(5) { padding-left:.75em; padding-right:.75em; }
 .b-zone-table th:nth-child(6), .b-zone-table td:nth-child(6) { padding-left:.75em; padding-right:.75em; }
-.b-zone-table th:nth-child(7), .b-zone-table td:nth-child(7) { padding-left:1em; padding-right:0; }
+.b-zone-table th:nth-child(7), .b-zone-table td:nth-child(7) { padding-left:.75em; padding-right:.75em; }
+.b-zone-table th:nth-child(8), .b-zone-table td:nth-child(8), .b-zone-table th:nth-child(9), .b-zone-table td:nth-child(9) { padding-left:.75em; padding-right:.75em; }
+.b-zone-table th:nth-child(10), .b-zone-table td:nth-child(10) { padding-left:1em; padding-right:0; }
 .b-zone-table td.team-column { font-weight:700; text-align:center; }
+.b-zone-table th:first-child, .b-zone-table td:first-child { position:sticky; left:0; z-index:3; background:#fff; }
+.b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { position:sticky; left:3em; z-index:2; background:#fff; box-shadow:2px 0 0 var(--line); }
 .b-league-theme .team-row.loser .score { font-weight:400; }
 .b-league-theme .match-meta.match-venue { justify-content:center; }
 .b-note { color:var(--muted); font-size:12px; line-height:1.65; }

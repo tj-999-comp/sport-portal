@@ -243,7 +243,7 @@ test('parses numeric B.League standings results', () => {
   const html = `<h3>東地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th><th>得点</th><th>失点</th><th>得失点差</th><th>ホーム</th><th>アウェー</th><th>過去5試合</th><th>連勝/連敗</th><th>試合数</th></tr><tr><td>1</td><td><span>宇都宮ブレックス</span> <span>宇都宮</span></td><td>45</td><td>15</td><td>.750</td><td>--</td><td>5130</td><td>4801</td><td>329</td><td>22-8</td><td>23-7</td><td>4-1</td><td>L1</td><td>60</td></tr></table>`;
   const result = parseBLeagueStandingsHtml(html, { league: 'premier' });
   assert.equal(result.status, 'success');
-  assert.deepEqual(result.zones[0].rows[0], { rank: 1, team: '宇都宮', wins: 45, losses: 15, winPercentage: '.750', gamesBehind: null, pointsFor: 5130, pointsAgainst: 4801, pointDifference: 329, played: 60, remaining: null });
+  assert.deepEqual(result.zones[0].rows[0], { rank: 1, team: '宇都宮', wins: 45, losses: 15, winPercentage: '.750', gamesBehind: null, pointsFor: 5130, pointsAgainst: 4801, pointDifference: 329, recentForm: '4-1', streak: 'L1', played: 60, remaining: null });
 });
 
 test('derives B.League standings from finished results when official stats are not published', () => {
@@ -259,6 +259,8 @@ test('derives B.League standings from finished results when official stats are n
   ]);
   assert.equal(result.zones[0].rows[0].pointDifference, 0);
   assert.equal(result.zones[0].rows[0].gamesBehind, 0);
+  assert.equal(result.zones[0].rows[0].recentForm, '1-1');
+  assert.equal(result.zones[0].rows[0].streak, 'L1');
 });
 
 test('B.League categories have isolated keys and stable empty data shapes', () => {

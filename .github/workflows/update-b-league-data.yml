@@ -1,0 +1,59 @@
+name: Update B.League data
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+    - cron: '0 10 * * *'
+    - cron: '0 12 * * *'
+    - cron: '0 13 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to update
+        required: true
+        default: all
+        type: choice
+        options: [all, production, stg]
+      league:
+        description: Category to update
+        required: true
+        default: all
+        type: choice
+        options: [all, premier, one, next]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sport-portal-b-league-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [production, stg]
+        league: [premier, one, next]
+    steps:
+      - name: Update ${{ matrix.environment }} ${{ matrix.league }}
+        if: github.event_name == 'schedule' || ((inputs.environment == 'all' || inputs.environment == matrix.environment) && (inputs.league == 'all' || inputs.league == matrix.league))
+        env:
+          PRODUCTION_API_URL: ${{ vars.SPORTAL_API_URL || secrets.SPORTAL_API_URL }}
+          STG_API_URL: ${{ vars.SPORTAL_STG_API_URL || secrets.SPORTAL_STG_API_URL }}
+          API_USER: ${{ secrets.SPORTAL_API_USER }}
+          API_PASSWORD: ${{ secrets.SPORTAL_API_PASSWORD }}
+          ENVIRONMENT: ${{ matrix.environment }}
+          LEAGUE: ${{ matrix.league }}
+        run: |
+          set -euo pipefail
+          if [[ "$ENVIRONMENT" == "production" ]]; then API_BASE_URL="$PRODUCTION_API_URL"; else API_BASE_URL="$STG_API_URL"; fi
+          test -n "$API_BASE_URL"; test -n "$API_USER"; test -n "$API_PASSWORD"
+          response_file="$(mktemp)"; trap 'rm -f "$response_file"' EXIT
+          http_code="$(curl --silent --show-error --location --user "$API_USER:$API_PASSWORD" --request POST --header 'Accept: application/json' --connect-timeout 15 --max-time 600 --retry 2 --retry-delay 5 --output "$response_file" --write-out '%{http_code}' "${API_BASE_URL%/}/api/b-league/update?league=${LEAGUE}")"
+          if [[ "$http_code" != 2* ]]; then jq -r '.error // "HTTP request failed"' "$response_file" >&2; exit 1; fi
+          jq -e --arg league "$LEAGUE" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "success"' "$response_file" >/dev/null
+          echo "${ENVIRONMENT}/${LEAGUE} B.League update completed successfully"

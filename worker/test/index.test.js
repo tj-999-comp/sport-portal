@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { emptyData, getLeagueConfig, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
 import { onRequest as protectPagesRequest } from '../../functions/_middleware.js';
 import worker from '../src/index.js';
+import { emptyBLeagueData, parseScheduleHtml as parseBLeagueScheduleHtml, parseStandingsHtml as parseBLeagueStandingsHtml, BLEAGUES } from '../src/b_league.js';
 
 function basicAuth(user, password) {
   return `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`;
@@ -211,6 +212,33 @@ test('uses the linked-card fallback used by the public schedule page', () => {
   assert.equal(result[0].home.short, '鹿島');
   assert.equal(result[0].away.short, '浦和');
   assert.deepEqual([result[0].homeScore, result[0].awayScore], [0, 1]);
+});
+
+test('parses official B.League schedule cards without exposing live scores', () => {
+  const html = `<li class="list-item" id="506380"><a class="data-game"><div class="game"><span class="team home"><span class="team-name">群馬</span></span><span class="point"></span><span class="team away"><span class="team-name">A千葉</span></span></div><div class="info"><div class="info-arena"><span>群馬県 | オプアリ</span><span>19:05</span></div><div class="info-scorestate"><span>見どころ</span></div></div></a></li>`;
+  const result = parseBLeagueScheduleHtml(html, { year: 2026, month: 9, day: 24, league: 'premier' });
+  assert.equal(result.length, 1);
+  assert.deepEqual(result[0], { id: '506380', date: '2026-09-24', league: 'premier', home: { short: '群馬', name: '群馬' }, away: { short: 'A千葉', name: 'A千葉' }, kickoff: '19:05', venue: '群馬県 | オプアリ', matchday: null, status: 'scheduled', homeScore: null, awayScore: null, competition: 'レギュラーシーズン' });
+});
+
+test('accepts official B.League standings before rankings are published', () => {
+  const html = `<h3>東地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th><th>得点</th><th>失点</th><th>得失点差</th><th>ホーム</th><th>アウェー</th><th>過去5試合</th><th>連勝/連敗</th><th>試合数</th></tr><tr><td>-</td><td><span>レバンガ北海道</span> <span>北海道</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr></table><h3>西地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th></tr><tr><td>1</td><td>琉球</td><td>2</td><td>0</td><td>1.000</td><td>-</td></tr></table>`;
+  const result = parseBLeagueStandingsHtml(html, { league: 'premier' });
+  assert.equal(result.status, 'success');
+  assert.equal(result.zones.length, 2);
+  assert.equal(result.zones[0].rows[0].rank, null);
+  assert.equal(result.zones[0].rows[0].team, '北海道');
+});
+
+test('B.League categories have isolated keys and stable empty data shapes', () => {
+  for (const league of ['premier', 'one', 'next']) {
+    assert.equal(BLEAGUES[league].dataKey, `b-${league}-2026-27`);
+    const data = emptyBLeagueData(league);
+    assert.equal(data.sport, 'b-league');
+    assert.equal(data.league, league);
+    assert.ok(Array.isArray(data.standings.zones));
+    assert.ok(Array.isArray(data.postseason.rounds));
+  }
 });
 
 test('parses representative J2 and J3 team names from linked cards', () => {

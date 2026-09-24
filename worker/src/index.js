@@ -1,4 +1,5 @@
 import { emptyNpbData, performNpbUpdate } from './npb.js';
+import { BLEAGUES, BLEAGUE_KEYS, emptyBLeagueData, performBLeagueUpdate } from './b_league.js';
 
 const SEASON = '2026';
 const LEAGUE_DEFINITIONS = {
@@ -207,6 +208,7 @@ function unauthorized() { return new Response('Authentication required', { statu
 
 const activeUpdatePromises = new Map();
 let activeNpbUpdatePromise = null;
+const activeBLeagueUpdatePromises = new Map();
 
 async function performUpdateInternal(env, now, fetchImpl, config) {
   const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyData({}, config);
@@ -247,6 +249,24 @@ export default {
     if (url.pathname === '/api/npb/update' && request.method === 'POST') {
       if (!activeNpbUpdatePromise) activeNpbUpdatePromise = performNpbUpdate(env, new Date(), fetch).finally(() => { activeNpbUpdatePromise = null; });
       try { return json({ data: await activeNpbUpdatePromise }); }
+      catch (error) { return json({ error: error.message, data: error.data }, 502); }
+    }
+    if (url.pathname === '/api/b-league/data' && request.method === 'GET') {
+      const league = url.searchParams.get('league') || 'premier';
+      if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
+      return json((await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league));
+    }
+    if (url.pathname === '/api/b-league/status' && request.method === 'GET') {
+      const league = url.searchParams.get('league') || 'premier';
+      if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
+      const data = (await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league);
+      return json({ update: data.update, hasData: data.matches.length > 0 || data.standings.zones.length > 0 });
+    }
+    if (url.pathname === '/api/b-league/update' && request.method === 'POST') {
+      const league = url.searchParams.get('league') || 'premier';
+      if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
+      if (!activeBLeagueUpdatePromises.has(league)) activeBLeagueUpdatePromises.set(league, performBLeagueUpdate(env, new Date(), fetch, league).finally(() => activeBLeagueUpdatePromises.delete(league)));
+      try { return json({ data: await activeBLeagueUpdatePromises.get(league) }); }
       catch (error) { return json({ error: error.message, data: error.data }, 502); }
     }
     const league = url.searchParams.get('league') || CONFIG.league;

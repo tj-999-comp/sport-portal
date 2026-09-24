@@ -104,7 +104,7 @@ h1 { font-size: 12px; font-weight: 800; }
 .league-page .page-shell { padding-bottom: calc(var(--bottom-nav-height) + 32px); }
 .bottom-controls { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: min(720px, 100%); background: #fff; border-top: 1px solid var(--line); z-index: 7; }
 .bottom-controls .league-tabs { height: 52px; margin: 0; padding: 8px 14px 0; border-bottom: 0; }
-.bottom-controls .league-tab { min-width: 0; border-radius: 6px; }
+.bottom-controls .league-tab { display: flex; align-items: center; justify-content: center; min-width: 0; border: 0; border-radius: 6px; padding: 8px 10px; text-align: center; }
 .bottom-controls .bottom-nav { position: static; transform: none; width: 100%; height: calc(78px + env(safe-area-inset-bottom, 0px)); padding-bottom: calc(7px + env(safe-area-inset-bottom, 0px)); border-top: 0; }
 .league-page .standings-sheet-panel { max-height: min(78vh, 780px, calc(100dvh - var(--bottom-nav-height))); }
 

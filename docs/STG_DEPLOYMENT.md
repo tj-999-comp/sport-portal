@@ -4,6 +4,10 @@
 
 `query_learning_BB` の運用に合わせ、既存のCloudflare Pages project `sport-portal` に `stg` ブランチのPreview deploymentを追加する。ProductionのPages projectは新設しない。
 
+## 変更の既定反映先
+
+ユーザーが反映先を指定しない変更は、まずSTGへ反映する。STGでの確認が完了するまで本番へ反映しない。本番反映はユーザーが明示した場合にだけ行い、STGへの反映や受入確認を本番反映の承認と解釈しない。STGへの反映には依頼対象の変更だけを含め、無関係な未コミット変更を混在させない。STG反映後はURL、内容、確認結果を報告する。
+
 | 項目 | Production | STG |
 | --- | --- | --- |
 | Pages project | `sport-portal` | `sport-portal` の `stg` Preview |

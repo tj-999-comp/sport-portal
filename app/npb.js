@@ -1,5 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
-const state = { data: null, league: 'central', modalLeague: 'central', modalTab: 'standings', selectedDate: null, selectedByLeague: {}, updating: false, scrollTimer: null };
+const state = { data: null, modalTab: 'standings', selectedDate: null, updating: false, scrollTimer: null };
 let dateNavScrollTimer = null;
 let daysWheelUnlockTimer = null;
 let daysWheelResetTimer = null;
@@ -44,22 +44,25 @@ function formatStatus(update = {}, hasData = false) {
   $('#npb-updated-at').textContent = update.at ? timeLabel(update.at) : '';
 }
 
-function matchesForLeague() {
-  const matches = state.data?.matches || [];
-  return matches.filter((match) => {
-    if (match.kind === 'event') return !match.league || match.league === state.league;
-    if (match.category === 'regular') return match.league === state.league || match.league === 'interleague';
-    return match.league === state.league || match.league === 'interleague';
-  });
-}
-
-function updateTabs() {
-  document.querySelectorAll('[data-npb-league]').forEach((button) => {
-    const active = button.dataset.npbLeague === state.league;
-    button.setAttribute('aria-selected', String(active));
-    button.tabIndex = active ? 0 : -1;
-  });
-  document.title = `スポーツポータル | 2026 ${state.league === 'central' ? 'セ・リーグ' : 'パ・リーグ'}`;
+function renderDayMatches(matches) {
+  const groups = new Map([
+    ['central', { label: 'セ・リーグ', matches: [] }],
+    ['pacific', { label: 'パ・リーグ', matches: [] }],
+    ['interleague', { label: 'セ・パ交流戦', matches: [] }],
+    ['cs', { label: 'クライマックスシリーズ', matches: [] }],
+    ['japanSeries', { label: '日本シリーズ', matches: [] }],
+    ['other', { label: 'その他の試合・予定', matches: [] }]
+  ]);
+  for (const match of matches) {
+    const key = match.category === 'japanSeries' ? 'japanSeries'
+      : ['central', 'pacific'].includes(match.league) ? match.league
+        : match.category === 'cs' ? 'cs'
+          : match.league === 'interleague' ? 'interleague' : 'other';
+    groups.get(key).matches.push(match);
+  }
+  return [...groups.values()].filter((group) => group.matches.length).map((group) =>
+    `<section class="npb-day-league" aria-label="${group.label}"><h3>${group.label}</h3><div class="npb-day-list">${group.matches.map(renderGame).join('')}</div></section>`
+  ).join('');
 }
 
 function updateScrollState(element) {
@@ -159,7 +162,6 @@ function setDaysHeight(date = state.selectedDate) {
 function selectDate(date, behavior = 'smooth', syncCarousel = true) {
   if (!date) return;
   state.selectedDate = date;
-  state.selectedByLeague[state.league] = date;
   $('#npb-selected-date').textContent = fullDateLabel(date);
   centerDate(date, behavior);
   setDaysHeight(date);
@@ -306,7 +308,7 @@ function cancelNpbDaysTouch() {
 
 function renderMatches() {
   const root = $('#npb-days');
-  const matches = matchesForLeague().sort((a, b) => `${a.date}${a.kickoff || ''}${a.id}`.localeCompare(`${b.date}${b.kickoff || ''}${b.id}`));
+  const matches = [...(state.data?.matches || [])].sort((a, b) => `${a.date}${a.kickoff || ''}${a.id}`.localeCompare(`${b.date}${b.kickoff || ''}${b.id}`));
   const byDate = new Map();
   for (const match of matches) {
     if (!byDate.has(match.date)) byDate.set(match.date, []);
@@ -315,7 +317,7 @@ function renderMatches() {
   const dates = [...byDate.keys()].sort();
   const today = todayJst();
   const defaultDate = dates.includes(today) ? today : dates.find((date) => date > today) || dates.at(-1) || null;
-  const remembered = state.selectedByLeague[state.league];
+  const remembered = state.selectedDate;
   const selected = remembered && dates.includes(remembered) ? remembered : defaultDate;
   state.selectedDate = selected;
   $('#npb-selected-date').textContent = fullDateLabel(selected);
@@ -327,10 +329,9 @@ function renderMatches() {
   dateNav.querySelectorAll('[data-date]').forEach((button) => button.addEventListener('click', () => selectDate(button.dataset.date, 'auto')));
   dateNav.onscroll = syncDateSelectionFromDateNav;
   updateScrollState(dateNav);
-  root.innerHTML = dates.map((date) => `<section class="npb-day" data-date="${escapeHtml(date)}" aria-label="${escapeHtml(fullDateLabel(date))}"><div class="npb-day-list">${byDate.get(date).map(renderGame).join('')}</div></section>`).join('');
+  root.innerHTML = dates.map((date) => `<section class="npb-day" data-date="${escapeHtml(date)}" aria-label="${escapeHtml(fullDateLabel(date))}">${renderDayMatches(byDate.get(date))}</section>`).join('');
   $('#npb-empty').hidden = dates.length > 0;
-  $('#npb-empty').textContent = state.data?.matches?.length ? `${state.league === 'central' ? 'セ・リーグ' : 'パ・リーグ'}の試合データはありません` : 'データを取得できていません';
-  if (!dates.length) root.innerHTML = '<p class="npb-no-matches">このリーグの試合予定はありません</p>';
+  $('#npb-empty').textContent = '試合データを取得できていません';
   root.onscroll = syncDateSelectionFromDays;
   updateScrollState(root);
   updateNpbScrollSurfaces();
@@ -348,7 +349,6 @@ function render(data) {
   state.data = data;
   const hasData = Boolean(data?.matches?.length || data?.standings?.central?.rows?.length || data?.standings?.pacific?.rows?.length);
   formatStatus(data?.update || {}, hasData);
-  updateTabs();
   renderMatches();
   if (!$('#npb-standings-modal').hidden) renderModalContent();
 }
@@ -394,7 +394,6 @@ function setModal(open) {
     window.cancelAnimationFrame(modalOpenFrame);
     modalClosing = false;
     modalOpenedFrom = document.activeElement;
-    state.modalLeague = state.league;
     renderModalContent();
     setStandingsButton(true);
     modal.hidden = false;
@@ -427,7 +426,7 @@ function setStandingsButton(open) {
 }
 
 function teamName(team) { return team?.short || team?.name || '未確定'; }
-function modalLeagueLabel(league = state.modalLeague) { return league === 'central' ? 'セ・リーグ' : 'パ・リーグ'; }
+function modalLeagueLabel(league) { return league === 'central' ? 'セ・リーグ' : 'パ・リーグ'; }
 
 function renderStandingsLeagueTable(league) {
   const rows = state.data?.standings?.[league]?.rows || [];
@@ -541,21 +540,6 @@ document.querySelectorAll('[data-npb-modal-tab]').forEach((button) => {
   });
 });
 
-document.querySelectorAll('[data-npb-league]').forEach((button) => {
-  button.addEventListener('click', () => {
-    if (button.dataset.npbLeague === state.league) return;
-    state.league = button.dataset.npbLeague;
-    updateTabs();
-    renderMatches();
-  });
-  button.addEventListener('keydown', (event) => {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-    event.preventDefault();
-    const next = state.league === 'central' ? 'pacific' : 'central';
-    document.querySelector(`[data-npb-league="${next}"]`).click();
-    document.querySelector(`[data-npb-league="${next}"]`).focus();
-  });
-});
 $('#npb-refresh').addEventListener('click', refresh);
 $('#npb-standings-open').addEventListener('click', () => setModal($('#npb-standings-modal').hidden || modalClosing));
 $('#npb-modal-backdrop').addEventListener('click', () => setModal(false));

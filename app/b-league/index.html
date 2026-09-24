@@ -6,11 +6,11 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="description" content="2026-27年Bリーグの試合予定・結果と順位情報を確認するページ">
   <title>スポーツポータル | 2026-27 B.PREMIER</title>
-  <link rel="stylesheet" href="/styles.css?v=b-league-8">
+  <link rel="stylesheet" href="/styles.css?v=league-tabs-bottom-1">
   <link rel="stylesheet" href="/sport-themes.css?v=b-league-8">
-  <link rel="stylesheet" href="/b-league.css?v=b-league-8">
+  <link rel="stylesheet" href="/b-league.css?v=league-tabs-bottom-1">
 </head>
-<body class="b-league-theme">
+<body class="b-league-theme league-page">
   <main class="page-shell">
     <header class="app-header">
       <div class="site-header">
@@ -21,15 +21,17 @@
         <section class="status-strip" aria-live="polite"><span class="status-indicator" id="status-indicator"></span><span class="status-label" id="status-label">読み込み中</span><span class="status-detail" id="status-detail"></span><time class="updated-at" id="updated-at"></time></section>
         <h2 class="selected-date" id="selected-date">2026-27シーズン</h2>
         <nav class="date-nav" id="date-nav" aria-label="試合日"></nav>
-        <nav class="league-tabs" role="tablist" aria-label="Bリーグカテゴリー">
-          <button class="league-tab active" type="button" role="tab" aria-selected="true" aria-controls="league-panel" data-league="premier">B.PREMIER</button>
-          <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="one" tabindex="-1">B.ONE</button>
-          <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="next" tabindex="-1">B.NEXT</button>
-        </nav>
       </section>
     </header>
     <section class="matches-section" id="league-panel" role="tabpanel" tabindex="-1" aria-label="B.PREMIERの試合日程・結果"><div class="match-days" id="match-days" tabindex="0" aria-label="試合日ごとの一覧"></div><p class="empty-state" id="empty-state" hidden>データを取得できていません</p></section>
-    <nav class="bottom-nav" aria-label="操作"><button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button><button id="standings-button" type="button" aria-label="順位表を開く" aria-controls="standings-sheet" aria-expanded="false"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button></nav>
+    <div class="bottom-controls">
+      <nav class="league-tabs" role="tablist" aria-label="Bリーグカテゴリー">
+        <button class="league-tab active" type="button" role="tab" aria-selected="true" aria-controls="league-panel" data-league="premier">B.PREMIER</button>
+        <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="one" tabindex="-1">B.ONE</button>
+        <button class="league-tab" type="button" role="tab" aria-selected="false" aria-controls="league-panel" data-league="next" tabindex="-1">B.NEXT</button>
+      </nav>
+      <nav class="bottom-nav" aria-label="操作"><button id="refresh-button" type="button"><span aria-hidden="true">↻</span><small>更新</small></button><button id="standings-button" type="button" aria-label="順位表を開く" aria-controls="standings-sheet" aria-expanded="false"><span id="standings-icon" aria-hidden="true">▦</span><small id="standings-label">順位</small></button></nav>
+    </div>
   </main>
   <section class="standings-sheet" id="standings-sheet" role="dialog" aria-modal="true" aria-label="Bリーグ順位情報" aria-hidden="true" hidden>
     <button class="sheet-backdrop" id="standings-backdrop" type="button" aria-label="順位情報を閉じる"></button>

@@ -14,7 +14,7 @@
 .b-standing-wrap { display:flex; justify-content:center; overflow-x:auto; border:0; border-radius:0; padding:0; }
 .b-zone-table { width:max-content; min-width:0; table-layout:auto; font-size:11px; }
 .b-zone-table th, .b-zone-table td { padding:8px 1.5em; }
-.b-zone-table th:first-child, .b-zone-table td:first-child { width:3em; padding-right:1em; text-align:center; }
+.b-zone-table th:first-child, .b-zone-table td:first-child { width:3em; min-width:3em; max-width:3em; padding-right:1em; text-align:center; }
 .b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { width:5.5em; min-width:5.5em; max-width:5.5em; padding-left:1em; text-align:center; }
 .b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3), .b-zone-table th:nth-child(4), .b-zone-table td:nth-child(4), .b-zone-table th:nth-child(5), .b-zone-table td:nth-child(5) { width:3em; }
 .b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3) { padding-right:1em; }
@@ -33,8 +33,7 @@
 .b-zone-table th:nth-child(8), .b-zone-table td:nth-child(8), .b-zone-table th:nth-child(9), .b-zone-table td:nth-child(9) { padding-left:.75em; padding-right:.75em; }
 .b-zone-table th:nth-child(10), .b-zone-table td:nth-child(10) { padding-left:1em; padding-right:0; }
 .b-zone-table td.team-column { font-weight:700; text-align:center; }
-.b-zone-table th:first-child, .b-zone-table td:first-child { position:sticky; left:0; z-index:3; background-color:#fff !important; box-shadow:1px 0 0 #fff; }
-.b-zone-table th:first-child::after, .b-zone-table td:first-child::after { position:absolute; top:-1px; right:-1px; bottom:-1px; width:1px; background:#fff; content:""; pointer-events:none; }
+.b-zone-table th:first-child, .b-zone-table td:first-child { position:sticky; left:0; z-index:3; background-color:#fff !important; }
 .b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { position:sticky; left:3em; z-index:2; background-color:#fff !important; box-shadow:none; }
 .b-league-theme .team-row.loser .score { font-weight:400; }
 .b-league-theme .match-meta.match-venue { justify-content:center; }

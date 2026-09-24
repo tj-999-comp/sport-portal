@@ -132,7 +132,7 @@ async function fetchMonthMatches(fetchImpl, year, month, config) {
   return pages.flat(2);
 }
 
-export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(), league = 'premier', { monthIndexes = null, includeStandings = true } = {}) {
+export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(), league = 'premier', { monthIndexes = null, includeStandings = true, allowEmptyMatches = false } = {}) {
   const config = BLEAGUES[league];
   if (!config) throw new Error(`未対応のBリーグカテゴリーです: ${league}`);
   const matchPages = [];
@@ -141,7 +141,7 @@ export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(),
   const matches = unique(matchPages.flat(), (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
   const standingsHtml = includeStandings ? await getText(fetchImpl, `${STANDINGS}?tab=${config.tab}&year=${START_YEAR}`) : null;
   const standings = standingsHtml ? parseStandingsHtml(standingsHtml, { league }) : { zones: [], wildcard: [], status: 'partial' };
-  if (includeStandings && !matches.length) throw new Error('Bリーグの試合日程を抽出できませんでした');
+  if (!allowEmptyMatches && !matches.length) throw new Error('Bリーグの試合日程を抽出できませんでした');
   if (includeStandings && standings.status !== 'success') throw new Error('Bリーグの順位表を抽出できませんでした');
   return { schemaVersion: 1, sport: 'b-league', league, season: SEASON, matches, standings, postseason: { status: 'unavailable', rounds: [], note: 'ポストシーズンの日程・結果は公式発表の取得範囲を確認中です' }, update: { status: 'success', at: now.toISOString() } };
 }
@@ -155,7 +155,7 @@ export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fe
   const partialKey = `${config.dataKey}:part:${part}`;
   try {
     if (isPartitioned && part === 0) await Promise.all(Array.from({ length: totalParts }, (_, index) => env.SPORTAL_DATA.delete(`${config.dataKey}:part:${index}`)));
-    const data = await fetchFreshBLeagueData(fetchImpl, now, league, { monthIndexes: isPartitioned ? [part] : null, includeStandings: !isPartitioned || part === totalParts - 1 });
+    const data = await fetchFreshBLeagueData(fetchImpl, now, league, { monthIndexes: isPartitioned ? [part] : null, includeStandings: !isPartitioned || part === totalParts - 1, allowEmptyMatches: isPartitioned });
     if (isPartitioned && part < totalParts - 1) {
       await env.SPORTAL_DATA.put(partialKey, JSON.stringify({ matches: data.matches }));
       return { ...data, standings: { zones: [], wildcard: [], status: 'partial' }, update: { status: 'partial', part, totalParts, at: now.toISOString() } };

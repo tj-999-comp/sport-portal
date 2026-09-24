@@ -117,14 +117,18 @@ async function fetchMonthMatches(fetchImpl, year, month, config) {
   const monthUrl = `${SCHEDULE}?year=${year}&mon=${String(month).padStart(2, '0')}&day=all&tab=${config.tab}`;
   const monthHtml = await getText(fetchImpl, monthUrl);
   const dates = parseDateButtons(monthHtml, year, month);
-  const pages = await Promise.all(dates.map(async (date) => {
-    const day = Number(date.slice(-2));
-    const url = `${SCHEDULE}?data_format=json&year=${year}&mon=${String(month).padStart(2, '0')}&day=${day}&event=&club=&tab=${config.tab}&ha=&fb=&index=0`;
-    try {
-      const json = await getJson(fetchImpl, url);
-      return (json.topics || []).map((topic) => parseScheduleHtml(topic, { year, month, day, league: config.league }));
-    } catch { return []; }
-  }));
+  const pages = [];
+  for (let index = 0; index < dates.length; index += 6) {
+    const batch = dates.slice(index, index + 6);
+    pages.push(...await Promise.all(batch.map(async (date) => {
+      const day = Number(date.slice(-2));
+      const url = `${SCHEDULE}?data_format=json&year=${year}&mon=${String(month).padStart(2, '0')}&day=${day}&event=&club=&tab=${config.tab}&ha=&fb=&index=0`;
+      try {
+        const json = await getJson(fetchImpl, url);
+        return (json.topics || []).map((topic) => parseScheduleHtml(topic, { year, month, day, league: config.league }));
+      } catch { return []; }
+    })));
+  }
   return pages.flat(2);
 }
 
@@ -137,7 +141,7 @@ export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(),
   const matches = unique(matchPages.flat(), (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
   const standingsHtml = includeStandings ? await getText(fetchImpl, `${STANDINGS}?tab=${config.tab}&year=${START_YEAR}`) : null;
   const standings = standingsHtml ? parseStandingsHtml(standingsHtml, { league }) : { zones: [], wildcard: [], status: 'partial' };
-  if (!matches.length) throw new Error('Bリーグの試合日程を抽出できませんでした');
+  if (includeStandings && !matches.length) throw new Error('Bリーグの試合日程を抽出できませんでした');
   if (includeStandings && standings.status !== 'success') throw new Error('Bリーグの順位表を抽出できませんでした');
   return { schemaVersion: 1, sport: 'b-league', league, season: SEASON, matches, standings, postseason: { status: 'unavailable', rounds: [], note: 'ポストシーズンの日程・結果は公式発表の取得範囲を確認中です' }, update: { status: 'success', at: now.toISOString() } };
 }

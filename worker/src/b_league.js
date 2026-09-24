@@ -118,7 +118,7 @@ function teamKey(value) { return htmlText(value).replace(/[\s　・.]/g, '').toL
 export function applyMatchResultsToStandings(standings, matches, { league = 'premier' } = {}) {
   if (!standings?.zones?.length) return standings;
   const rows = standings.zones.flatMap((zone) => zone.rows || []);
-  if (rows.some((row) => Number.isInteger(row.wins) || Number.isInteger(row.losses))) return standings;
+  if (!standings.derived && rows.some((row) => Number.isInteger(row.wins) || Number.isInteger(row.losses))) return standings;
   const stats = new Map();
   const getStats = (team) => {
     const key = teamKey(team);

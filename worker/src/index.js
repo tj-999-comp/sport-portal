@@ -1,5 +1,5 @@
 import { emptyNpbData, performNpbUpdate } from './npb.js';
-import { B_UPDATE_PARTS, BLEAGUES, BLEAGUE_KEYS, emptyBLeagueData, performBLeagueUpdate } from './b_league.js';
+import { B_UPDATE_PARTS, BLEAGUES, BLEAGUE_KEYS, applyMatchResultsToStandings, emptyBLeagueData, performBLeagueUpdate } from './b_league.js';
 
 const SEASON = '2026';
 const LEAGUE_DEFINITIONS = {
@@ -254,7 +254,8 @@ export default {
     if (url.pathname === '/api/b-league/data' && request.method === 'GET') {
       const league = url.searchParams.get('league') || 'premier';
       if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
-      return json((await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league));
+      const data = (await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league);
+      return json({ ...data, standings: applyMatchResultsToStandings(data.standings, data.matches, { league }) });
     }
     if (url.pathname === '/api/b-league/status' && request.method === 'GET') {
       const league = url.searchParams.get('league') || 'premier';

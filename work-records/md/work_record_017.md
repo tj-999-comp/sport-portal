@@ -20,7 +20,7 @@ Issue #54とPhase 1〜5の子Issue #55〜#59について、Bリーグの2026–2
 
 - STG対象コミット: `a6777a2ffbda0b89d301202a8b26d697298044e6`
 - STG Pages: https://8a853677.sport-portal.pages.dev/b-league/
-- Production対象コミット: `ff5568230693e4211392099f43cd2c4b1207744a4`
+- Production対象コミット: `ff5568230693e4211392099f43cd2c4b1207744a`
 - Production Pages: https://91e058e9.sport-portal.pages.dev
 - Production Worker: `sport-portal-api` Version `5b93d2f3-af39-4682-b810-c2f02f6f88fc`
 

@@ -239,7 +239,7 @@ export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fe
       const partials = await Promise.all(Array.from({ length: totalParts - 1 }, (_, index) => env.SPORTAL_DATA.get(`${config.dataKey}:part:${index}`, 'json')));
       const matches = unique([...(partials.flatMap((item) => item?.matches || [])), ...data.matches], (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
       if (!matches.length) throw new Error('Bリーグの分割更新結果が空です');
-      const complete = { ...data, matches, update: { status: 'success', at: now.toISOString() } };
+      const complete = { ...data, matches, standings: applyMatchResultsToStandings(data.standings, matches, { league }), update: { status: 'success', at: now.toISOString() } };
       await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(complete));
       await Promise.all(Array.from({ length: totalParts }, (_, index) => env.SPORTAL_DATA.delete(`${config.dataKey}:part:${index}`)));
       return complete;

@@ -1,0 +1,11 @@
+schema_version: 1
+title: 'NBAページ要件定義と実装Issue登録'
+date: "2026-09-30"
+project_id: sport-portal
+tags:
+  - nba
+  - requirements
+  - planning
+  - github
+  - documentation
+publish: true

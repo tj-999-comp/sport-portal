@@ -36,7 +36,9 @@ npx wrangler secret put NBA_API_KEY --env stg -c worker/wrangler.toml
 
 ## 更新Workflow
 
-`.github/workflows/update-nba-data.yml` は毎日8、10、12、14、16時JSTにSTG NBAデータだけを更新する。GitHub Actions cronはUTCなので前日の23時、当日1時、3時、5時、7時とする。手動実行では環境を選ぶ。HTTP成功だけでなく、Workerが取得・検証・保存を完了し `update.status=success` を返すことを確認する。
+`.github/workflows/update-nba-data.yml` は毎日8、10、12、14、16時JSTにSTG NBAデータだけを更新する設定である。GitHub Actions cronはUTCなので前日の23時、当日1時、3時、5時、7時とする。手動実行では環境を選ぶ。HTTP成功だけでなく、Workerが取得・検証・保存を完了し `update.status=success` を返す。
+
+現時点ではWorkflowファイルは `stg` ブランチにだけ存在するため、GitHub Actionsのスケジュール／手動実行はまだ有効ではない。GitHubの仕様では両イベントはデフォルトブランチにあるWorkflowだけが起動する。`main`への追加は本番ブランチ更新にあたり、STG受入前には行わない。したがってPhase 4の運用確認は保留中。
 
 ## 既知のデータ制約
 

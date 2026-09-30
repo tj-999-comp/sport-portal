@@ -1,0 +1,81 @@
+name: Update NBA data
+
+on:
+  # GitHub Actions cron runs in UTC: these are 8, 10, 12, 14 and 16 JST.
+  schedule:
+    - cron: '0 23 * * *'
+    - cron: '0 1 * * *'
+    - cron: '0 3 * * *'
+    - cron: '0 5 * * *'
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to update
+        required: true
+        default: stg
+        type: choice
+        options:
+          - stg
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sport-portal-nba-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [stg, production]
+    steps:
+      - name: Update ${{ matrix.environment }} NBA season
+        if: (github.event_name == 'schedule' && matrix.environment == 'stg') || (github.event_name == 'workflow_dispatch' && inputs.environment == matrix.environment)
+        env:
+          STG_API_URL: ${{ vars.SPORTAL_STG_API_URL || secrets.SPORTAL_STG_API_URL }}
+          PRODUCTION_API_URL: ${{ vars.SPORTAL_API_URL || secrets.SPORTAL_API_URL }}
+          API_USER: ${{ secrets.SPORTAL_API_USER }}
+          API_PASSWORD: ${{ secrets.SPORTAL_API_PASSWORD }}
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          set -euo pipefail
+          if [[ "$ENVIRONMENT" == "stg" ]]; then
+            API_BASE_URL="$STG_API_URL"
+          else
+            API_BASE_URL="$PRODUCTION_API_URL"
+          fi
+          test -n "$API_BASE_URL"
+          test -n "$API_USER"
+          test -n "$API_PASSWORD"
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+          http_code="$(curl \
+            --silent \
+            --show-error \
+            --location \
+            --user "$API_USER:$API_PASSWORD" \
+            --request POST \
+            --header 'Accept: application/json' \
+            --connect-timeout 15 \
+            --max-time 180 \
+            --retry 2 \
+            --retry-delay 5 \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            "${API_BASE_URL%/}/api/nba/update")"
+
+          if [[ "$http_code" != 2* ]]; then
+            error_message="$(jq -r '.error // "HTTP request failed"' "$response_file" 2>/dev/null || true)"
+            echo "${ENVIRONMENT}/nba update failed (HTTP ${http_code}): ${error_message}" >&2
+            exit 1
+          fi
+
+          jq -e '.data.sport == "nba" and .data.season == "2026-27" and .data.update.status == "success"' "$response_file" >/dev/null
+          echo "${ENVIRONMENT}/nba update completed successfully"

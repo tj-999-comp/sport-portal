@@ -1,5 +1,6 @@
 import { emptyNpbData, performNpbUpdate } from './npb.js';
 import { B_UPDATE_PARTS, BLEAGUES, BLEAGUE_KEYS, applyMatchResultsToStandings, emptyBLeagueData, performBLeagueUpdate } from './b_league.js';
+import { emptyNBAData, NBA_DATA_KEY, performNBAUpdate } from './nba.js';
 
 const SEASON = '2026';
 const LEAGUE_DEFINITIONS = {
@@ -209,6 +210,7 @@ function unauthorized() { return new Response('Authentication required', { statu
 const activeUpdatePromises = new Map();
 let activeNpbUpdatePromise = null;
 const activeBLeagueUpdatePromises = new Map();
+let activeNBAUpdatePromise = null;
 
 async function performUpdateInternal(env, now, fetchImpl, config) {
   const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyData({}, config);
@@ -239,6 +241,19 @@ export default {
   async fetch(request, env) {
     if (!authorized(request, env)) return unauthorized();
     const url = new URL(request.url);
+    if (url.pathname === '/api/nba/data' && request.method === 'GET') {
+      return json((await env.SPORTAL_DATA.get(NBA_DATA_KEY, 'json')) || emptyNBAData());
+    }
+    if (url.pathname === '/api/nba/status' && request.method === 'GET') {
+      const data = (await env.SPORTAL_DATA.get(NBA_DATA_KEY, 'json')) || emptyNBAData();
+      const hasData = Boolean(data.matches?.length || data.standings?.status === 'success' || data.cup?.status === 'success' || data.playIn?.status === 'success' || data.playoffs?.status === 'success');
+      return json({ update: data.update, hasData });
+    }
+    if (url.pathname === '/api/nba/update' && request.method === 'POST') {
+      if (!activeNBAUpdatePromise) activeNBAUpdatePromise = performNBAUpdate(env, new Date(), fetch).finally(() => { activeNBAUpdatePromise = null; });
+      try { return json({ data: await activeNBAUpdatePromise }); }
+      catch (error) { return json({ error: error.message, data: error.data }, 502); }
+    }
     if (url.pathname === '/api/npb/data' && request.method === 'GET') {
       return json((await env.SPORTAL_DATA.get('npb-2026', 'json')) || emptyNpbData());
     }

@@ -2,35 +2,53 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="description" content="NBAのページ">
-  <title>スポーツポータル | NBA</title>
-  <link rel="stylesheet" href="/portal.css">
-  <link rel="stylesheet" href="/sport-themes.css">
+  <meta name="description" content="2026-27 NBAの試合日程・結果、順位、NBA Cup、Play-In、プレーオフ情報">
+  <title>スポーツポータル | 2026-27 NBA</title>
+  <link rel="stylesheet" href="/styles.css?v=nba-1">
+  <link rel="stylesheet" href="/sport-themes.css?v=nba-1">
+  <link rel="stylesheet" href="/nba/nba.css?v=nba-1">
 </head>
-<body class="sport-theme sport-theme--nba">
-  <main class="portal-shell">
-    <header class="portal-header">
-      <a class="brand-lockup" href="/" aria-label="スポーツポータルへ戻る">スポーツポータル</a>
-      <label class="page-switcher-wrap">
-        <span class="sr-only">ページを選択</span>
-        <select class="page-switcher" data-page-switcher aria-label="ページを選択">
-          <option value="/j-league/">Jリーグ</option>
-          <option value="/npb/">NPB</option>
-          <option value="/b-league/">Bリーグ</option>
-          <option value="/nba/" selected>NBA</option>
-        </select>
-      </label>
+<body class="sport-theme sport-theme--nba league-page nba-page">
+  <main class="page-shell">
+    <header class="app-header">
+      <div class="site-header">
+        <div class="brand-lockup"><h1><a class="brand-link" href="/">スポーツポータル</a></h1></div>
+        <label class="page-switcher-wrap"><span class="sr-only">ページを選択</span><select class="page-switcher" data-page-switcher aria-label="ページを選択"><option value="/j-league/">Jリーグ</option><option value="/npb/">NPB</option><option value="/b-league/">Bリーグ</option><option value="/nba/" selected>NBA</option></select></label>
+      </div>
+      <section class="date-section nba-date-section" aria-labelledby="selected-date">
+        <div class="nba-status" aria-live="polite"><span class="nba-status-dot" id="nba-status-dot"></span><span class="nba-status-label" id="nba-status-label">読み込み中</span><span id="nba-status-detail"></span><time id="nba-updated-at"></time></div>
+        <h2 class="selected-date" id="selected-date">2026-27 NBAシーズン</h2>
+        <nav class="date-nav nba-date-nav" id="date-nav" aria-label="試合日"></nav>
+      </section>
     </header>
-    <section class="portal-intro sport-hero sport-hero--arena" aria-labelledby="placeholder-title">
-      <p class="sport-kicker">UNITED STATES · PRO BASKETBALL</p>
-      <h1 id="placeholder-title">NBA</h1>
-      <p class="sport-placeholder">作成途中です</p>
-      <span class="sport-mark sport-mark--ball" aria-hidden="true"></span>
+    <section class="nba-matches-section" aria-label="2026-27 NBAの試合日程・結果">
+      <div class="nba-day-list" id="nba-day-list" tabindex="0" aria-label="試合日ごとの一覧"></div>
+      <p class="nba-empty" id="nba-empty" hidden></p>
     </section>
-    <a class="support-link" href="/">ポータルへ戻る<span class="arrow" aria-hidden="true">→</span></a>
+    <div class="bottom-controls nba-bottom-controls">
+      <nav class="bottom-nav" aria-label="NBA操作">
+        <button id="nba-refresh" type="button" aria-label="NBA情報を更新"><span aria-hidden="true">↻</span><small>更新</small></button>
+        <button id="nba-info-open" type="button" aria-label="順位・大会情報を開く" aria-controls="nba-info-sheet" aria-expanded="false"><span aria-hidden="true">▦</span><small>順位・大会</small></button>
+      </nav>
+    </div>
   </main>
+  <section class="nba-info-sheet" id="nba-info-sheet" role="dialog" aria-modal="true" aria-label="NBA順位・大会情報" aria-hidden="true" hidden>
+    <button class="nba-sheet-backdrop" id="nba-sheet-backdrop" type="button" aria-label="順位・大会情報を閉じる"></button>
+    <div class="nba-sheet-panel" id="nba-sheet-panel" tabindex="-1">
+      <div class="modal-grabber" aria-hidden="true"></div>
+      <header class="nba-sheet-header"><h2>2026-27 NBA 順位・大会</h2><button id="nba-info-close" type="button" aria-label="閉じる">閉じる</button></header>
+      <nav class="nba-modal-tabs" role="tablist" aria-label="NBA情報">
+        <button type="button" role="tab" aria-selected="true" aria-controls="nba-modal-content" data-nba-tab="standings">順位表</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="nba-modal-content" data-nba-tab="cup" tabindex="-1">NBA Cup</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="nba-modal-content" data-nba-tab="playIn" tabindex="-1">Play-In</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="nba-modal-content" data-nba-tab="playoffs" tabindex="-1">プレーオフ</button>
+      </nav>
+      <div class="nba-modal-content" id="nba-modal-content" role="tabpanel" tabindex="0"></div>
+    </div>
+  </section>
+  <script type="module" src="/nba/nba.js?v=nba-1"></script>
   <script src="/header-nav.js?v=1.0.0" defer></script>
 </body>
 </html>

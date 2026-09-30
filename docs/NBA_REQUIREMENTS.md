@@ -29,3 +29,5 @@ API-Sportsの利用規約は第三者データの掲載許諾を同社が付与�
 - APIアクセスはBasic認証で保護する。同時更新は一つにまとめ、取得・検証・保存に失敗した場合は前回データを保つ。
 - 自動更新Workflowは毎日8、10、12、14、16時JSTに実行する。Cloudflare Worker Cronは使わない。
 - STG受入が終わるまで本番へ反映しない。
+
+GitHub ActionsのScheduleとWorkflow Dispatchはデフォルトブランチ上のファイルが必要なため、`stg` ブランチにある現行Workflowはまだ起動できない。デフォルトブランチの更新はSTG受入まで保留する。

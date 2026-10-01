@@ -284,10 +284,12 @@ export default {
       const rawPart = url.searchParams.get('part');
       const part = rawPart === null ? null : Number(rawPart);
       if (rawPart !== null && (!Number.isInteger(part) || part < 0 || part >= B_UPDATE_PARTS)) return json({ error: `Bリーグ更新パートが不正です: ${rawPart}` }, 400);
-      const updateKey = `${league}:${part === null ? 'full' : part}`;
-      if (!activeBLeagueUpdatePromises.has(updateKey)) activeBLeagueUpdatePromises.set(updateKey, performBLeagueUpdate(env, new Date(), fetch, league, { part, totalParts: B_UPDATE_PARTS }).finally(() => activeBLeagueUpdatePromises.delete(updateKey)));
+      const updateId = url.searchParams.get('updateId');
+      if (updateId !== null && !/^[a-zA-Z0-9_-]{1,80}$/.test(updateId)) return json({ error: 'Bリーグ更新IDが不正です' }, 400);
+      const updateKey = `${league}:${updateId || 'legacy'}:${part === null ? 'full' : part}`;
+      if (!activeBLeagueUpdatePromises.has(updateKey)) activeBLeagueUpdatePromises.set(updateKey, performBLeagueUpdate(env, new Date(), fetch, league, { part, totalParts: B_UPDATE_PARTS, updateId }).finally(() => activeBLeagueUpdatePromises.delete(updateKey)));
       try { return json({ data: await activeBLeagueUpdatePromises.get(updateKey) }); }
-      catch (error) { return json({ error: error.message, data: error.data }, 502); }
+      catch (error) { return json({ error: error.message, data: error.data, retryable: Boolean(error.retryable) }, error.retryable ? 503 : 502); }
     }
     const league = url.searchParams.get('league') || CONFIG.league;
     const config = getLeagueConfig(league);

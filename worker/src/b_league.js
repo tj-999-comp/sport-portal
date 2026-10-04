@@ -117,8 +117,10 @@ function teamKey(value) { return htmlText(value).replace(/[\s　・.]/g, '').toL
 
 export function applyMatchResultsToStandings(standings, matches, { league = 'premier' } = {}) {
   if (!standings?.zones?.length) return standings;
-  const rows = standings.zones.flatMap((zone) => zone.rows || []);
-  if (!standings.derived && rows.some((row) => Number.isInteger(row.wins) || Number.isInteger(row.losses))) return standings;
+  // The official standings page can lag behind the schedule/results feed.
+  // Recompute the live table from the complete season schedule so a stale
+  // official snapshot cannot hide finished games. Keep the official table's
+  // team roster and zone order as the source of truth.
   const stats = new Map();
   const getStats = (team) => {
     const key = teamKey(team);
@@ -168,9 +170,70 @@ export function applyMatchResultsToStandings(standings, matches, { league = 'pre
         remaining: stat.remaining
       };
     });
-    enriched.sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.pointDifference - a.pointDifference || a._sourceIndex - b._sourceIndex);
+    const headToHead = new Map();
+    const recordAgainst = (first, second) => {
+      const key = `${first}\u0000${second}`;
+      if (!headToHead.has(key)) headToHead.set(key, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, played: 0 });
+      return headToHead.get(key);
+    };
+    const zoneKeys = new Set(enriched.map((row) => teamKey(row.team)));
+    for (const match of matches || []) {
+      if (match.status !== 'finished' || !Number.isInteger(match.homeScore) || !Number.isInteger(match.awayScore)) continue;
+      const home = teamKey(match.home?.short || match.home?.name);
+      const away = teamKey(match.away?.short || match.away?.name);
+      if (!zoneKeys.has(home) || !zoneKeys.has(away)) continue;
+      const homeRecord = recordAgainst(home, away);
+      const awayRecord = recordAgainst(away, home);
+      homeRecord.played += 1;
+      awayRecord.played += 1;
+      homeRecord.pointsFor += match.homeScore;
+      homeRecord.pointsAgainst += match.awayScore;
+      awayRecord.pointsFor += match.awayScore;
+      awayRecord.pointsAgainst += match.homeScore;
+      if (match.homeScore > match.awayScore) { homeRecord.wins += 1; awayRecord.losses += 1; }
+      else if (match.awayScore > match.homeScore) { awayRecord.wins += 1; homeRecord.losses += 1; }
+    }
+    const tieBreakMetrics = (row, tiedRows) => {
+      const tiedKeys = new Set(tiedRows.map((row) => teamKey(row.team)));
+      let wins = 0; let pointsFor = 0; let pointsAgainst = 0; let played = 0;
+      for (const opponent of tiedKeys) {
+        if (opponent === teamKey(row.team)) continue;
+        const record = headToHead.get(`${teamKey(row.team)}\u0000${opponent}`);
+        if (!record) continue;
+        wins += record.wins; pointsFor += record.pointsFor; pointsAgainst += record.pointsAgainst; played += record.played;
+      }
+      return [
+        played ? wins / played : 0,
+        pointsFor - pointsAgainst,
+        played ? pointsFor / played : 0,
+        row.pointDifference,
+        row.played ? row.pointsFor / row.played : 0
+      ];
+    };
+    const resolveTie = (tiedRows) => {
+      if (tiedRows.length < 2) return tiedRows;
+      for (let metricIndex = 0; metricIndex < 5; metricIndex += 1) {
+        const buckets = new Map();
+        for (const row of tiedRows) {
+          const value = tieBreakMetrics(row, tiedRows)[metricIndex];
+          if (!buckets.has(value)) buckets.set(value, []);
+          buckets.get(value).push(row);
+        }
+        if (buckets.size > 1) return [...buckets.entries()].sort(([a], [b]) => b - a).flatMap(([, bucket]) => resolveTie(bucket));
+      }
+      // The official rules use a draw if all statistical criteria remain tied.
+      // Keep the source order until the official page publishes that outcome.
+      return [...tiedRows].sort((a, b) => a._sourceIndex - b._sourceIndex);
+    };
+    const overallBuckets = new Map();
+    for (const row of enriched) {
+      const percentage = row.played ? row.wins / row.played : 0;
+      if (!overallBuckets.has(percentage)) overallBuckets.set(percentage, []);
+      overallBuckets.get(percentage).push(row);
+    }
+    const ordered = [...overallBuckets.entries()].sort(([a], [b]) => b - a).flatMap(([, bucket]) => resolveTie(bucket));
     const leader = enriched.find((row) => row.played > 0);
-    const ranked = enriched.map((row, index) => ({
+    const ranked = ordered.map((row, index) => ({
       ...row,
       rank: index + 1,
       gamesBehind: leader && row.played > 0 ? Number(((leader.wins - row.wins + row.losses - leader.losses) / 2).toFixed(1)) : null

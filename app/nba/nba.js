@@ -15,7 +15,7 @@ function timeLabel(value) {
   return new Intl.DateTimeFormat('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }).format(new Date(value));
 }
 function categoryLabel(match) {
-  return ({ preseason: 'プレシーズン', regular: 'レギュラーシーズン', 'cup-group': 'NBA Cup グループプレー', 'cup-knockout': 'NBA Cup ノックアウト', 'play-in': 'Play-In', playoffs: 'プレーオフ', finals: 'NBA Finals' })[match.category] || '大会区分未取得';
+  return ({ preseason: 'プレシーズン', regularSeason: 'レギュラーシーズン', nbaCupGroupPlay: 'NBA Cup グループプレー', nbaCupKnockout: 'NBA Cup ノックアウト', playIn: 'Play-In', playoffs: 'プレーオフ', nbaFinals: 'NBA Finals' })[match.category] || '大会区分未取得';
 }
 function statusLabel(match) {
   if (match.status === 'finished') return '試合終了';
@@ -31,9 +31,10 @@ function showStatus(update, hasData) {
   const dot = $('#nba-status-dot');
   dot.className = `nba-status-dot ${update?.status || ''}`;
   $('#nba-status-label').textContent = update?.status === 'failure' ? '更新失敗' : update?.status === 'success' ? '更新済み' : '未取得';
+  const refreshLabel = update.refreshMode === 'full' ? '全日程を同期済み' : update.refreshMode === 'recent' ? '昨日・今日の結果を更新済み' : '試合予定・結果を表示しています';
   $('#nba-status-detail').textContent = update?.status === 'failure'
     ? `${update.message || 'データを更新できませんでした'}${hasData ? '・前回正常データを表示中' : ''}`
-    : hasData ? (state.data?.coverage?.unclassifiedGames ? `試合予定・結果を表示中・大会区分未取得 ${state.data.coverage.unclassifiedGames}件` : '試合予定・結果を表示しています') : 'NBAデータの取得を待っています';
+    : hasData ? (state.data?.coverage?.unclassifiedGames ? `${refreshLabel}・大会区分未取得 ${state.data.coverage.unclassifiedGames}件` : refreshLabel) : 'NBAデータの取得を待っています';
   $('#nba-updated-at').textContent = update?.at ? `更新 ${timeLabel(update.at)}` : '';
 }
 function availableDates() { return [...new Set((state.data?.matches || []).map((game) => game.date).filter(Boolean))].sort(); }
@@ -76,7 +77,7 @@ function renderMatches() {
 function fmt(value) { return value === null || value === undefined || value === '' ? '—' : escapeHtml(value); }
 function renderStandings() {
   const data = state.data?.standings;
-  if (!data || data.status !== 'success') return '<p class="nba-unavailable">順位表データは未取得です。</p>';
+  if (!data || data.status !== 'success') return '<p class="nba-unavailable">BALLDONTLIEのTeam Standings APIはGOATプラン限定のため、Freeプランでは順位表を取得できません。NBAの試合予定と結果は表示できます。</p>';
   const headers = ['Rank', 'Team', 'W', 'L', 'WIN%', 'GB', 'CONF', 'HOME', 'ROAD', 'LAST 10', 'STREAK', 'STATUS'];
   const table = (rows, label) => `<section class="nba-standing-section"><h3>${label}</h3><div class="nba-table-scroll" role="region" tabindex="0" aria-label="${label}順位表"><table class="nba-standings-table"><thead><tr>${headers.map((header) => `<th scope="col">${header}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr><td>${fmt(row.rank)}</td><th scope="row">${fmt(row.team)}</th><td>${fmt(row.wins)}</td><td>${fmt(row.losses)}</td><td>${fmt(row.winPercentage)}</td><td>${fmt(row.gamesBehind)}</td><td>${fmt(row.conferenceRecord)}</td><td>${fmt(row.home)}</td><td>${fmt(row.road)}</td><td>${fmt(row.lastTen)}</td><td>${fmt(row.streak)}</td><td>${fmt(row.postseasonStatus)}</td></tr>`).join('')}</tbody></table></div></section>`;
   return `${table(data.east || [], '東カンファレンス')}${table(data.west || [], '西カンファレンス')}<p class="nba-table-note">STATUSは提供元の進出・敗退情報がある場合のみ表示します。—は情報未取得を示します。</p>`;
@@ -144,7 +145,7 @@ async function loadData() {
 }
 async function refresh() {
   if (state.updating) return;
-  if (!window.confirm('API-SportsからNBAの日程・順位データを更新しますか？')) return;
+  if (!window.confirm('BALLDONTLIEからNBAの試合予定・結果を更新しますか？')) return;
   state.updating = true;
   const button = $('#nba-refresh');
   button.disabled = true;

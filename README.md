@@ -32,6 +32,8 @@ work-records/
 
 ローカル検証は `npm test` と `npm run test:syntax` で実行できます。
 
+ローカルで画面とWorker APIを接続して起動する手順は [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md) を参照してください。
+
 `a_rendered`方式では、HTML・共通CSS・project indexは生成元で管理しません。公開時に公開リポジトリ側のrendererがMarkdownとmetadataから生成します。
 
 ## 作業記録の追加

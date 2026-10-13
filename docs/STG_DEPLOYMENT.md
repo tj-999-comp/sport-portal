@@ -42,6 +42,7 @@
    ```bash
    npx wrangler secret put BASIC_AUTH_USER --env stg -c worker/wrangler.toml
    npx wrangler secret put BASIC_AUTH_PASSWORD --env stg -c worker/wrangler.toml
+   npx wrangler secret put BALLDONTLIE_API_KEY --env stg -c worker/wrangler.toml
    ```
 
 5. PagesのPreview環境へ、`SPORTAL_API` のService Bindingとして `sport-portal-api-stg` を設定する。
@@ -52,10 +53,11 @@
 
 - STG URLが認証なしで401、正しい認証情報で200になる
 - `/api/status`、`/api/data`、`/api/update` がSTG Workerへ到達する
-- STG KVの対象リーグキー（`j1-2026`、`j2-2026`、`j3-2026`）だけが更新され、本番KVが変更されない
+- STG KVの対象リーグキーだけが更新され、本番KVが変更されない
 - `X-Robots-Tag: noindex`、robots.txt、HTTPSが有効である
 - STG WorkerにCron Triggerが設定されておらず、Actionsが`SPORTAL_STG_API_URL`を参照している
 - PagesのService Bindingが本番Workerではなく `sport-portal-api-stg` を指している
+- NBAの取得APIキーはSTG WorkerとProduction Workerそれぞれの `BALLDONTLIE_API_KEY` Secretに個別登録し、ブラウザーやGitHub Actionsへ複製しない
 
 ## STG受入チェック
 

@@ -20,9 +20,10 @@ const matchSwipeThreshold = 72;
 
 function status(update = {}) {
   const failed = update.status === 'failure';
+  const updating = update.status === 'updating';
   $('#status-indicator').className = `status-indicator ${update.status || ''}`;
-  $('#status-label').textContent = failed ? '更新失敗' : update.status === 'success' ? '更新済み' : '読み込み中';
-  $('#status-detail').textContent = failed ? (update.message || '前回正常に取得したデータを表示しています') : `${LABELS[state.league]}のデータを表示しています`;
+  $('#status-label').textContent = failed ? '更新失敗' : updating ? '更新中' : update.status === 'success' ? '更新済み' : '読み込み中';
+  $('#status-detail').textContent = failed ? (update.message || '前回正常に取得したデータを表示しています') : updating ? update.message : `${LABELS[state.league]}のデータを表示しています`;
   $('#updated-at').textContent = updateText(update.at);
 }
 
@@ -270,9 +271,9 @@ function render(data) {
 async function load(league, force = false) {
   state.league = league;
   updateLeagueTabSelection(league);
+  const token = ++state.token;
   const cached = state.dataByLeague.get(league);
   if (cached && !force) { render(cached); return; }
-  const token = ++state.token;
   status({});
   $('#empty-state').hidden = false;
   $('#empty-state').textContent = 'データを読み込んでいます';
@@ -294,16 +295,37 @@ async function refresh() {
   if (state.updating || !window.confirm(`${LABELS[state.league]}の試合予定・結果・順位を更新します。よろしいですか？`)) return;
   state.updating = true;
   const league = state.league;
-  status({ status: 'success', message: '公式サイトからデータを取得しています' });
+  const updateId = crypto.randomUUID();
+  const showProgress = (message) => { if (state.league === league) status({ status: 'updating', message }); };
   $('#refresh-button').disabled = true;
   try {
-    const response = await fetch(`/api/b-league/update?league=${encodeURIComponent(league)}`, { method: 'POST', headers: { Accept: 'application/json' } });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || '更新に失敗しました');
-    render(result.data);
-  } catch (error) { status({ status: 'failure', message: error.message }); }
-  finally { state.updating = false; $('#refresh-button').disabled = false; }
+    let totalParts = 1;
+    let complete;
+    for (let part = 0; part < totalParts; part += 1) {
+      showProgress(`公式サイトから日程を取得しています (${part + 1}/${part === 0 ? '…' : totalParts})`);
+      let result;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const response = await fetch(`/api/b-league/update?league=${encodeURIComponent(league)}&part=${part}&updateId=${updateId}`, { method: 'POST', headers: { Accept: 'application/json' } });
+        result = await response.json();
+        if (response.ok) break;
+        if (!result.retryable || attempt === 2) throw new Error(result.error || '更新に失敗しました');
+        showProgress('月別データの反映を待っています。約1分後に再確認します');
+        await new Promise((resolve) => window.setTimeout(resolve, 65000));
+      }
+      if (result.data?.league !== league) throw new Error('更新結果のカテゴリーが一致しません');
+      if (part === 0) totalParts = result.data.update.totalParts;
+      if (!Number.isInteger(totalParts) || totalParts < 1 || totalParts > 24) throw new Error('更新結果の分割数が不正です');
+      if (part < totalParts - 1 && (result.data.update.status !== 'partial' || result.data.update.part !== part)) throw new Error('月別データを取得できませんでした');
+      complete = result.data;
+    }
+    if (complete?.update.status !== 'success') throw new Error('全期間の日程を取得できませんでした');
+    state.dataByLeague.set(league, complete);
+    if (state.league === league) { state.token += 1; render(complete); }
+  } catch (error) {
+    if (state.league === league) status({ status: 'failure', message: `${error.message}。前回のデータを表示しています` });
+  } finally { state.updating = false; $('#refresh-button').disabled = false; }
 }
+
 function openModal() {
   const sheet = $('#standings-sheet');
   sheet.hidden = false;

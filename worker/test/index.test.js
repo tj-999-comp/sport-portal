@@ -61,6 +61,33 @@ test('league API requests use isolated empty payloads and reject unknown leagues
   assert.equal(invalid.status, 400);
 });
 
+test('B.League data API recalculates standings when its stored official table is stale', async () => {
+  const stored = {
+    ...emptyBLeagueData('premier'),
+    standings: { zones: [{ name: '東地区', rows: [
+      { rank: 1, team: 'B', wins: 1, losses: 0, pointDifference: 10 },
+      { rank: 2, team: 'A', wins: 0, losses: 1, pointDifference: -10 }
+    ] }], wildcard: [], status: 'success' },
+    matches: [{ date: '2026-10-04', status: 'finished', home: { short: 'A' }, away: { short: 'B' }, homeScore: 80, awayScore: 70 }]
+  };
+  const env = {
+    BASIC_AUTH_USER: 'owner',
+    BASIC_AUTH_PASSWORD: 'secret',
+    SPORTAL_DATA: { async get(key) { assert.equal(key, BLEAGUES.premier.dataKey); return stored; } }
+  };
+
+  const response = await worker.fetch(new Request('https://example.test/api/b-league/data?league=premier', {
+    headers: { Authorization: basicAuth('owner', 'secret') }
+  }), env);
+  const data = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(data.standings.zones[0].rows.map(({ team, rank, wins, losses }) => ({ team, rank, wins, losses })), [
+    { team: 'A', rank: 1, wins: 1, losses: 0 },
+    { team: 'B', rank: 2, wins: 0, losses: 1 }
+  ]);
+});
+
 test('league definitions use separate official URLs and KV keys', () => {
   for (const league of ['j1', 'j2', 'j3']) {
     const config = getLeagueConfig(league);
@@ -261,6 +288,41 @@ test('derives B.League standings from finished results when official stats are n
   assert.equal(result.zones[0].rows[0].gamesBehind, 0);
   assert.equal(result.zones[0].rows[0].recentForm, '1-1');
   assert.equal(result.zones[0].rows[0].streak, 'L1');
+});
+
+test('replaces stale official B.League totals and standings order with completed results', () => {
+  const standings = { zones: [{ name: '東地区', rows: [
+    { rank: 1, team: 'A東京', wins: 4, losses: 0, pointDifference: 40 },
+    { rank: 2, team: '琉球', wins: 2, losses: 2, pointDifference: 0 },
+    { rank: 3, team: '群馬', wins: 0, losses: 4, pointDifference: -40 }
+  ] }], wildcard: [], status: 'success' };
+  const result = applyMatchResultsToStandings(standings, [
+    { date: '2026-10-03', status: 'finished', home: { short: '琉球' }, away: { short: 'A東京' }, homeScore: 80, awayScore: 70 },
+    { date: '2026-10-03', status: 'finished', home: { short: '琉球' }, away: { short: '群馬' }, homeScore: 82, awayScore: 74 },
+    { date: '2026-10-03', status: 'finished', home: { short: 'A東京' }, away: { short: '群馬' }, homeScore: 75, awayScore: 70 }
+  ]);
+
+  assert.deepEqual(result.zones[0].rows.map(({ team, rank, wins, losses }) => ({ team, rank, wins, losses })), [
+    { team: '琉球', rank: 1, wins: 2, losses: 0 },
+    { team: 'A東京', rank: 2, wins: 1, losses: 1 },
+    { team: '群馬', rank: 3, wins: 0, losses: 2 }
+  ]);
+  assert.equal(result.derived, true);
+});
+
+test('uses official head-to-head criteria to order tied B.League records', () => {
+  const standings = { zones: [{ name: '東地区', rows: [
+    { rank: 1, team: 'B' }, { rank: 2, team: 'A' }, { rank: 3, team: 'C' }
+  ] }], wildcard: [], status: 'success' };
+  const result = applyMatchResultsToStandings(standings, [
+    { status: 'finished', home: { short: 'A' }, away: { short: 'B' }, homeScore: 80, awayScore: 70 },
+    { status: 'finished', home: { short: 'B' }, away: { short: 'C' }, homeScore: 100, awayScore: 90 },
+    { status: 'finished', home: { short: 'C' }, away: { short: 'A' }, homeScore: 90, awayScore: 80 }
+  ]);
+
+  assert.deepEqual(result.zones[0].rows.map(({ team, rank }) => ({ team, rank })), [
+    { team: 'C', rank: 1 }, { team: 'B', rank: 2 }, { team: 'A', rank: 3 }
+  ]);
 });
 
 test('B.League categories have isolated keys and stable empty data shapes', () => {

@@ -299,28 +299,29 @@ async function refresh() {
   const showProgress = (message) => { if (state.league === league) status({ status: 'updating', message }); };
   $('#refresh-button').disabled = true;
   try {
-    let totalParts = 1;
     let complete;
-    for (let part = 0; part < totalParts; part += 1) {
-      showProgress(`公式サイトから日程を取得しています (${part + 1}/${part === 0 ? '…' : totalParts})`);
+    for (const [index, target] of ['current', 'next'].entries()) {
+      showProgress(`公式サイトから${target === 'current' ? '当月' : '翌月'}の日程を取得しています (${index + 1}/2)`);
       let result;
       for (let attempt = 0; attempt < 3; attempt += 1) {
-        const response = await fetch(`/api/b-league/update?league=${encodeURIComponent(league)}&part=${part}&updateId=${updateId}`, { method: 'POST', headers: { Accept: 'application/json' } });
+        const response = await fetch(`/api/b-league/update?league=${encodeURIComponent(league)}&target=${target}&updateId=${updateId}`, { method: 'POST', headers: { Accept: 'application/json' } });
         result = await response.json();
         if (response.ok) break;
         if (!result.retryable || attempt === 2) throw new Error(result.error || '更新に失敗しました');
         showProgress('月別データの反映を待っています。約1分後に再確認します');
         await new Promise((resolve) => window.setTimeout(resolve, 65000));
       }
+      if (result.skipped) continue;
       if (result.data?.league !== league) throw new Error('更新結果のカテゴリーが一致しません');
-      if (part === 0) totalParts = result.data.update.totalParts;
-      if (!Number.isInteger(totalParts) || totalParts < 1 || totalParts > 24) throw new Error('更新結果の分割数が不正です');
-      if (part < totalParts - 1 && (result.data.update.status !== 'partial' || result.data.update.part !== part)) throw new Error('月別データを取得できませんでした');
+      if (result.data.update.status !== 'success' || result.data.update.target !== target) throw new Error('月別データを取得できませんでした');
       complete = result.data;
     }
-    if (complete?.update.status !== 'success') throw new Error('全期間の日程を取得できませんでした');
-    state.dataByLeague.set(league, complete);
-    if (state.league === league) { state.token += 1; render(complete); }
+    if (complete) {
+      state.dataByLeague.set(league, complete);
+      if (state.league === league) { state.token += 1; render(complete); }
+    } else if (state.league === league) {
+      status(state.data?.update || {});
+    }
   } catch (error) {
     if (state.league === league) status({ status: 'failure', message: `${error.message}。前回のデータを表示しています` });
   } finally { state.updating = false; $('#refresh-button').disabled = false; }

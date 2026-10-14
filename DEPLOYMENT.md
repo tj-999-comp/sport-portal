@@ -4,7 +4,7 @@
 
 `app/` をCloudflare Pagesの静的出力ディレクトリとしてデプロイする。ビルドコマンドは不要、出力ディレクトリは `app`。リポジトリ直下の `functions/_middleware.js` をPages Functionsとして有効にし、Pages側にも同じ名前のSecret（`BASIC_AUTH_USER`、`BASIC_AUTH_PASSWORD`）を登録する。認証済みのPages応答には、middlewareから `X-Robots-Tag: noindex, nofollow, noarchive` などのプライバシーヘッダーを付与する。
 
-Pages projectのService Bindingに `SPORTAL_API` という名前でWorker `sport-portal-api` を接続する。リポジトリ直下の `functions/api/[[path]].js` が `/api/*` をWorkerへ中継するため、`app/app.js` は相対パスの `/api/*` のままでよい。Pages Functionsのmiddlewareは静的ページ全体にBasic認証を適用し、Worker側でもAPIにBasic認証を適用する。
+Pages projectのService Bindingに `SPORTAL_API` という名前でWorker `sport-portal-api` を接続する。リポジトリ直下の `functions/api/[[path]].js` が `/api/*` をWorkerへ中継するため、`app/j-league/j-league.js` は相対パスの `/api/*` のままでよい。Pages Functionsのmiddlewareは静的ページ全体にBasic認証を適用し、Worker側でもAPIにBasic認証を適用する。
 
 ## 2. Workerと保存先
 

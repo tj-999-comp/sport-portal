@@ -19,9 +19,6 @@
 
 FreeプランのGames APIからは試合日程、状態、スコアを取得できる。Team Standings APIはGOATプラン限定である。また、Games APIからNBA Cupの順位・公式進出状況や、NBA Cup／Play-In／プレーオフの公式ブラケットは得られない。これらは試合結果から推測しない。会場情報も取得できない場合は表示しない。
 
-## 環境別更新
+## STG運用
 
-- デフォルトブランチ上の定期Workflowは、毎日8・10・12・14・16時（JST）にProduction Workerの `/api/nba/update` を呼び出す。
-- `workflow_dispatch` ではSTGまたはProductionを選択できる。手動実行の初期選択はSTGとする。
-- 接続先はProductionが `SPORTAL_API_URL`、STGが `SPORTAL_STG_API_URL`。Basic認証は既存の `SPORTAL_API_USER` と `SPORTAL_API_PASSWORD` を使う。
-- BALLDONTLIEキーは各環境のCloudflare Worker Secret `BALLDONTLIE_API_KEY` に個別に登録する。GitHub Actionsやブラウザーへ複製しない。
+NBA更新はSTG専用Workflowから毎日8・10・12・14・16時（JST）に実行する。本番Worker・本番KVへのNBA更新はこのWorkflowから行わない。手動更新と定期更新はいずれも `/api/nba/update` を使う。

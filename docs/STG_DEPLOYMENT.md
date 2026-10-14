@@ -57,7 +57,7 @@
 - `X-Robots-Tag: noindex`、robots.txt、HTTPSが有効である
 - STG WorkerにCron Triggerが設定されておらず、Actionsが`SPORTAL_STG_API_URL`を参照している
 - PagesのService Bindingが本番Workerではなく `sport-portal-api-stg` を指している
-- NBAの取得APIキーはSTG WorkerとProduction Workerそれぞれの `BALLDONTLIE_API_KEY` Secretに個別登録し、ブラウザーやGitHub Actionsへ複製しない
+- NBAの取得APIキーはSTG Workerの `BALLDONTLIE_API_KEY` Secretにあり、ブラウザーやGitHub Actionsへ複製されていない
 
 ## STG受入チェック
 

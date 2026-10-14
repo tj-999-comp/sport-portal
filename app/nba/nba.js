@@ -51,10 +51,10 @@ function renderGame(game) {
   return `<article class="nba-game-card">
     <div class="nba-game-meta"><span>${escapeHtml(categoryLabel(game))}</span><strong>${escapeHtml(statusLabel(game))}</strong></div>
     <div class="nba-matchup">
-      <div class="nba-team${winner(true) ? ' winner' : ''}"><span class="nba-side">HOME</span><span>${escapeHtml(game.home?.name || '未確定')}</span></div>
-      <span class="nba-score">${final ? escapeHtml(game.homeScore) : '—'}</span>
+      <div class="nba-team nba-team-home${winner(true) ? ' winner' : ''}"><span class="nba-side">HOME</span><span>${escapeHtml(game.home?.name || '未確定')}</span></div>
+      <span class="nba-score nba-score-home">${final ? escapeHtml(game.homeScore) : '—'}</span>
       <span class="nba-versus" aria-hidden="true">—</span>
-      <span class="nba-score">${final ? escapeHtml(game.awayScore) : '—'}</span>
+      <span class="nba-score nba-score-away">${final ? escapeHtml(game.awayScore) : '—'}</span>
       <div class="nba-team nba-team-away${winner(false) ? ' winner' : ''}"><span class="nba-side">AWAY</span><span>${escapeHtml(game.away?.name || '未確定')}</span></div>
     </div>
     <div class="nba-game-footer"><span>${escapeHtml(game.venue || '会場未発表')}</span><span>${escapeHtml(game.city || '')}</span></div>

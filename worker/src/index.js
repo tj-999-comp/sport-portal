@@ -1,3 +1,7 @@
+import { emptyNpbData, performNpbUpdate } from './npb.js';
+import { B_UPDATE_PARTS, BLEAGUES, BLEAGUE_KEYS, applyMatchResultsToStandings, emptyBLeagueData, getBLeagueTargetMonthIndex, performBLeagueUpdate } from './b_league.js';
+import { emptyNBAData, NBA_DATA_KEY, performNBAUpdate } from './nba.js';
+
 const SEASON = '2026';
 const LEAGUE_DEFINITIONS = {
   j1: { label: 'J1', schedulePath: 'j1', dataKey: 'j1-2026' },
@@ -204,6 +208,9 @@ function authorized(request, env) {
 function unauthorized() { return new Response('Authentication required', { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="sport-portal", charset="UTF-8"', 'Cache-Control': 'no-store' } }); }
 
 const activeUpdatePromises = new Map();
+let activeNpbUpdatePromise = null;
+const activeBLeagueUpdatePromises = new Map();
+let activeNBAUpdatePromise = null;
 
 async function performUpdateInternal(env, now, fetchImpl, config) {
   const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyData({}, config);
@@ -234,6 +241,64 @@ export default {
   async fetch(request, env) {
     if (!authorized(request, env)) return unauthorized();
     const url = new URL(request.url);
+    if (url.pathname === '/api/nba/data' && request.method === 'GET') {
+      return json((await env.SPORTAL_DATA.get(NBA_DATA_KEY, 'json')) || emptyNBAData());
+    }
+    if (url.pathname === '/api/nba/status' && request.method === 'GET') {
+      const data = (await env.SPORTAL_DATA.get(NBA_DATA_KEY, 'json')) || emptyNBAData();
+      const hasData = Boolean(data.matches?.length || data.standings?.status === 'success' || data.cup?.status === 'success' || data.playIn?.status === 'success' || data.playoffs?.status === 'success');
+      return json({ update: data.update, hasData });
+    }
+    if (url.pathname === '/api/nba/update' && request.method === 'POST') {
+      if (!activeNBAUpdatePromise) activeNBAUpdatePromise = performNBAUpdate(env, new Date(), fetch).finally(() => { activeNBAUpdatePromise = null; });
+      try { return json({ data: await activeNBAUpdatePromise }); }
+      catch (error) { return json({ error: error.message, data: error.data }, 502); }
+    }
+    if (url.pathname === '/api/npb/data' && request.method === 'GET') {
+      return json((await env.SPORTAL_DATA.get('npb-2026', 'json')) || emptyNpbData());
+    }
+    if (url.pathname === '/api/npb/status' && request.method === 'GET') {
+      const data = (await env.SPORTAL_DATA.get('npb-2026', 'json')) || emptyNpbData();
+      return json({ update: data.update, hasData: data.matches.length > 0 || data.standings.central.rows.length > 0 || data.standings.pacific.rows.length > 0 });
+    }
+    if (url.pathname === '/api/npb/update' && request.method === 'POST') {
+      if (!activeNpbUpdatePromise) activeNpbUpdatePromise = performNpbUpdate(env, new Date(), fetch).finally(() => { activeNpbUpdatePromise = null; });
+      try { return json({ data: await activeNpbUpdatePromise }); }
+      catch (error) { return json({ error: error.message, data: error.data }, 502); }
+    }
+    if (url.pathname === '/api/b-league/data' && request.method === 'GET') {
+      const league = url.searchParams.get('league') || 'premier';
+      if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
+      const data = (await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league);
+      return json({ ...data, standings: applyMatchResultsToStandings(data.standings, data.matches, { league }) });
+    }
+    if (url.pathname === '/api/b-league/status' && request.method === 'GET') {
+      const league = url.searchParams.get('league') || 'premier';
+      if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
+      const data = (await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league);
+      return json({ update: data.update, hasData: data.matches.length > 0 || data.standings.zones.length > 0 });
+    }
+    if (url.pathname === '/api/b-league/update' && request.method === 'POST') {
+      const league = url.searchParams.get('league') || 'premier';
+      if (!BLEAGUE_KEYS.includes(league)) return json({ error: `未対応のBリーグカテゴリーです: ${league}` }, 400);
+      const rawPart = url.searchParams.get('part');
+      const part = rawPart === null ? null : Number(rawPart);
+      if (rawPart !== null && (!Number.isInteger(part) || part < 0 || part >= B_UPDATE_PARTS)) return json({ error: `Bリーグ更新パートが不正です: ${rawPart}` }, 400);
+      const target = url.searchParams.get('target');
+      if (target !== null && !['current', 'next'].includes(target)) return json({ error: `Bリーグ更新対象が不正です: ${target}` }, 400);
+      if (part !== null && target !== null) return json({ error: 'Bリーグのパート更新と月別更新は同時に指定できません' }, 400);
+      const updateId = url.searchParams.get('updateId');
+      if (updateId !== null && !/^[a-zA-Z0-9_-]{1,80}$/.test(updateId)) return json({ error: 'Bリーグ更新IDが不正です' }, 400);
+      const now = new Date();
+      if (target !== null && getBLeagueTargetMonthIndex(now, target) < 0) {
+        const data = (await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league);
+        return json({ data, skipped: true, target, reason: 'out-of-season' });
+      }
+      const updateKey = `${league}:${updateId || 'legacy'}:${part === null ? (target || 'full') : part}`;
+      if (!activeBLeagueUpdatePromises.has(updateKey)) activeBLeagueUpdatePromises.set(updateKey, performBLeagueUpdate(env, now, fetch, league, { part, target, totalParts: B_UPDATE_PARTS, updateId }).finally(() => activeBLeagueUpdatePromises.delete(updateKey)));
+      try { return json({ data: await activeBLeagueUpdatePromises.get(updateKey) }); }
+      catch (error) { return json({ error: error.message, data: error.data, retryable: Boolean(error.retryable) }, error.retryable ? 503 : 502); }
+    }
     const league = url.searchParams.get('league') || CONFIG.league;
     const config = getLeagueConfig(league);
     if (!config) return json({ error: `未対応のリーグです: ${league}` }, 400);

@@ -1,0 +1,14 @@
+schema_version: 1
+title: '共通スコアレイアウトとリーグ別アセット整理のSTG反映'
+date: "2026-10-14"
+project_id: sport-portal
+tags:
+  - score-layout
+  - css
+  - refactor
+  - stg
+  - b-league
+  - npb
+  - nba
+  - documentation
+publish: true

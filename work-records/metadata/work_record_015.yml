@@ -1,11 +1,12 @@
 schema_version: 1
-title: 'NBAページ要件定義と実装Issue登録'
-date: "2026-09-30"
+title: 'NPBページ追加と本番反映・Issueクローズ'
+date: "2026-09-23"
 project_id: sport-portal
 tags:
-  - nba
-  - requirements
-  - planning
-  - github
-  - documentation
+  - npb
+  - production
+  - stg
+  - acceptance
+  - deployment
+  - closure
 publish: true

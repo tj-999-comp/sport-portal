@@ -1,0 +1,11 @@
+schema_version: 1
+title: 'Issueタイトルとリリースバージョン運用ルールを整備'
+date: "2026-10-13"
+project_id: sport-portal
+tags:
+  - github
+  - issues
+  - versioning
+  - documentation
+  - process
+publish: true

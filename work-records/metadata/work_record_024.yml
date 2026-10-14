@@ -1,0 +1,13 @@
+schema_version: 1
+title: 'Bリーグ月次更新のSTG受入と本番反映'
+date: "2026-10-14"
+project_id: sport-portal
+tags:
+  - b-league
+  - issue-69
+  - monthly-update
+  - stg
+  - production
+  - deployment
+  - documentation
+publish: true

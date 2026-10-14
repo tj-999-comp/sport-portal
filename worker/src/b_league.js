@@ -1,0 +1,402 @@
+const SEASON = '2026-27';
+const START_YEAR = 2026;
+const SOURCE = 'https://www.bleague.jp';
+const SCHEDULE = `${SOURCE}/schedule/`;
+const STANDINGS = `${SOURCE}/standings/`;
+const LEAGUE_DEFINITIONS = {
+  premier: { label: 'Bプレミア', tab: '1', dataKey: 'b-premier-2026-27', zones: ['東地区', '西地区'] },
+  one: { label: 'Bワン', tab: '2', dataKey: 'b-one-2026-27', zones: ['北地区', '東地区', '中地区', '西地区', '南地区'] },
+  next: { label: 'Bネクスト', tab: '3', dataKey: 'b-next-2026-27', zones: ['1地区'] }
+};
+
+export const BLEAGUE_KEYS = Object.keys(LEAGUE_DEFINITIONS);
+export const BLEAGUES = Object.fromEntries(BLEAGUE_KEYS.map((league) => [league, { ...LEAGUE_DEFINITIONS[league], league, season: SEASON }]));
+export const B_CONFIG = BLEAGUES.premier;
+
+const HEADERS = { 'User-Agent': 'sport-portal/1.0 (+https://www.bleague.jp)', Accept: 'text/html,application/xhtml+xml' };
+const MONTHS = [
+  [2026, 9], [2026, 10], [2026, 11], [2026, 12],
+  [2027, 1], [2027, 2], [2027, 3], [2027, 4], [2027, 5]
+];
+export const B_UPDATE_PARTS = MONTHS.length;
+export const B_LEAGUE_MONTHS = MONTHS.map(([year, month]) => `${year}-${String(month).padStart(2, '0')}`);
+
+function jstYearMonth(now) {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit' }).formatToParts(now);
+  return { year: Number(parts.find((part) => part.type === 'year')?.value), month: Number(parts.find((part) => part.type === 'month')?.value) };
+}
+
+function addMonth({ year, month }, offset) {
+  const value = new Date(Date.UTC(year, month - 1 + offset, 1));
+  return { year: value.getUTCFullYear(), month: value.getUTCMonth() + 1 };
+}
+
+function monthIndex(year, month) { return MONTHS.findIndex(([candidateYear, candidateMonth]) => candidateYear === year && candidateMonth === month); }
+
+export function getBLeagueTargetMonthIndex(now = new Date(), target = 'current') {
+  if (!['current', 'next'].includes(target)) throw new Error(`Bリーグ更新対象が不正です: ${target}`);
+  return monthIndex(...Object.values(addMonth(jstYearMonth(now), target === 'next' ? 1 : 0)));
+}
+
+export function getBLeagueTargetMonthIndexes(now = new Date()) {
+  return ['current', 'next'].map((target) => getBLeagueTargetMonthIndex(now, target)).filter((index) => index >= 0);
+}
+
+function monthLabel(index) { return B_LEAGUE_MONTHS[index]; }
+
+function htmlText(value) {
+  return String(value ?? '').replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#x3000;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/[\s\u3000]+/g, ' ').trim();
+}
+function attrs(tag) {
+  const result = {};
+  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*["']([^"']*)["']/g)) result[match[1].toLowerCase()] = match[2];
+  return result;
+}
+function unescape(value) { return htmlText(value); }
+function number(value) { const match = String(value ?? '').replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0)).match(/-?\d+/); return match ? Number(match[0]) : null; }
+function seasonDate(year, month, day) { return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`; }
+function unique(items, key) { return [...new Map(items.map((item) => [key(item), item])).values()]; }
+
+export function emptyBLeagueData(league = 'premier', update = {}) {
+  const config = BLEAGUES[league] || B_CONFIG;
+  return { schemaVersion: 1, sport: 'b-league', league: config.league, season: SEASON, matches: [], standings: { zones: [], wildcard: [], status: 'unavailable' }, postseason: { status: 'unavailable', rounds: [] }, update };
+}
+
+function parseDateButtons(html, year, month) {
+  const dates = [];
+  for (const match of html.matchAll(/class=["'][^"']*js-schedule-date-slider-item[^"']*[\s\S]*?data-day=["'](\d{1,2})["'][\s\S]*?<\/div>/gi)) dates.push(seasonDate(year, month, Number(match[1])));
+  return unique(dates, (value) => value).sort();
+}
+
+function parseStatus(text, homeScore, awayScore) {
+  if (/中止/.test(text)) return 'cancelled';
+  if (/延期|順延/.test(text)) return 'postponed';
+  if (/試合終了|FINAL|試合終了後/.test(text) && homeScore !== null && awayScore !== null) return 'finished';
+  return 'scheduled';
+}
+
+export function parseScheduleHtml(html, { year = 2026, month = 9, day = null, league = 'premier' } = {}) {
+  const matches = [];
+  const listPattern = /<li\b[^>]*class=["'][^"']*list-item[^"']*["'][^>]*id=["'](\d+)["'][^>]*>[\s\S]*?<\/li>/gi;
+  for (const match of html.matchAll(listPattern)) {
+    const block = match[0];
+    const text = htmlText(block);
+    const id = match[1];
+    const homeMatch = block.match(/class=["'][^"']*team home[^"']*["'][\s\S]*?class=["'][^"']*team-name[^"']*["'][^>]*>([\s\S]*?)<\//i);
+    const awayMatch = block.match(/class=["'][^"']*team away[^"']*["'][\s\S]*?class=["'][^"']*team-name[^"']*["'][^>]*>([\s\S]*?)<\//i);
+    const teams = [homeMatch?.[1], awayMatch?.[1]].map((value) => value ? unescape(value) : '').filter(Boolean);
+    if (teams.length !== 2) continue;
+    const arena = block.match(/class=["'][^"']*info-arena[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || '';
+    const arenaText = htmlText(arena);
+    const kickoff = arenaText.match(/\b(\d{1,2}:\d{2})\b/)?.[1] || null;
+    const venue = arenaText.replace(/\b\d{1,2}:\d{2}\b/g, '').replace(/^\s*\|\s*/, '').trim() || null;
+    const scoreFor = (side) => {
+      const scoreBlock = block.match(new RegExp(`<span\\b[^>]*class=["'][^"']*\\b${side}-score\\b[^"']*["'][^>]*>([\\s\\S]*?)<\\/span>`, 'i'))?.[1] || '';
+      return number(htmlText(scoreBlock));
+    };
+    const pointText = block.match(/class=["'][^"']*point[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] || '';
+    const pointNumbers = [...htmlText(pointText).matchAll(/\d+/g)].map((item) => Number(item[0]));
+    const homeScore = scoreFor('home') ?? (Number.isInteger(pointNumbers[0]) ? pointNumbers[0] : null);
+    const awayScore = scoreFor('away') ?? (Number.isInteger(pointNumbers[1]) ? pointNumbers[1] : null);
+    const status = parseStatus(text, homeScore, awayScore);
+    matches.push({ id, date: seasonDate(year, month, Number(day || text.match(/(?:^|\s)(\d{1,2})日/)?.[1] || 1)), league, home: { short: teams[0], name: teams[0] }, away: { short: teams[1], name: teams[1] }, kickoff, venue, matchday: text.match(/第\s*(\d+)\s*節/)?.[1] || null, status, homeScore: status === 'finished' ? homeScore : null, awayScore: status === 'finished' ? awayScore : null, competition: text.match(/(B\.PREMIER|B\.ONE|B\.NEXT|プレーオフ|ファイナル)/i)?.[1] || 'レギュラーシーズン' });
+  }
+  return matches;
+}
+
+function parseTeamName(cell) { const text = htmlText(cell).replace(/詳細$/, '').trim(); return text.split(/\s+/).at(-1) || text; }
+function parseTableRows(table) {
+  const rows = [];
+  for (const row of table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const cells = [...row[1].matchAll(/<(?:td|th)\b[^>]*>([\s\S]*?)<\/(?:td|th)>/gi)].map((cell) => htmlText(cell[1]));
+    if (cells.length < 6 || !cells[1] || cells[1] === 'クラブ') continue;
+    rows.push({ rank: /^\d+$/.test(cells[0]) ? Number(cells[0]) : null, team: parseTeamName(cells[1]), wins: number(cells[2]), losses: number(cells[3]), winPercentage: cells[4] === '-' ? null : cells[4], gamesBehind: cells[5] === '-' ? null : number(cells[5]), pointsFor: number(cells[6]), pointsAgainst: number(cells[7]), pointDifference: number(cells[8]), recentForm: ['-', '--'].includes(cells[11]) ? null : (cells[11] || null), streak: ['-', '--'].includes(cells[12]) ? null : (cells[12] || null), played: number(cells[13]), remaining: null });
+  }
+  return rows;
+}
+
+export function parseStandingsHtml(html, { league = 'premier' } = {}) {
+  const zones = [];
+  const headingPattern = /<h3[^>]*>([^<]*(?:地区|地域)[^<]*)<\/h3>[\s\S]*?<table\b[\s\S]*?<\/table>/gi;
+  for (const match of html.matchAll(headingPattern)) {
+    const name = htmlText(match[1]);
+    const table = match[0].match(/<table\b[\s\S]*?<\/table>/i)?.[0];
+    if (!table) continue;
+    const rows = parseTableRows(table);
+    if (rows.length) zones.push({ name, rows });
+  }
+  if (!zones.length && league === 'next') {
+    const table = html.match(/<table\b[^>]*class=["'][^"']*table-standings[^"']*["'][\s\S]*?<\/table>/i)?.[0];
+    const rows = table ? parseTableRows(table) : [];
+    if (rows.length) zones.push({ name: '1地区', rows });
+  }
+  const known = BLEAGUES[league]?.zones || [];
+  const ordered = known.map((name) => zones.find((zone) => zone.name.includes(name))).filter(Boolean);
+  const allRows = ordered.flatMap((zone) => zone.rows);
+  const wildcard = league === 'premier' ? allRows.filter((row) => row.rank > 3) : league === 'one' ? allRows.filter((row) => row.rank > 2) : [];
+  return { zones: ordered, wildcard, status: ordered.length ? 'success' : 'unavailable' };
+}
+
+function teamKey(value) { return htmlText(value).replace(/[\s　・.]/g, '').toLowerCase(); }
+
+export function applyMatchResultsToStandings(standings, matches, { league = 'premier' } = {}) {
+  if (!standings?.zones?.length) return standings;
+  // The official standings page can lag behind the schedule/results feed.
+  // Recompute the live table from the complete season schedule so a stale
+  // official snapshot cannot hide finished games. Keep the official table's
+  // team roster and zone order as the source of truth.
+  const stats = new Map();
+  const getStats = (team) => {
+    const key = teamKey(team);
+    if (!stats.has(key)) stats.set(key, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0, results: [] });
+    return stats.get(key);
+  };
+  for (const match of matches || []) {
+    const home = match.home?.short || match.home?.name;
+    const away = match.away?.short || match.away?.name;
+    if (!home || !away) continue;
+    const homeStats = getStats(home);
+    const awayStats = getStats(away);
+    if (match.status === 'finished' && Number.isInteger(match.homeScore) && Number.isInteger(match.awayScore)) {
+      homeStats.pointsFor += match.homeScore;
+      homeStats.pointsAgainst += match.awayScore;
+      awayStats.pointsFor += match.awayScore;
+      awayStats.pointsAgainst += match.homeScore;
+      if (match.homeScore > match.awayScore) { homeStats.wins += 1; awayStats.losses += 1; homeStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'W' }); awayStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'L' }); }
+      else if (match.awayScore > match.homeScore) { awayStats.wins += 1; homeStats.losses += 1; homeStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'L' }); awayStats.results.push({ key: `${match.date || ''}${match.kickoff || ''}`, result: 'W' }); }
+    } else if (match.status === 'scheduled') {
+      homeStats.remaining += 1;
+      awayStats.remaining += 1;
+    }
+  }
+  const zones = standings.zones.map((zone) => {
+    const enriched = (zone.rows || []).map((row, index) => {
+      const stat = stats.get(teamKey(row.team)) || { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, remaining: 0, results: [] };
+      const played = stat.wins + stat.losses;
+      const recent = [...stat.results].sort((a, b) => a.key.localeCompare(b.key)).slice(-5);
+      const recentWins = recent.filter((item) => item.result === 'W').length;
+      const lastResult = [...stat.results].sort((a, b) => a.key.localeCompare(b.key)).at(-1)?.result;
+      const streakCount = lastResult ? [...stat.results].sort((a, b) => a.key.localeCompare(b.key)).reverse().findIndex((item) => item.result !== lastResult) : -1;
+      return {
+        ...row,
+        _sourceIndex: index,
+        rank: null,
+        wins: stat.wins,
+        losses: stat.losses,
+        winPercentage: played ? (stat.wins / played).toFixed(3).replace(/^0/, '') : null,
+        gamesBehind: null,
+        pointsFor: stat.pointsFor,
+        pointsAgainst: stat.pointsAgainst,
+        pointDifference: stat.pointsFor - stat.pointsAgainst,
+        recentForm: recent.length ? `${recentWins}-${recent.length - recentWins}` : null,
+        streak: lastResult ? `${lastResult}${streakCount < 0 ? stat.results.length : streakCount}` : null,
+        played,
+        remaining: stat.remaining
+      };
+    });
+    const headToHead = new Map();
+    const recordAgainst = (first, second) => {
+      const key = `${first}\u0000${second}`;
+      if (!headToHead.has(key)) headToHead.set(key, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, played: 0 });
+      return headToHead.get(key);
+    };
+    const zoneKeys = new Set(enriched.map((row) => teamKey(row.team)));
+    for (const match of matches || []) {
+      if (match.status !== 'finished' || !Number.isInteger(match.homeScore) || !Number.isInteger(match.awayScore)) continue;
+      const home = teamKey(match.home?.short || match.home?.name);
+      const away = teamKey(match.away?.short || match.away?.name);
+      if (!zoneKeys.has(home) || !zoneKeys.has(away)) continue;
+      const homeRecord = recordAgainst(home, away);
+      const awayRecord = recordAgainst(away, home);
+      homeRecord.played += 1;
+      awayRecord.played += 1;
+      homeRecord.pointsFor += match.homeScore;
+      homeRecord.pointsAgainst += match.awayScore;
+      awayRecord.pointsFor += match.awayScore;
+      awayRecord.pointsAgainst += match.homeScore;
+      if (match.homeScore > match.awayScore) { homeRecord.wins += 1; awayRecord.losses += 1; }
+      else if (match.awayScore > match.homeScore) { awayRecord.wins += 1; homeRecord.losses += 1; }
+    }
+    const tieBreakMetrics = (row, tiedRows) => {
+      const tiedKeys = new Set(tiedRows.map((row) => teamKey(row.team)));
+      let wins = 0; let pointsFor = 0; let pointsAgainst = 0; let played = 0;
+      for (const opponent of tiedKeys) {
+        if (opponent === teamKey(row.team)) continue;
+        const record = headToHead.get(`${teamKey(row.team)}\u0000${opponent}`);
+        if (!record) continue;
+        wins += record.wins; pointsFor += record.pointsFor; pointsAgainst += record.pointsAgainst; played += record.played;
+      }
+      return [
+        played ? wins / played : 0,
+        pointsFor - pointsAgainst,
+        played ? pointsFor / played : 0,
+        row.pointDifference,
+        row.played ? row.pointsFor / row.played : 0
+      ];
+    };
+    const resolveTie = (tiedRows) => {
+      if (tiedRows.length < 2) return tiedRows;
+      for (let metricIndex = 0; metricIndex < 5; metricIndex += 1) {
+        const buckets = new Map();
+        for (const row of tiedRows) {
+          const value = tieBreakMetrics(row, tiedRows)[metricIndex];
+          if (!buckets.has(value)) buckets.set(value, []);
+          buckets.get(value).push(row);
+        }
+        if (buckets.size > 1) return [...buckets.entries()].sort(([a], [b]) => b - a).flatMap(([, bucket]) => resolveTie(bucket));
+      }
+      // The official rules use a draw if all statistical criteria remain tied.
+      // Keep the source order until the official page publishes that outcome.
+      return [...tiedRows].sort((a, b) => a._sourceIndex - b._sourceIndex);
+    };
+    const overallBuckets = new Map();
+    for (const row of enriched) {
+      const percentage = row.played ? row.wins / row.played : 0;
+      if (!overallBuckets.has(percentage)) overallBuckets.set(percentage, []);
+      overallBuckets.get(percentage).push(row);
+    }
+    const ordered = [...overallBuckets.entries()].sort(([a], [b]) => b - a).flatMap(([, bucket]) => resolveTie(bucket));
+    const leader = enriched.find((row) => row.played > 0);
+    const ranked = ordered.map((row, index) => ({
+      ...row,
+      rank: index + 1,
+      gamesBehind: leader && row.played > 0 ? Number(((leader.wins - row.wins + row.losses - leader.losses) / 2).toFixed(1)) : null
+    }));
+    return { ...zone, rows: ranked.map(({ _sourceIndex, ...row }) => row) };
+  });
+  const wildcard = league === 'premier' ? zones.flatMap((zone) => zone.rows).filter((row) => row.rank > 3) : league === 'one' ? zones.flatMap((zone) => zone.rows).filter((row) => row.rank > 2) : [];
+  return { ...standings, zones, wildcard, derived: true };
+}
+
+async function getText(fetchImpl, url) { const response = await fetchImpl(url, { headers: HEADERS, redirect: 'follow' }); if (!response.ok) throw new Error(`Bリーグ公式サイトの応答エラー (${response.status})`); return response.text(); }
+async function getJson(fetchImpl, url) { const response = await fetchImpl(url, { headers: HEADERS, redirect: 'follow' }); if (!response.ok) throw new Error(`Bリーグ日程JSONの応答エラー (${response.status})`); return response.json(); }
+async function getJsonWithRetry(fetchImpl, url) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try { return await getJson(fetchImpl, url); }
+    catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+  throw lastError;
+}
+
+async function fetchMonthMatches(fetchImpl, year, month, config) {
+  // The official year parameter is the season's start year, including Jan–May.
+  const query = `year=${START_YEAR}&mon=${String(month).padStart(2, '0')}`;
+  const monthHtml = await getText(fetchImpl, `${SCHEDULE}?${query}&day=all&tab=${config.tab}`);
+  const selectedYear = monthHtml.match(/var\s+year\s*=\s*['"](\d+)['"]/)?.[1];
+  const selectedMonth = monthHtml.match(/var\s+mon\s*=\s*['"](\d+)['"]/)?.[1];
+  const selectedTab = monthHtml.match(/var\s+tab\s*=\s*['"](\d+)['"]/)?.[1];
+  if (Number(selectedYear) !== START_YEAR || Number(selectedMonth) !== month || selectedTab !== config.tab || !monthHtml.includes(`id="schedule-b${config.tab}"`)) {
+    throw new Error(`Bリーグの対象月を確認できませんでした: ${year}-${month}`);
+  }
+  const dates = parseDateButtons(monthHtml, year, month);
+  // Some categories have no games in a month. The official page still
+  // returns the category schedule container, so an empty date list is a
+  // valid result and must not be treated as a failed fetch.
+  const pages = [];
+  for (let offset = 0; offset < dates.length; offset += 6) {
+    pages.push(...await Promise.all(dates.slice(offset, offset + 6).map(async (date) => {
+      const day = Number(date.slice(-2));
+      const matches = [];
+      const seen = new Set();
+      let index = 0;
+      do {
+        if (seen.has(index) || seen.size >= 20) throw new Error(`Bリーグ日程のページ分割が不正です: ${date}`);
+        seen.add(index);
+        const json = await getJsonWithRetry(fetchImpl, `${SCHEDULE}?data_format=json&${query}&day=${day}&event=&club=&tab=${config.tab}&ha=&fb=&index=${index}`);
+        if (!Array.isArray(json.topics) || !Object.hasOwn(json, 'index')) throw new Error(`Bリーグ日程JSONの形式が不正です: ${date}`);
+        for (const topic of json.topics) {
+          const parsed = typeof topic === 'string' ? parseScheduleHtml(topic, { year, month, day, league: config.league }) : [];
+          if (parsed.length !== 1) throw new Error(`Bリーグの試合を抽出できませんでした: ${date}`);
+          matches.push(...parsed);
+        }
+        index = json.index == null || json.index === '' || Number(json.index) === 0 ? null : Number(json.index);
+        if (index !== null && (!Number.isInteger(index) || index < 0)) throw new Error(`Bリーグ日程の次ページが不正です: ${date}`);
+      } while (index !== null);
+      if (!matches.length || new Set(matches.map((match) => match.id)).size !== matches.length) throw new Error(`Bリーグの開催日の試合が空または重複しています: ${date}`);
+      return matches;
+    })));
+  }
+  return pages.flat();
+}
+
+export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(), league = 'premier', { monthIndexes = null, includeStandings = true, allowEmptyMatches = false } = {}) {
+  const config = BLEAGUES[league];
+  if (!config) throw new Error(`未対応のBリーグカテゴリーです: ${league}`);
+  const matchPages = [];
+  const months = monthIndexes ? monthIndexes.map((index) => MONTHS[index]).filter(Boolean) : MONTHS;
+  for (const [year, month] of months) matchPages.push(await fetchMonthMatches(fetchImpl, year, month, config));
+  const matches = unique(matchPages.flat(), (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
+  const standingsHtml = includeStandings ? await getText(fetchImpl, `${STANDINGS}?tab=${config.tab}&year=${START_YEAR}`) : null;
+  const parsedStandings = standingsHtml ? parseStandingsHtml(standingsHtml, { league }) : { zones: [], wildcard: [], status: 'partial' };
+  const standings = applyMatchResultsToStandings(parsedStandings, matches, { league });
+  if (!allowEmptyMatches && !matches.length) throw new Error('Bリーグの試合日程を抽出できませんでした');
+  if (includeStandings && standings.status !== 'success') throw new Error('Bリーグの順位表を抽出できませんでした');
+  return { schemaVersion: 1, sport: 'b-league', league, season: SEASON, matches, standings, postseason: { status: 'unavailable', rounds: [], note: 'ポストシーズンの日程・結果は公式発表の取得範囲を確認中です' }, update: { status: 'success', at: now.toISOString() } };
+}
+
+export function mergeBLeagueMatches(previousMatches = [], newMatches = [], targetMonth) {
+  const preserved = (previousMatches || []).filter((match) => !match.date?.startsWith(targetMonth));
+  return unique([...preserved, ...(newMatches || [])], (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
+}
+
+export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fetch, league = 'premier', { part = null, target = null, totalParts = B_UPDATE_PARTS, updateId = null } = {}) {
+  const config = BLEAGUES[league];
+  if (!config) throw new Error(`未対応のBリーグカテゴリーです: ${league}`);
+  const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyBLeagueData(league);
+  const isPartitioned = Number.isInteger(part);
+  const targetMonthIndex = target === null ? null : getBLeagueTargetMonthIndex(now, target);
+  const isMonthly = Number.isInteger(targetMonthIndex);
+  if (target !== null && !isMonthly) throw new Error(`Bリーグの更新対象月がシーズン外です: ${target}`);
+  if (isPartitioned && target !== null) throw new Error('Bリーグのパート更新と月別更新は同時に指定できません');
+  if (isPartitioned && (totalParts !== B_UPDATE_PARTS || part < 0 || part >= totalParts)) throw new Error(`Bリーグ更新パートが不正です: ${part}`);
+  if (updateId !== null && !/^[a-zA-Z0-9_-]{1,80}$/.test(updateId)) throw new Error('Bリーグ更新IDが不正です');
+  // Unique keys avoid reading cached deletions and mixing concurrent update runs.
+  const partKey = (index) => `${config.dataKey}${updateId ? `:run:${updateId}` : ''}:part:${index}`;
+  try {
+    const data = await fetchFreshBLeagueData(fetchImpl, now, league, { monthIndexes: isPartitioned || isMonthly ? [isPartitioned ? part : targetMonthIndex] : null, includeStandings: !isPartitioned || part === totalParts - 1, allowEmptyMatches: isPartitioned || isMonthly });
+    if (isPartitioned && part < totalParts - 1) {
+      await env.SPORTAL_DATA.put(partKey(part), JSON.stringify({ matches: data.matches, part, league, season: SEASON, updateId, at: now.toISOString() }), { expirationTtl: 3600 });
+      return { ...data, update: { status: 'partial', part, totalParts, at: now.toISOString() } };
+    }
+    if (isPartitioned) {
+      const partials = await Promise.all(Array.from({ length: totalParts - 1 }, (_, index) => env.SPORTAL_DATA.get(partKey(index), 'json')));
+      const startedAt = Date.parse(partials[0]?.at);
+      const missing = partials.flatMap((item, index) => {
+        const month = seasonDate(...MONTHS[index], 1).slice(0, 7);
+        const at = Date.parse(item?.at);
+        const valid = item && item.part === index && item.league === league && item.season === SEASON && item.updateId === updateId && Array.isArray(item.matches)
+          && Number.isFinite(startedAt) && at >= startedAt && at <= now.getTime() && now.getTime() - startedAt < 3600000
+          && item.matches.every((match) => match.league === league && match.date?.startsWith(month));
+        return valid ? [] : [month];
+      });
+      if (missing.length) throw Object.assign(new Error(`Bリーグの月別データが揃っていません (${missing.join(', ')})。前回のデータを保持しています`), { retryable: true });
+      const matches = unique([...partials.flatMap((item) => item.matches), ...data.matches], (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
+      if (!matches.length) throw new Error('Bリーグの分割更新結果が空です');
+      const complete = { ...data, matches, standings: applyMatchResultsToStandings(data.standings, matches, { league }), update: { status: 'success', at: now.toISOString() } };
+      await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(complete));
+      // Let partials expire: immediate deletion breaks retries and caches absence.
+      return complete;
+    }
+    if (isMonthly) {
+      // Re-read immediately before the atomic replacement so sequential current/next
+      // calls cannot discard the month written by the preceding call.
+      const latest = (await env.SPORTAL_DATA.get(config.dataKey, 'json')) || previous;
+      const targetMonth = monthLabel(targetMonthIndex);
+      const matches = mergeBLeagueMatches(latest.matches, data.matches, targetMonth);
+      const complete = { ...data, matches, standings: applyMatchResultsToStandings(data.standings, matches, { league }), update: { status: 'success', at: now.toISOString(), target, targetMonth } };
+      await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(complete));
+      return complete;
+    }
+    await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(data));
+    return data;
+  } catch (error) {
+    if (isPartitioned || isMonthly) throw Object.assign(new Error(error instanceof Error ? error.message : 'Bリーグ更新に失敗しました'), { data: previous, retryable: true });
+    const failed = { ...previous, update: { status: 'failure', at: now.toISOString(), message: error instanceof Error ? error.message : 'Bリーグ更新に失敗しました' } };
+    await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(failed));
+    throw Object.assign(new Error(failed.update.message), { data: failed });
+  }
+}

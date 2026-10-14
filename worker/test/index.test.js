@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { emptyData, getLeagueConfig, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
 import { onRequest as protectPagesRequest } from '../../functions/_middleware.js';
 import worker from '../src/index.js';
+import { applyMatchResultsToStandings, emptyBLeagueData, getBLeagueTargetMonthIndex, getBLeagueTargetMonthIndexes, mergeBLeagueMatches, parseScheduleHtml as parseBLeagueScheduleHtml, parseStandingsHtml as parseBLeagueStandingsHtml, performBLeagueUpdate, BLEAGUES } from '../src/b_league.js';
 
 function basicAuth(user, password) {
   return `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`;
@@ -60,6 +61,33 @@ test('league API requests use isolated empty payloads and reject unknown leagues
   assert.equal(invalid.status, 400);
 });
 
+test('B.League data API recalculates standings when its stored official table is stale', async () => {
+  const stored = {
+    ...emptyBLeagueData('premier'),
+    standings: { zones: [{ name: '東地区', rows: [
+      { rank: 1, team: 'B', wins: 1, losses: 0, pointDifference: 10 },
+      { rank: 2, team: 'A', wins: 0, losses: 1, pointDifference: -10 }
+    ] }], wildcard: [], status: 'success' },
+    matches: [{ date: '2026-10-04', status: 'finished', home: { short: 'A' }, away: { short: 'B' }, homeScore: 80, awayScore: 70 }]
+  };
+  const env = {
+    BASIC_AUTH_USER: 'owner',
+    BASIC_AUTH_PASSWORD: 'secret',
+    SPORTAL_DATA: { async get(key) { assert.equal(key, BLEAGUES.premier.dataKey); return stored; } }
+  };
+
+  const response = await worker.fetch(new Request('https://example.test/api/b-league/data?league=premier', {
+    headers: { Authorization: basicAuth('owner', 'secret') }
+  }), env);
+  const data = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(data.standings.zones[0].rows.map(({ team, rank, wins, losses }) => ({ team, rank, wins, losses })), [
+    { team: 'A', rank: 1, wins: 1, losses: 0 },
+    { team: 'B', rank: 2, wins: 0, losses: 1 }
+  ]);
+});
+
 test('league definitions use separate official URLs and KV keys', () => {
   for (const league of ['j1', 'j2', 'j3']) {
     const config = getLeagueConfig(league);
@@ -103,6 +131,53 @@ test('portal root links to the J.League page and keeps the review page separate'
   assert.match(jLeague, /href="\/design-review\.html"/);
 });
 
+test('all league pages expose the shared themed header and page selector', async () => {
+  const pages = [
+    ['j-league', 'Jリーグ'],
+    ['npb', 'NPB'],
+    ['b-league', 'Bリーグ'],
+    ['nba', 'NBA'],
+  ];
+  for (const [directory, label] of pages) {
+    const html = await readFile(new URL(`../../app/${directory}/index.html`, import.meta.url), 'utf8');
+    assert.match(html, /class="(?:site-header|portal-header)"/);
+    assert.match(html, /class="page-switcher"[^>]*data-page-switcher/);
+    assert.match(html, new RegExp(`<option value="\/${directory}\/" selected>${label}<\\/option>`));
+    assert.match(html, /src="\/common\/header-nav\.js/);
+  }
+  const headerNav = await readFile(new URL('../../app/common/header-nav.js', import.meta.url), 'utf8');
+  assert.match(headerNav, /window\.location\.assign/);
+});
+
+test('league selectors omit the top option and keep the portal home link', async () => {
+  for (const directory of ['j-league', 'npb', 'b-league', 'nba']) {
+    const html = await readFile(new URL(`../../app/${directory}/index.html`, import.meta.url), 'utf8');
+    assert.doesNotMatch(html, /<option value="\/">トップ<\/option>/);
+    assert.match(html, /href="\/"/);
+  }
+});
+
+test('NPB scroll surfaces use the J.League scroll state and gesture model', async () => {
+  const npbCss = await readFile(new URL('../../app/npb/npb.css', import.meta.url), 'utf8');
+  const npbJs = await readFile(new URL('../../app/npb/npb.js', import.meta.url), 'utf8');
+  const jLeagueCss = await readFile(new URL('../../app/common/styles.css', import.meta.url), 'utf8');
+  for (const selector of ['.npb-date-nav.is-scrollable', '.npb-days.is-scrollable', '.npb-days.is-dragging', '.npb-modal-tabs.is-scrollable']) {
+    assert.match(npbCss, new RegExp(selector.replaceAll('.', '\\.') + '\\s*\\{'));
+  }
+  assert.match(npbCss, /\.npb-days \{[^}]*overflow-x: hidden[^}]*touch-action: pan-y/);
+  assert.match(jLeagueCss, /\.match-days \{[^}]*overflow-x: hidden[^}]*touch-action: pan-y/);
+  for (const functionName of ['handleNpbDaysWheel', 'handleNpbDaysPointerDown', 'handleNpbDaysTouchStart', 'updatePageScrollState']) {
+    assert.match(npbJs, new RegExp(`function ${functionName}\\(`));
+  }
+});
+
+test('portal league cards use their concept colors', async () => {
+  const html = await readFile(new URL('../../app/index.html', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../../app/portal.css', import.meta.url), 'utf8');
+  for (const theme of ['j-league', 'npb', 'b-league', 'nba']) assert.match(html, new RegExp(`league-card--${theme}`));
+  for (const color of ['#d51b76', '#18365f', '#111', '#1769c2']) assert.match(css, new RegExp(`--card-accent: ${color}`));
+});
+
 test('J.League page exposes accessible J1/J2/J3 tabs below the date navigation', async () => {
   const html = await readFile(new URL('../../app/j-league/index.html', import.meta.url), 'utf8');
   assert.match(html, /class="date-nav"[^>]*id="date-nav"/);
@@ -140,6 +215,17 @@ test('Production and STG updates use GitHub Actions instead of Worker Cron', asy
   assert.match(workflow, /fail-fast: false/);
 });
 
+test('B.League scheduled updates are separated by environment and target only current/next month', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/update-b-league-data.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /update-production:/);
+  assert.match(workflow, /update-stg:/);
+  assert.match(workflow, /github\.event\.schedule == '30 8 \* \* \*'/);
+  assert.match(workflow, /github\.event\.schedule == '0 8 \* \* \*'/);
+  assert.match(workflow, /for target in current next/);
+  assert.match(workflow, /target=\$\{target\}/);
+  assert.match(workflow, /mode:[\s\S]*options: \[normal, backfill\]/);
+});
+
 test('parses official-style schedule cards and keeps match states', () => {
   const html = `<article data-match-id="m1" data-date="2026-09-06" data-matchday="6" data-kickoff="18:00" data-home-team="鹿島アントラーズ" data-away-team="浦和レッズ" data-status="finished" data-home-score="0" data-away-score="1"></article><article data-match-id="m2" data-date="2026-09-11" data-matchday="7" data-kickoff="19:00" data-home-team="京都サンガF.C." data-away-team="柏レイソル" data-status="scheduled"></article>`;
   const result = parseScheduleHtml(html);
@@ -164,6 +250,171 @@ test('uses the linked-card fallback used by the public schedule page', () => {
   assert.equal(result[0].home.short, '鹿島');
   assert.equal(result[0].away.short, '浦和');
   assert.deepEqual([result[0].homeScore, result[0].awayScore], [0, 1]);
+});
+
+test('parses official B.League schedule cards without exposing live scores', () => {
+  const html = `<li class="list-item" id="506380"><a class="data-game"><div class="game"><span class="team home"><span class="team-name">群馬</span></span><span class="point"></span><span class="team away"><span class="team-name">A千葉</span></span></div><div class="info"><div class="info-arena"><span>群馬県 | オプアリ</span><span>19:05</span></div><div class="info-scorestate"><span>見どころ</span></div></div></a></li>`;
+  const result = parseBLeagueScheduleHtml(html, { year: 2026, month: 9, day: 24, league: 'premier' });
+  assert.equal(result.length, 1);
+  assert.deepEqual(result[0], { id: '506380', date: '2026-09-24', league: 'premier', home: { short: '群馬', name: '群馬' }, away: { short: 'A千葉', name: 'A千葉' }, kickoff: '19:05', venue: '群馬県 | オプアリ', matchday: null, status: 'scheduled', homeScore: null, awayScore: null, competition: 'レギュラーシーズン' });
+});
+
+test('accepts official B.League standings before rankings are published', () => {
+  const html = `<h3>東地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th><th>得点</th><th>失点</th><th>得失点差</th><th>ホーム</th><th>アウェー</th><th>過去5試合</th><th>連勝/連敗</th><th>試合数</th></tr><tr><td>-</td><td><span>レバンガ北海道</span> <span>北海道</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr></table><h3>西地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th></tr><tr><td>1</td><td>琉球</td><td>2</td><td>0</td><td>1.000</td><td>-</td></tr></table>`;
+  const result = parseBLeagueStandingsHtml(html, { league: 'premier' });
+  assert.equal(result.status, 'success');
+  assert.equal(result.zones.length, 2);
+  assert.equal(result.zones[0].rows[0].rank, null);
+  assert.equal(result.zones[0].rows[0].team, '北海道');
+});
+
+test('parses B.League final scores and winner data from official game cards', () => {
+  const html = `<li class="list-item" id="506389"><div class="game"><span class="team home"><span class="team-name">A東京</span></span><span class="point"><span class="number home-score gr"><span>74</span></span><span class="hifun"></span><span class="number away-score"><span>85</span></span></span><span class="team away"><span class="team-name">琉球</span></span></div><div class="info"><div class="info-arena"><span>東京都 | トヨタA</span><span>14:05</span></div><div class="info-scorestate"><span>FINAL</span></div></div></li>`;
+  const result = parseBLeagueScheduleHtml(html, { year: 2026, month: 9, day: 23, league: 'premier' });
+  assert.equal(result.length, 1);
+  assert.equal(result[0].status, 'finished');
+  assert.equal(result[0].homeScore, 74);
+  assert.equal(result[0].awayScore, 85);
+});
+
+test('parses numeric B.League standings results', () => {
+  const html = `<h3>東地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th><th>得点</th><th>失点</th><th>得失点差</th><th>ホーム</th><th>アウェー</th><th>過去5試合</th><th>連勝/連敗</th><th>試合数</th></tr><tr><td>1</td><td><span>宇都宮ブレックス</span> <span>宇都宮</span></td><td>45</td><td>15</td><td>.750</td><td>--</td><td>5130</td><td>4801</td><td>329</td><td>22-8</td><td>23-7</td><td>4-1</td><td>L1</td><td>60</td></tr></table>`;
+  const result = parseBLeagueStandingsHtml(html, { league: 'premier' });
+  assert.equal(result.status, 'success');
+  assert.deepEqual(result.zones[0].rows[0], { rank: 1, team: '宇都宮', wins: 45, losses: 15, winPercentage: '.750', gamesBehind: null, pointsFor: 5130, pointsAgainst: 4801, pointDifference: 329, recentForm: '4-1', streak: 'L1', played: 60, remaining: null });
+});
+
+test('derives B.League standings from finished results when official stats are not published', () => {
+  const standings = { zones: [{ name: '東地区', rows: [{ rank: null, team: 'A東京' }, { rank: null, team: '琉球' }] }], wildcard: [], status: 'success' };
+  const result = applyMatchResultsToStandings(standings, [
+    { status: 'finished', home: { short: 'A東京' }, away: { short: '琉球' }, homeScore: 84, awayScore: 73 },
+    { status: 'finished', home: { short: 'A東京' }, away: { short: '琉球' }, homeScore: 74, awayScore: 85 },
+    { status: 'scheduled', home: { short: 'A東京' }, away: { short: '琉球' } }
+  ], { league: 'premier' });
+  assert.deepEqual(result.zones[0].rows.map((row) => ({ team: row.team, rank: row.rank, wins: row.wins, losses: row.losses, played: row.played, remaining: row.remaining })), [
+    { team: 'A東京', rank: 1, wins: 1, losses: 1, played: 2, remaining: 1 },
+    { team: '琉球', rank: 2, wins: 1, losses: 1, played: 2, remaining: 1 }
+  ]);
+  assert.equal(result.zones[0].rows[0].pointDifference, 0);
+  assert.equal(result.zones[0].rows[0].gamesBehind, 0);
+  assert.equal(result.zones[0].rows[0].recentForm, '1-1');
+  assert.equal(result.zones[0].rows[0].streak, 'L1');
+});
+
+test('replaces stale official B.League totals and standings order with completed results', () => {
+  const standings = { zones: [{ name: '東地区', rows: [
+    { rank: 1, team: 'A東京', wins: 4, losses: 0, pointDifference: 40 },
+    { rank: 2, team: '琉球', wins: 2, losses: 2, pointDifference: 0 },
+    { rank: 3, team: '群馬', wins: 0, losses: 4, pointDifference: -40 }
+  ] }], wildcard: [], status: 'success' };
+  const result = applyMatchResultsToStandings(standings, [
+    { date: '2026-10-03', status: 'finished', home: { short: '琉球' }, away: { short: 'A東京' }, homeScore: 80, awayScore: 70 },
+    { date: '2026-10-03', status: 'finished', home: { short: '琉球' }, away: { short: '群馬' }, homeScore: 82, awayScore: 74 },
+    { date: '2026-10-03', status: 'finished', home: { short: 'A東京' }, away: { short: '群馬' }, homeScore: 75, awayScore: 70 }
+  ]);
+
+  assert.deepEqual(result.zones[0].rows.map(({ team, rank, wins, losses }) => ({ team, rank, wins, losses })), [
+    { team: '琉球', rank: 1, wins: 2, losses: 0 },
+    { team: 'A東京', rank: 2, wins: 1, losses: 1 },
+    { team: '群馬', rank: 3, wins: 0, losses: 2 }
+  ]);
+  assert.equal(result.derived, true);
+});
+
+test('uses official head-to-head criteria to order tied B.League records', () => {
+  const standings = { zones: [{ name: '東地区', rows: [
+    { rank: 1, team: 'B' }, { rank: 2, team: 'A' }, { rank: 3, team: 'C' }
+  ] }], wildcard: [], status: 'success' };
+  const result = applyMatchResultsToStandings(standings, [
+    { status: 'finished', home: { short: 'A' }, away: { short: 'B' }, homeScore: 80, awayScore: 70 },
+    { status: 'finished', home: { short: 'B' }, away: { short: 'C' }, homeScore: 100, awayScore: 90 },
+    { status: 'finished', home: { short: 'C' }, away: { short: 'A' }, homeScore: 90, awayScore: 80 }
+  ]);
+
+  assert.deepEqual(result.zones[0].rows.map(({ team, rank }) => ({ team, rank })), [
+    { team: 'C', rank: 1 }, { team: 'B', rank: 2 }, { team: 'A', rank: 3 }
+  ]);
+});
+
+test('B.League categories have isolated keys and stable empty data shapes', () => {
+  for (const league of ['premier', 'one', 'next']) {
+    assert.equal(BLEAGUES[league].dataKey, `b-${league}-2026-27`);
+    const data = emptyBLeagueData(league);
+    assert.equal(data.sport, 'b-league');
+    assert.equal(data.league, league);
+    assert.ok(Array.isArray(data.standings.zones));
+    assert.ok(Array.isArray(data.postseason.rounds));
+  }
+});
+
+test('B.League normal targets are resolved in JST and exclude out-of-season months', () => {
+  assert.equal(getBLeagueTargetMonthIndex(new Date('2026-09-30T14:59:00.000Z'), 'current'), 0);
+  assert.equal(getBLeagueTargetMonthIndex(new Date('2026-09-30T15:00:00.000Z'), 'current'), 1);
+  assert.deepEqual(getBLeagueTargetMonthIndexes(new Date('2026-10-14T00:00:00.000Z')), [1, 2]);
+  assert.deepEqual(getBLeagueTargetMonthIndexes(new Date('2027-06-01T00:00:00.000Z')), []);
+});
+
+test('B.League monthly merge replaces only the requested month and deduplicates by match/date', () => {
+  const result = mergeBLeagueMatches([
+    { id: 'sep', date: '2026-09-30' },
+    { id: 'old-oct', date: '2026-10-03' },
+    { id: 'nov', date: '2026-11-01' }
+  ], [
+    { id: '506391', date: '2026-10-03' },
+    { id: 'new-oct-2', date: '2026-10-10' },
+    { id: 'new-oct-2', date: '2026-10-10', status: 'finished' }
+  ], '2026-10');
+  assert.deepEqual(result.map(({ id, date, status }) => ({ id, date, status })), [
+    { id: 'sep', date: '2026-09-30', status: undefined },
+    { id: '506391', date: '2026-10-03', status: undefined },
+    { id: 'new-oct-2', date: '2026-10-10', status: 'finished' },
+    { id: 'nov', date: '2026-11-01', status: undefined }
+  ]);
+});
+
+test('B.League monthly update fetches one month and preserves other months', async () => {
+  const now = new Date('2026-10-14T00:00:00.000Z');
+  const previous = { ...emptyBLeagueData('premier'), matches: [
+    { id: 'sep', date: '2026-09-30', league: 'premier' },
+    { id: 'old-oct', date: '2026-10-03', league: 'premier' },
+    { id: 'nov', date: '2026-11-01', league: 'premier' }
+  ] };
+  const state = previous;
+  const writes = [];
+  const standings = '<h3>東地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th></tr><tr><td>1</td><td>A東京</td><td>0</td><td>0</td><td>-</td><td>-</td></tr></table>';
+  const card = '<li class="list-item" id="506391"><div class="game"><span class="team home"><span class="team-name">A東京</span></span><span class="point"></span><span class="team away"><span class="team-name">琉球</span></span></div><div class="info"><div class="info-arena"><span>東京都 | 会場</span><span>19:05</span></div><div class="info-scorestate"><span>見どころ</span></div></div></li>';
+  const requested = [];
+  const fetchImpl = async (input) => {
+    const url = String(input);
+    requested.push(url);
+    if (url.includes('standings')) return new Response(standings);
+    if (url.includes('data_format=json')) return new Response(JSON.stringify({ topics: [card], index: null }), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(`<script>var year='2026'; var mon='10'; var tab='1';</script><div id="schedule-b1"><div class="js-schedule-date-slider-item" data-day="3"></div></div>`);
+  };
+  const env = { SPORTAL_DATA: {
+    async get() { return state; },
+    async put(_key, value) { const data = JSON.parse(value); writes.push(data); Object.assign(state, data); }
+  } };
+
+  const result = await performBLeagueUpdate(env, now, fetchImpl, 'premier', { target: 'current', updateId: 'monthly-test' });
+  assert.equal(result.update.target, 'current');
+  assert.equal(result.update.targetMonth, '2026-10');
+  assert.deepEqual(result.matches.map((match) => match.id), ['sep', '506391', 'nov']);
+  assert.equal(writes.length, 1);
+  assert.ok(requested.some((url) => url.includes('mon=10')));
+  assert.ok(requested.every((url) => !url.includes('mon=09') && !url.includes('mon=11')));
+});
+
+test('B.League monthly failure leaves the previous payload untouched', async () => {
+  const previous = { ...emptyBLeagueData('premier'), matches: [{ id: 'old', date: '2026-10-03' }] };
+  const writes = [];
+  const env = { SPORTAL_DATA: {
+    async get() { return previous; },
+    async put(_key, value) { writes.push(JSON.parse(value)); }
+  } };
+  await assert.rejects(() => performBLeagueUpdate(env, new Date('2026-10-14T00:00:00.000Z'), async () => new Response('down', { status: 503 }), 'premier', { target: 'current', updateId: 'monthly-failure' }));
+  assert.equal(writes.length, 0);
+  assert.deepEqual(previous.matches, [{ id: 'old', date: '2026-10-03' }]);
 });
 
 test('parses representative J2 and J3 team names from linked cards', () => {

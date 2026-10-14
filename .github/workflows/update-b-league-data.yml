@@ -1,0 +1,123 @@
+name: Update B.League data
+
+on:
+  schedule:
+    # Production runs at these UTC times. STG is offset by 30 minutes below.
+    - cron: '0 8 * * *'
+    - cron: '0 10 * * *'
+    - cron: '0 12 * * *'
+    - cron: '0 13 * * *'
+    - cron: '0 14 * * *'
+    - cron: '30 8 * * *'
+    - cron: '30 10 * * *'
+    - cron: '30 12 * * *'
+    - cron: '30 13 * * *'
+    - cron: '30 14 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to update
+        required: true
+        default: all
+        type: choice
+        options: [all, production, stg]
+      league:
+        description: Category to update
+        required: true
+        default: all
+        type: choice
+        options: [all, premier, one, next]
+      mode:
+        description: Normal current/next-month update or explicit season backfill
+        required: true
+        default: normal
+        type: choice
+        options: [normal, backfill]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sport-portal-b-league-update-${{ github.event.schedule || inputs.environment || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  update-production:
+    if: ${{ github.event_name == 'schedule' && (github.event.schedule == '0 8 * * *' || github.event.schedule == '0 10 * * *' || github.event.schedule == '0 12 * * *' || github.event.schedule == '0 13 * * *' || github.event.schedule == '0 14 * * *') || github.event_name == 'workflow_dispatch' && (inputs.environment == 'all' || inputs.environment == 'production') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        league: [premier, one, next]
+    steps:
+      - name: Update production ${{ matrix.league }}
+        env:
+          API_BASE_URL: ${{ vars.SPORTAL_API_URL || secrets.SPORTAL_API_URL }}
+          API_USER: ${{ secrets.SPORTAL_API_USER }}
+          API_PASSWORD: ${{ secrets.SPORTAL_API_PASSWORD }}
+          LEAGUE: ${{ matrix.league }}
+          MODE: ${{ inputs.mode || 'normal' }}
+        run: |
+          set -euo pipefail
+          test -n "$API_BASE_URL"; test -n "$API_USER"; test -n "$API_PASSWORD"
+          response_file="$(mktemp)"; trap 'rm -f "$response_file"' EXIT
+          update_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-production-${LEAGUE}"
+          if [[ "$MODE" == "backfill" ]]; then
+            for part in $(seq 0 8); do
+              http_code="$(curl --silent --show-error --location --user "$API_USER:$API_PASSWORD" --request POST --header 'Accept: application/json' --connect-timeout 15 --max-time 180 --retry 2 --retry-delay 65 --output "$response_file" --write-out '%{http_code}' "${API_BASE_URL%/}/api/b-league/update?league=${LEAGUE}&part=${part}&updateId=${update_id}")"
+              if [[ "$http_code" != 2* ]]; then jq -r '.error // "HTTP request failed"' "$response_file" >&2; exit 1; fi
+              if [[ "$part" == 8 ]]; then
+                jq -e --arg league "$LEAGUE" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "success"' "$response_file" >/dev/null
+              else
+                jq -e --arg league "$LEAGUE" --argjson part "$part" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "partial" and .data.update.part == $part' "$response_file" >/dev/null
+              fi
+            done
+          else
+            for target in current next; do
+              http_code="$(curl --silent --show-error --location --user "$API_USER:$API_PASSWORD" --request POST --header 'Accept: application/json' --connect-timeout 15 --max-time 180 --retry 2 --retry-delay 65 --output "$response_file" --write-out '%{http_code}' "${API_BASE_URL%/}/api/b-league/update?league=${LEAGUE}&target=${target}&updateId=${update_id}")"
+              if [[ "$http_code" != 2* ]]; then jq -r '.error // "HTTP request failed"' "$response_file" >&2; exit 1; fi
+              jq -e --arg league "$LEAGUE" --arg target "$target" '(.skipped == true) or (.data.sport == "b-league" and .data.league == $league and .data.update.status == "success" and .data.update.target == $target)' "$response_file" >/dev/null
+            done
+          fi
+          echo "production/${LEAGUE} B.League update completed successfully"
+
+  update-stg:
+    if: ${{ github.event_name == 'schedule' && (github.event.schedule == '30 8 * * *' || github.event.schedule == '30 10 * * *' || github.event.schedule == '30 12 * * *' || github.event.schedule == '30 13 * * *' || github.event.schedule == '30 14 * * *') || github.event_name == 'workflow_dispatch' && (inputs.environment == 'all' || inputs.environment == 'stg') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        league: [premier, one, next]
+    steps:
+      - name: Update stg ${{ matrix.league }}
+        env:
+          API_BASE_URL: ${{ vars.SPORTAL_STG_API_URL || secrets.SPORTAL_STG_API_URL }}
+          API_USER: ${{ secrets.SPORTAL_API_USER }}
+          API_PASSWORD: ${{ secrets.SPORTAL_API_PASSWORD }}
+          LEAGUE: ${{ matrix.league }}
+          MODE: ${{ inputs.mode || 'normal' }}
+        run: |
+          set -euo pipefail
+          test -n "$API_BASE_URL"; test -n "$API_USER"; test -n "$API_PASSWORD"
+          response_file="$(mktemp)"; trap 'rm -f "$response_file"' EXIT
+          update_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-stg-${LEAGUE}"
+          if [[ "$MODE" == "backfill" ]]; then
+            for part in $(seq 0 8); do
+              http_code="$(curl --silent --show-error --location --user "$API_USER:$API_PASSWORD" --request POST --header 'Accept: application/json' --connect-timeout 15 --max-time 180 --retry 2 --retry-delay 65 --output "$response_file" --write-out '%{http_code}' "${API_BASE_URL%/}/api/b-league/update?league=${LEAGUE}&part=${part}&updateId=${update_id}")"
+              if [[ "$http_code" != 2* ]]; then jq -r '.error // "HTTP request failed"' "$response_file" >&2; exit 1; fi
+              if [[ "$part" == 8 ]]; then
+                jq -e --arg league "$LEAGUE" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "success"' "$response_file" >/dev/null
+              else
+                jq -e --arg league "$LEAGUE" --argjson part "$part" '.data.sport == "b-league" and .data.league == $league and .data.update.status == "partial" and .data.update.part == $part' "$response_file" >/dev/null
+              fi
+            done
+          else
+            for target in current next; do
+              http_code="$(curl --silent --show-error --location --user "$API_USER:$API_PASSWORD" --request POST --header 'Accept: application/json' --connect-timeout 15 --max-time 180 --retry 2 --retry-delay 65 --output "$response_file" --write-out '%{http_code}' "${API_BASE_URL%/}/api/b-league/update?league=${LEAGUE}&target=${target}&updateId=${update_id}")"
+              if [[ "$http_code" != 2* ]]; then jq -r '.error // "HTTP request failed"' "$response_file" >&2; exit 1; fi
+              jq -e --arg league "$LEAGUE" --arg target "$target" '(.skipped == true) or (.data.sport == "b-league" and .data.league == $league and .data.update.status == "success" and .data.update.target == $target)' "$response_file" >/dev/null
+            done
+          fi
+          echo "stg/${LEAGUE} B.League update completed successfully"

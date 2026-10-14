@@ -4,6 +4,10 @@
 
 `query_learning_BB` の運用に合わせ、既存のCloudflare Pages project `sport-portal` に `stg` ブランチのPreview deploymentを追加する。ProductionのPages projectは新設しない。
 
+## 変更の既定反映先
+
+ユーザーが反映先を指定しない変更は、まずSTGへ反映する。STGでの確認が完了するまで本番へ反映しない。本番反映はユーザーが明示した場合にだけ行い、STGへの反映や受入確認を本番反映の承認と解釈しない。STGへの反映には依頼対象の変更だけを含め、無関係な未コミット変更を混在させない。STG反映後はURL、内容、確認結果を報告する。
+
 | 項目 | Production | STG |
 | --- | --- | --- |
 | Pages project | `sport-portal` | `sport-portal` の `stg` Preview |
@@ -38,6 +42,7 @@
    ```bash
    npx wrangler secret put BASIC_AUTH_USER --env stg -c worker/wrangler.toml
    npx wrangler secret put BASIC_AUTH_PASSWORD --env stg -c worker/wrangler.toml
+   npx wrangler secret put BALLDONTLIE_API_KEY --env stg -c worker/wrangler.toml
    ```
 
 5. PagesのPreview環境へ、`SPORTAL_API` のService Bindingとして `sport-portal-api-stg` を設定する。
@@ -48,10 +53,11 @@
 
 - STG URLが認証なしで401、正しい認証情報で200になる
 - `/api/status`、`/api/data`、`/api/update` がSTG Workerへ到達する
-- STG KVの対象リーグキー（`j1-2026`、`j2-2026`、`j3-2026`）だけが更新され、本番KVが変更されない
+- STG KVの対象リーグキーだけが更新され、本番KVが変更されない
 - `X-Robots-Tag: noindex`、robots.txt、HTTPSが有効である
 - STG WorkerにCron Triggerが設定されておらず、Actionsが`SPORTAL_STG_API_URL`を参照している
 - PagesのService Bindingが本番Workerではなく `sport-portal-api-stg` を指している
+- NBAの取得APIキーはSTG Workerの `BALLDONTLIE_API_KEY` Secretにあり、ブラウザーやGitHub Actionsへ複製されていない
 
 ## STG受入チェック
 

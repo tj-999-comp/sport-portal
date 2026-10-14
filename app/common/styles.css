@@ -353,15 +353,14 @@ h1 {
 .npb-scoreline,
 .nba-matchup {
   --score-gap: 8px;
+  --score-width: 3ch;
   align-items: center;
   display: grid;
   grid-template-columns:
     minmax(0, 1fr) 2em
-    minmax(20px, max-content) var(--score-gap) 14px
-    var(--score-gap) minmax(20px, max-content)
+    var(--score-width) var(--score-gap) 14px
+    var(--score-gap) var(--score-width)
     2em minmax(0, 1fr);
-  /* font-size: 14px; */
-  /* line-height: 1.45; */
 }
 
 .team-row {
@@ -372,6 +371,12 @@ h1 {
   display: grid;
   gap: 3px;
   min-width: 0;
+}
+
+.team-row.home .team-name-block ,
+.team-row.away .team-name-block {
+  justify-self: stretch;
+  width: 100%;
 }
 
 .team-row.home .team-name-block {
@@ -450,8 +455,19 @@ h1 {
 .npb-score,
 .nba-score {
   align-self: center;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
   font-weight: 800;
-  min-width: 20px;
+  min-width: 0;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.npb-score.home,
+.npb-score.away,
+.nba-score-home,
+.nba-score-away{
+  justify-content: stretch;
 }
 
 .score-placeholder {

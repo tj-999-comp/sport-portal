@@ -19,6 +19,30 @@ const MONTHS = [
   [2027, 1], [2027, 2], [2027, 3], [2027, 4], [2027, 5]
 ];
 export const B_UPDATE_PARTS = MONTHS.length;
+export const B_LEAGUE_MONTHS = MONTHS.map(([year, month]) => `${year}-${String(month).padStart(2, '0')}`);
+
+function jstYearMonth(now) {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit' }).formatToParts(now);
+  return { year: Number(parts.find((part) => part.type === 'year')?.value), month: Number(parts.find((part) => part.type === 'month')?.value) };
+}
+
+function addMonth({ year, month }, offset) {
+  const value = new Date(Date.UTC(year, month - 1 + offset, 1));
+  return { year: value.getUTCFullYear(), month: value.getUTCMonth() + 1 };
+}
+
+function monthIndex(year, month) { return MONTHS.findIndex(([candidateYear, candidateMonth]) => candidateYear === year && candidateMonth === month); }
+
+export function getBLeagueTargetMonthIndex(now = new Date(), target = 'current') {
+  if (!['current', 'next'].includes(target)) throw new Error(`Bリーグ更新対象が不正です: ${target}`);
+  return monthIndex(...Object.values(addMonth(jstYearMonth(now), target === 'next' ? 1 : 0)));
+}
+
+export function getBLeagueTargetMonthIndexes(now = new Date()) {
+  return ['current', 'next'].map((target) => getBLeagueTargetMonthIndex(now, target)).filter((index) => index >= 0);
+}
+
+function monthLabel(index) { return B_LEAGUE_MONTHS[index]; }
 
 function htmlText(value) {
   return String(value ?? '').replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#x3000;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/[\s\u3000]+/g, ' ').trim();
@@ -314,17 +338,26 @@ export async function fetchFreshBLeagueData(fetchImpl = fetch, now = new Date(),
   return { schemaVersion: 1, sport: 'b-league', league, season: SEASON, matches, standings, postseason: { status: 'unavailable', rounds: [], note: 'ポストシーズンの日程・結果は公式発表の取得範囲を確認中です' }, update: { status: 'success', at: now.toISOString() } };
 }
 
-export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fetch, league = 'premier', { part = null, totalParts = B_UPDATE_PARTS, updateId = null } = {}) {
+export function mergeBLeagueMatches(previousMatches = [], newMatches = [], targetMonth) {
+  const preserved = (previousMatches || []).filter((match) => !match.date?.startsWith(targetMonth));
+  return unique([...preserved, ...(newMatches || [])], (match) => `${match.id}-${match.date}`).sort((a, b) => `${a.date}${a.kickoff || ''}`.localeCompare(`${b.date}${b.kickoff || ''}`));
+}
+
+export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fetch, league = 'premier', { part = null, target = null, totalParts = B_UPDATE_PARTS, updateId = null } = {}) {
   const config = BLEAGUES[league];
   if (!config) throw new Error(`未対応のBリーグカテゴリーです: ${league}`);
   const previous = (await env.SPORTAL_DATA?.get(config.dataKey, 'json')) || emptyBLeagueData(league);
   const isPartitioned = Number.isInteger(part);
+  const targetMonthIndex = target === null ? null : getBLeagueTargetMonthIndex(now, target);
+  const isMonthly = Number.isInteger(targetMonthIndex);
+  if (target !== null && !isMonthly) throw new Error(`Bリーグの更新対象月がシーズン外です: ${target}`);
+  if (isPartitioned && target !== null) throw new Error('Bリーグのパート更新と月別更新は同時に指定できません');
   if (isPartitioned && (totalParts !== B_UPDATE_PARTS || part < 0 || part >= totalParts)) throw new Error(`Bリーグ更新パートが不正です: ${part}`);
   if (updateId !== null && !/^[a-zA-Z0-9_-]{1,80}$/.test(updateId)) throw new Error('Bリーグ更新IDが不正です');
   // Unique keys avoid reading cached deletions and mixing concurrent update runs.
   const partKey = (index) => `${config.dataKey}${updateId ? `:run:${updateId}` : ''}:part:${index}`;
   try {
-    const data = await fetchFreshBLeagueData(fetchImpl, now, league, { monthIndexes: isPartitioned ? [part] : null, includeStandings: !isPartitioned || part === totalParts - 1, allowEmptyMatches: isPartitioned });
+    const data = await fetchFreshBLeagueData(fetchImpl, now, league, { monthIndexes: isPartitioned || isMonthly ? [isPartitioned ? part : targetMonthIndex] : null, includeStandings: !isPartitioned || part === totalParts - 1, allowEmptyMatches: isPartitioned || isMonthly });
     if (isPartitioned && part < totalParts - 1) {
       await env.SPORTAL_DATA.put(partKey(part), JSON.stringify({ matches: data.matches, part, league, season: SEASON, updateId, at: now.toISOString() }), { expirationTtl: 3600 });
       return { ...data, update: { status: 'partial', part, totalParts, at: now.toISOString() } };
@@ -348,10 +381,20 @@ export async function performBLeagueUpdate(env, now = new Date(), fetchImpl = fe
       // Let partials expire: immediate deletion breaks retries and caches absence.
       return complete;
     }
+    if (isMonthly) {
+      // Re-read immediately before the atomic replacement so sequential current/next
+      // calls cannot discard the month written by the preceding call.
+      const latest = (await env.SPORTAL_DATA.get(config.dataKey, 'json')) || previous;
+      const targetMonth = monthLabel(targetMonthIndex);
+      const matches = mergeBLeagueMatches(latest.matches, data.matches, targetMonth);
+      const complete = { ...data, matches, standings: applyMatchResultsToStandings(data.standings, matches, { league }), update: { status: 'success', at: now.toISOString(), target, targetMonth } };
+      await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(complete));
+      return complete;
+    }
     await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(data));
     return data;
   } catch (error) {
-    if (isPartitioned) throw Object.assign(new Error(error instanceof Error ? error.message : 'Bリーグ更新に失敗しました'), { data: previous, retryable: Boolean(error.retryable) });
+    if (isPartitioned || isMonthly) throw Object.assign(new Error(error instanceof Error ? error.message : 'Bリーグ更新に失敗しました'), { data: previous, retryable: true });
     const failed = { ...previous, update: { status: 'failure', at: now.toISOString(), message: error instanceof Error ? error.message : 'Bリーグ更新に失敗しました' } };
     await env.SPORTAL_DATA.put(config.dataKey, JSON.stringify(failed));
     throw Object.assign(new Error(failed.update.message), { data: failed });

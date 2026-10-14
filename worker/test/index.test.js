@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { emptyData, getLeagueConfig, parseScheduleHtml, parseStandingsHtml, performUpdate, scheduleUrls } from '../src/index.js';
 import { onRequest as protectPagesRequest } from '../../functions/_middleware.js';
 import worker from '../src/index.js';
-import { applyMatchResultsToStandings, emptyBLeagueData, parseScheduleHtml as parseBLeagueScheduleHtml, parseStandingsHtml as parseBLeagueStandingsHtml, BLEAGUES } from '../src/b_league.js';
+import { applyMatchResultsToStandings, emptyBLeagueData, getBLeagueTargetMonthIndex, getBLeagueTargetMonthIndexes, mergeBLeagueMatches, parseScheduleHtml as parseBLeagueScheduleHtml, parseStandingsHtml as parseBLeagueStandingsHtml, performBLeagueUpdate, BLEAGUES } from '../src/b_league.js';
 
 function basicAuth(user, password) {
   return `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`;
@@ -215,6 +215,17 @@ test('Production and STG updates use GitHub Actions instead of Worker Cron', asy
   assert.match(workflow, /fail-fast: false/);
 });
 
+test('B.League scheduled updates are separated by environment and target only current/next month', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/update-b-league-data.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /update-production:/);
+  assert.match(workflow, /update-stg:/);
+  assert.match(workflow, /github\.event\.schedule == '30 8 \* \* \*'/);
+  assert.match(workflow, /github\.event\.schedule == '0 8 \* \* \*'/);
+  assert.match(workflow, /for target in current next/);
+  assert.match(workflow, /target=\$\{target\}/);
+  assert.match(workflow, /mode:[\s\S]*options: \[normal, backfill\]/);
+});
+
 test('parses official-style schedule cards and keeps match states', () => {
   const html = `<article data-match-id="m1" data-date="2026-09-06" data-matchday="6" data-kickoff="18:00" data-home-team="鹿島アントラーズ" data-away-team="浦和レッズ" data-status="finished" data-home-score="0" data-away-score="1"></article><article data-match-id="m2" data-date="2026-09-11" data-matchday="7" data-kickoff="19:00" data-home-team="京都サンガF.C." data-away-team="柏レイソル" data-status="scheduled"></article>`;
   const result = parseScheduleHtml(html);
@@ -334,6 +345,76 @@ test('B.League categories have isolated keys and stable empty data shapes', () =
     assert.ok(Array.isArray(data.standings.zones));
     assert.ok(Array.isArray(data.postseason.rounds));
   }
+});
+
+test('B.League normal targets are resolved in JST and exclude out-of-season months', () => {
+  assert.equal(getBLeagueTargetMonthIndex(new Date('2026-09-30T14:59:00.000Z'), 'current'), 0);
+  assert.equal(getBLeagueTargetMonthIndex(new Date('2026-09-30T15:00:00.000Z'), 'current'), 1);
+  assert.deepEqual(getBLeagueTargetMonthIndexes(new Date('2026-10-14T00:00:00.000Z')), [1, 2]);
+  assert.deepEqual(getBLeagueTargetMonthIndexes(new Date('2027-06-01T00:00:00.000Z')), []);
+});
+
+test('B.League monthly merge replaces only the requested month and deduplicates by match/date', () => {
+  const result = mergeBLeagueMatches([
+    { id: 'sep', date: '2026-09-30' },
+    { id: 'old-oct', date: '2026-10-03' },
+    { id: 'nov', date: '2026-11-01' }
+  ], [
+    { id: '506391', date: '2026-10-03' },
+    { id: 'new-oct-2', date: '2026-10-10' },
+    { id: 'new-oct-2', date: '2026-10-10', status: 'finished' }
+  ], '2026-10');
+  assert.deepEqual(result.map(({ id, date, status }) => ({ id, date, status })), [
+    { id: 'sep', date: '2026-09-30', status: undefined },
+    { id: '506391', date: '2026-10-03', status: undefined },
+    { id: 'new-oct-2', date: '2026-10-10', status: 'finished' },
+    { id: 'nov', date: '2026-11-01', status: undefined }
+  ]);
+});
+
+test('B.League monthly update fetches one month and preserves other months', async () => {
+  const now = new Date('2026-10-14T00:00:00.000Z');
+  const previous = { ...emptyBLeagueData('premier'), matches: [
+    { id: 'sep', date: '2026-09-30', league: 'premier' },
+    { id: 'old-oct', date: '2026-10-03', league: 'premier' },
+    { id: 'nov', date: '2026-11-01', league: 'premier' }
+  ] };
+  const state = previous;
+  const writes = [];
+  const standings = '<h3>東地区</h3><table><tr><th>順位</th><th>クラブ</th><th>勝</th><th>負</th><th>勝率</th><th>差</th></tr><tr><td>1</td><td>A東京</td><td>0</td><td>0</td><td>-</td><td>-</td></tr></table>';
+  const card = '<li class="list-item" id="506391"><div class="game"><span class="team home"><span class="team-name">A東京</span></span><span class="point"></span><span class="team away"><span class="team-name">琉球</span></span></div><div class="info"><div class="info-arena"><span>東京都 | 会場</span><span>19:05</span></div><div class="info-scorestate"><span>見どころ</span></div></div></li>';
+  const requested = [];
+  const fetchImpl = async (input) => {
+    const url = String(input);
+    requested.push(url);
+    if (url.includes('standings')) return new Response(standings);
+    if (url.includes('data_format=json')) return new Response(JSON.stringify({ topics: [card], index: null }), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(`<script>var year='2026'; var mon='10'; var tab='1';</script><div id="schedule-b1"><div class="js-schedule-date-slider-item" data-day="3"></div></div>`);
+  };
+  const env = { SPORTAL_DATA: {
+    async get() { return state; },
+    async put(_key, value) { const data = JSON.parse(value); writes.push(data); Object.assign(state, data); }
+  } };
+
+  const result = await performBLeagueUpdate(env, now, fetchImpl, 'premier', { target: 'current', updateId: 'monthly-test' });
+  assert.equal(result.update.target, 'current');
+  assert.equal(result.update.targetMonth, '2026-10');
+  assert.deepEqual(result.matches.map((match) => match.id), ['sep', '506391', 'nov']);
+  assert.equal(writes.length, 1);
+  assert.ok(requested.some((url) => url.includes('mon=10')));
+  assert.ok(requested.every((url) => !url.includes('mon=09') && !url.includes('mon=11')));
+});
+
+test('B.League monthly failure leaves the previous payload untouched', async () => {
+  const previous = { ...emptyBLeagueData('premier'), matches: [{ id: 'old', date: '2026-10-03' }] };
+  const writes = [];
+  const env = { SPORTAL_DATA: {
+    async get() { return previous; },
+    async put(_key, value) { writes.push(JSON.parse(value)); }
+  } };
+  await assert.rejects(() => performBLeagueUpdate(env, new Date('2026-10-14T00:00:00.000Z'), async () => new Response('down', { status: 503 }), 'premier', { target: 'current', updateId: 'monthly-failure' }));
+  assert.equal(writes.length, 0);
+  assert.deepEqual(previous.matches, [{ id: 'old', date: '2026-10-03' }]);
 });
 
 test('parses representative J2 and J3 team names from linked cards', () => {

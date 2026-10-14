@@ -1,5 +1,5 @@
 import { emptyNpbData, performNpbUpdate } from './npb.js';
-import { B_UPDATE_PARTS, BLEAGUES, BLEAGUE_KEYS, applyMatchResultsToStandings, emptyBLeagueData, performBLeagueUpdate } from './b_league.js';
+import { B_UPDATE_PARTS, BLEAGUES, BLEAGUE_KEYS, applyMatchResultsToStandings, emptyBLeagueData, getBLeagueTargetMonthIndex, performBLeagueUpdate } from './b_league.js';
 import { emptyNBAData, NBA_DATA_KEY, performNBAUpdate } from './nba.js';
 
 const SEASON = '2026';
@@ -284,10 +284,18 @@ export default {
       const rawPart = url.searchParams.get('part');
       const part = rawPart === null ? null : Number(rawPart);
       if (rawPart !== null && (!Number.isInteger(part) || part < 0 || part >= B_UPDATE_PARTS)) return json({ error: `Bリーグ更新パートが不正です: ${rawPart}` }, 400);
+      const target = url.searchParams.get('target');
+      if (target !== null && !['current', 'next'].includes(target)) return json({ error: `Bリーグ更新対象が不正です: ${target}` }, 400);
+      if (part !== null && target !== null) return json({ error: 'Bリーグのパート更新と月別更新は同時に指定できません' }, 400);
       const updateId = url.searchParams.get('updateId');
       if (updateId !== null && !/^[a-zA-Z0-9_-]{1,80}$/.test(updateId)) return json({ error: 'Bリーグ更新IDが不正です' }, 400);
-      const updateKey = `${league}:${updateId || 'legacy'}:${part === null ? 'full' : part}`;
-      if (!activeBLeagueUpdatePromises.has(updateKey)) activeBLeagueUpdatePromises.set(updateKey, performBLeagueUpdate(env, new Date(), fetch, league, { part, totalParts: B_UPDATE_PARTS, updateId }).finally(() => activeBLeagueUpdatePromises.delete(updateKey)));
+      const now = new Date();
+      if (target !== null && getBLeagueTargetMonthIndex(now, target) < 0) {
+        const data = (await env.SPORTAL_DATA.get(BLEAGUES[league].dataKey, 'json')) || emptyBLeagueData(league);
+        return json({ data, skipped: true, target, reason: 'out-of-season' });
+      }
+      const updateKey = `${league}:${updateId || 'legacy'}:${part === null ? (target || 'full') : part}`;
+      if (!activeBLeagueUpdatePromises.has(updateKey)) activeBLeagueUpdatePromises.set(updateKey, performBLeagueUpdate(env, now, fetch, league, { part, target, totalParts: B_UPDATE_PARTS, updateId }).finally(() => activeBLeagueUpdatePromises.delete(updateKey)));
       try { return json({ data: await activeBLeagueUpdatePromises.get(updateKey) }); }
       catch (error) { return json({ error: error.message, data: error.data, retryable: Boolean(error.retryable) }, error.retryable ? 503 : 502); }
     }

@@ -15,12 +15,12 @@ JリーグページのJ1・J2・J3と同様に、Bプレミア・Bワン・Bネ�
 
 | 項目 | 参照基準 |
 | --- | --- |
-| カテゴリー切替・選択状態 | `app/j-league/index.html`、`app/app.js` |
-| 地区別順位表の縦並び | `app/npb.js` の `renderStandingsTable` / `renderStandingsLeagueTable` |
+| カテゴリー切替・選択状態 | `app/j-league/index.html`、`app/j-league/j-league.js` |
+| 地区別順位表の縦並び | `app/npb/npb.js` の `renderStandingsTable` / `renderStandingsLeagueTable` |
 | 共通ヘッダー・ページ切替 | [Issue #52](https://github.com/tj-999-comp/sport-portal/issues/52)、[Issue #53](https://github.com/tj-999-comp/sport-portal/issues/53) |
 | スワイプ・日付選択・スクロール | Jリーグ実装とIssue #53の確定方針 |
 | 認証・運用・環境分離 | `docs/MVP_SPEC.md`、`DEPLOYMENT.md`、`docs/STG_DEPLOYMENT.md` |
-| 競技別の外観 | 現在のBリーグ用白黒テーマ（`app/sport-themes.css`） |
+| 競技別の外観 | 現在のBリーグ用白黒テーマ（`app/common/sport-themes.css`） |
 
 古いNPB要件書にはセ・パ切替や星取表の記載があるが、現在の実装ではセ・パ順位表を縦に並べている。本要件では現在の表示を参照し、NPB固有の交流戦・CS・日本シリーズをBリーグへそのまま移植しない。既存の未コミット変更は参照にとどめ、本作業で変更しない。
 

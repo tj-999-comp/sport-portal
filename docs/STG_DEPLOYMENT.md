@@ -56,6 +56,7 @@
 - STG KVの対象リーグキーだけが更新され、本番KVが変更されない
 - `X-Robots-Tag: noindex`、robots.txt、HTTPSが有効である
 - STG WorkerにCron Triggerが設定されておらず、Actionsが`SPORTAL_STG_API_URL`を参照している
+- BALLDONTLIEのAPIキーはSTG Workerの`BALLDONTLIE_API_KEY` Secretにだけ登録され、GitHub Actionsやブラウザーへ複製されていない
 - PagesのService Bindingが本番Workerではなく `sport-portal-api-stg` を指している
 - NBAの取得APIキーはSTG WorkerとProduction Workerそれぞれの `BALLDONTLIE_API_KEY` Secretに個別登録し、ブラウザーやGitHub Actionsへ複製しない
 

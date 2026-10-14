@@ -143,9 +143,9 @@ test('all league pages expose the shared themed header and page selector', async
     assert.match(html, /class="(?:site-header|portal-header)"/);
     assert.match(html, /class="page-switcher"[^>]*data-page-switcher/);
     assert.match(html, new RegExp(`<option value="\/${directory}\/" selected>${label}<\\/option>`));
-    assert.match(html, /src="\/header-nav\.js/);
+    assert.match(html, /src="\/common\/header-nav\.js/);
   }
-  const headerNav = await readFile(new URL('../../app/header-nav.js', import.meta.url), 'utf8');
+  const headerNav = await readFile(new URL('../../app/common/header-nav.js', import.meta.url), 'utf8');
   assert.match(headerNav, /window\.location\.assign/);
 });
 
@@ -158,9 +158,9 @@ test('league selectors omit the top option and keep the portal home link', async
 });
 
 test('NPB scroll surfaces use the J.League scroll state and gesture model', async () => {
-  const npbCss = await readFile(new URL('../../app/npb.css', import.meta.url), 'utf8');
-  const npbJs = await readFile(new URL('../../app/npb.js', import.meta.url), 'utf8');
-  const jLeagueCss = await readFile(new URL('../../app/styles.css', import.meta.url), 'utf8');
+  const npbCss = await readFile(new URL('../../app/npb/npb.css', import.meta.url), 'utf8');
+  const npbJs = await readFile(new URL('../../app/npb/npb.js', import.meta.url), 'utf8');
+  const jLeagueCss = await readFile(new URL('../../app/common/styles.css', import.meta.url), 'utf8');
   for (const selector of ['.npb-date-nav.is-scrollable', '.npb-days.is-scrollable', '.npb-days.is-dragging', '.npb-modal-tabs.is-scrollable']) {
     assert.match(npbCss, new RegExp(selector.replaceAll('.', '\\.') + '\\s*\\{'));
   }

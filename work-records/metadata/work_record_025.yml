@@ -1,0 +1,13 @@
+schema_version: 1
+title: 'Jリーグ順位表の列幅・stickyヘッダ・中央寄せ調整とSTG/本番反映'
+date: "2026-10-16"
+project_id: sport-portal
+tags:
+  - j-league
+  - standings
+  - css
+  - stg
+  - production
+  - deployment
+  - playwright
+publish: true

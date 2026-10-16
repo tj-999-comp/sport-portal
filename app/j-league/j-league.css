@@ -10,6 +10,13 @@
   padding: 8px .5em;
 }
 
+.j-standing-wrap {
+  display: flex;
+  justify-content: center;
+  justify-content: safe center;
+  overflow-x: auto;
+}
+
 /* Tune each column independently with the same nth-child pattern as B.League. */
 .j-standings-table th:first-child,
 .j-standings-table td:first-child {

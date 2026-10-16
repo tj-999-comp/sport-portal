@@ -46,8 +46,8 @@ function formatStatus(update = {}, hasData = false) {
 
 function renderDayMatches(matches) {
   const groups = new Map([
-    ['central', { label: 'セ・リーグ', matches: [] }],
     ['pacific', { label: 'パ・リーグ', matches: [] }],
+    ['central', { label: 'セ・リーグ', matches: [] }],
     ['interleague', { label: 'セ・パ交流戦', matches: [] }],
     ['cs', { label: 'クライマックスシリーズ', matches: [] }],
     ['japanSeries', { label: '日本シリーズ', matches: [] }],
@@ -436,7 +436,7 @@ function renderStandingsLeagueTable(league) {
 }
 
 function renderStandingsTable() {
-  return `<div class="npb-standings-stack">${renderStandingsLeagueTable('central')}${renderStandingsLeagueTable('pacific')}</div>`;
+  return `<div class="npb-standings-stack">${renderStandingsLeagueTable('pacific')}${renderStandingsLeagueTable('central')}</div>`;
 }
 
 function remainingGames(row, totalGames) {
@@ -488,7 +488,7 @@ function renderCsLeague(league, rules, schedule) {
 function renderCs() {
   const cs = state.data?.postseason?.cs;
   if (!cs?.rules) return '<p class="npb-modal-empty">クライマックスシリーズ情報を取得できていません</p>';
-  return `<p class="npb-table-note">出場球団は公式に確定するまで表示せず、予定日だけを表示します。</p>${renderCsLeague('central', cs.rules, cs.schedule || [])}${renderCsLeague('pacific', cs.rules, cs.schedule || [])}`;
+  return `<p class="npb-table-note">出場球団は公式に確定するまで表示せず、予定日だけを表示します。</p>${renderCsLeague('pacific', cs.rules, cs.schedule || [])}${renderCsLeague('central', cs.rules, cs.schedule || [])}`;
 }
 
 function renderJapanSeries() {

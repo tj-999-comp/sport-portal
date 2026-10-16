@@ -427,6 +427,10 @@ function setStandingsButton(open) {
 
 function teamName(team) { return team?.short || team?.name || '未確定'; }
 function modalLeagueLabel(league) { return league === 'central' ? 'セ・リーグ' : 'パ・リーグ'; }
+const TEAM_MARKS = { t: '神', g: '巨', db: 'デ', s: 'ヤ', d: '中', c: '広', h: 'ソ', l: '西', f: '日', b: 'オ', m: 'ロ', e: '楽' };
+function teamMark(team) {
+  return TEAM_MARKS[team?.code] || [...teamName(team)][0] || '未';
+}
 
 function renderStandingsLeagueTable(league) {
   const rows = state.data?.standings?.[league]?.rows || [];
@@ -459,36 +463,82 @@ function actualPostseasonGames(category, league, stage = null) {
   return (state.data?.matches || []).filter((match) => match.kind === 'game' && match.category === category && (!league || match.league === league) && (!stage || match.stage === stage));
 }
 
-function renderPostseasonGame(match) {
-  if (match.kind === 'event') return '';
-  const finished = match.status === 'finished' && Number.isInteger(match.homeScore) && Number.isInteger(match.awayScore);
-  const result = finished ? `　${match.homeScore} - ${match.awayScore}` : `　${escapeHtml(statusText(match))}`;
-  return `<li class="npb-bracket-game"><time>${escapeHtml(dateLabel(match.date))}</time><span>${escapeHtml(teamName(match.home))}${result}　${escapeHtml(teamName(match.away))}</span></li>`;
+function teamKey(team) {
+  return team?.code || team?.short || team?.name || 'unknown';
 }
 
-function renderCsLeague(league, rules, schedule) {
-  const firstGames = actualPostseasonGames('cs', league, 'first').sort((a, b) => a.date.localeCompare(b.date));
-  const finalGames = actualPostseasonGames('cs', league, 'final').sort((a, b) => a.date.localeCompare(b.date));
-  const firstDates = schedule.filter((item) => item.stage === 'first');
-  const finalDates = schedule.filter((item) => item.stage === 'final');
-  const firstTeams = [...new Map(firstGames.flatMap((match) => [match.home, match.away]).filter(Boolean).map((team) => [team.code, team])).values()];
-  const finalTeams = [...new Map(finalGames.flatMap((match) => [match.home, match.away]).filter(Boolean).map((team) => [team.code, team])).values()];
-  const renderStage = (label, dates, games, teams, detail) => {
-    const datesText = dates.map((item) => item.reserve ? `${dateLabel(item.date)} 予備日` : `${dateLabel(item.date)} 第${item.gameNumber}試合`).join(' ・ ');
-    const participants = teams.length ? teams.map(teamName).join(' vs ') : '出場球団未確定';
-    return `<section class="npb-bracket-stage"><h4>${label}</h4><p class="npb-bracket-teams">${escapeHtml(participants)}</p><p class="npb-bracket-rule">${escapeHtml(detail)}</p><p class="npb-bracket-dates">${escapeHtml(datesText || '公式日程未発表')}</p>${games.length ? `<ol class="npb-bracket-games">${games.map(renderPostseasonGame).join('')}</ol>` : '<p class="npb-bracket-pending">試合結果未確定</p>'}</section>`;
-  };
-  const first = renderStage('ファーストステージ', firstDates, firstGames, firstTeams, `${rules.firstStage.games}試合制・先に${rules.firstStage.winsToAdvance}勝。2位球団のホーム開催。`);
-  const finalRule = rules.finalStage;
-  const finalDetail = `${finalRule.standard.games}試合制・1位に${finalRule.standard.advantageWins}勝のアドバンテージ、先に${finalRule.standard.winsToAdvance}勝で勝者。ゲーム差10以上、または勝率5割未満の場合は${finalRule.conditional.games}試合制・2勝アドバンテージ・先に5勝。`;
-  const final = renderStage('ファイナルステージ', finalDates, finalGames, finalTeams, finalDetail);
-  return `<section class="npb-playoff-league"><h3>${modalLeagueLabel(league)}</h3><div class="npb-bracket">${first}<div class="npb-bracket-connector" aria-hidden="true">›</div>${final}</div></section>`;
+function isFinishedPostseasonGame(match) {
+  return match.status === 'finished' && Number.isInteger(match.homeScore) && Number.isInteger(match.awayScore);
+}
+
+function renderPostseasonGame(match) {
+  if (match.kind === 'event') return '';
+  const finished = isFinishedPostseasonGame(match);
+  const result = finished ? `　${match.homeScore} - ${match.awayScore}` : `　${escapeHtml(statusText(match))}`;
+  const matchup = `${teamName(match.home)} vs ${teamName(match.away)}`;
+  return `<li class="npb-bracket-game"><time>${escapeHtml(dateLabel(match.date))}</time><span title="${escapeHtml(matchup)}">${escapeHtml(teamMark(match.home))}${result}　${escapeHtml(teamMark(match.away))}</span></li>`;
+}
+
+function resolveCsFinalRule(league, rules) {
+  const rows = state.data?.standings?.[league]?.rows || [];
+  const firstPlace = rows.find((row) => Number(row.rank) === 1);
+  const secondPlace = rows.find((row) => Number(row.rank) === 2);
+  const gamesBehind = Number(secondPlace?.gamesBehind);
+  const winPercentage = Number(firstPlace?.winPercentage);
+  const conditional = (Number.isFinite(gamesBehind) && gamesBehind >= 10) || (Number.isFinite(winPercentage) && winPercentage < 0.5);
+  return conditional ? rules.finalStage.conditional : rules.finalStage.standard;
+}
+
+function buildCsSeries(league, stage, rules, teams, games) {
+  const records = teams.map((team) => ({ team, wins: 0 }));
+  const recordByTeam = new Map(records.map((record) => [teamKey(record.team), record]));
+  const stageRule = stage === 'final' ? resolveCsFinalRule(league, rules) : rules.firstStage;
+  const advantageWins = stage === 'final' ? Number(stageRule.advantageWins || 0) : 0;
+  if (advantageWins) {
+    const firstPlaceTeam = state.data?.standings?.[league]?.rows?.find((row) => Number(row.rank) === 1)?.team;
+    const firstPlaceRecord = records.find((record) => teamKey(record.team) === teamKey(firstPlaceTeam) || teamName(record.team) === teamName(firstPlaceTeam));
+    if (firstPlaceRecord) firstPlaceRecord.wins += advantageWins;
+  }
+  for (const game of games) {
+    if (!isFinishedPostseasonGame(game) || game.homeScore === game.awayScore) continue;
+    const winner = game.homeScore > game.awayScore ? game.home : game.away;
+    const winnerRecord = recordByTeam.get(teamKey(winner));
+    if (winnerRecord) winnerRecord.wins += 1;
+  }
+  const winner = records.find((record) => record.wins >= stageRule.winsToAdvance);
+  return { records, winnerKey: winner ? teamKey(winner.team) : null, advantageWins };
+}
+
+function renderCsLeagueStage(league, stage, rules) {
+  const games = actualPostseasonGames('cs', league, stage).sort((a, b) => a.date.localeCompare(b.date));
+  const teams = [...new Map(games.flatMap((match) => [match.home, match.away]).filter(Boolean).map((team) => [teamKey(team), team])).values()];
+  const series = buildCsSeries(league, stage, rules, teams, games);
+  const participants = teams.length
+    ? teams.map((team, index) => `${index ? '<span class="npb-bracket-vs" aria-hidden="true">vs</span>' : ''}<span class="npb-bracket-team${teamKey(team) === series.winnerKey ? ' is-winner' : ''}">${escapeHtml(teamName(team))}</span>`).join('')
+    : '出場球団未確定';
+  const record = series.records.length
+    ? `<p class="npb-bracket-record" aria-label="シリーズ成績">${series.records.map((item, index) => `${index ? '<span class="npb-bracket-record-divider" aria-hidden="true">-</span>' : ''}<span>${item.wins}勝</span>`).join('')}</p>`
+    : '';
+  return `<section class="npb-bracket-stage"><h4>${modalLeagueLabel(league)}</h4><p class="npb-bracket-teams">${participants}</p>${record}${games.length ? `<ol class="npb-bracket-games">${games.map(renderPostseasonGame).join('')}</ol>` : '<p class="npb-bracket-pending">試合結果未確定</p>'}</section>`;
+}
+
+function renderCsStage(stage, rules) {
+  const label = stage === 'first' ? 'ファーストステージ' : 'ファイナルステージ';
+  const detail = stage === 'first'
+    ? `${rules.firstStage.games}試合制・先に${rules.firstStage.winsToAdvance}勝。2位球団のホーム開催。`
+    : `${rules.finalStage.standard.games}試合制・1位に${rules.finalStage.standard.advantageWins}勝のアドバンテージ、先に${rules.finalStage.standard.winsToAdvance}勝で勝者。ゲーム差10以上、または勝率5割未満の場合は${rules.finalStage.conditional.games}試合制・2勝アドバンテージ・先に5勝。`;
+  const collapsible = stage === 'first';
+  const contentId = `npb-cs-${stage}-content`;
+  const heading = collapsible
+    ? `<div class="npb-cs-stage-header"><h3>${label}</h3><button class="npb-cs-toggle" type="button" data-npb-cs-toggle aria-expanded="false" aria-controls="${contentId}">表示</button></div>`
+    : `<h3>${label}</h3>`;
+  return `<section class="npb-cs-stage">${heading}<div class="npb-cs-stage-content" id="${contentId}"${collapsible ? ' hidden' : ''}><p class="npb-bracket-rule">${escapeHtml(detail)}</p><div class="npb-cs-leagues">${renderCsLeagueStage('pacific', stage, rules)}${renderCsLeagueStage('central', stage, rules)}</div></div></section>`;
 }
 
 function renderCs() {
   const cs = state.data?.postseason?.cs;
   if (!cs?.rules) return '<p class="npb-modal-empty">クライマックスシリーズ情報を取得できていません</p>';
-  return `<p class="npb-table-note">出場球団は公式に確定するまで表示せず、予定日だけを表示します。</p>${renderCsLeague('pacific', cs.rules, cs.schedule || [])}${renderCsLeague('central', cs.rules, cs.schedule || [])}`;
+  return `${renderCsStage('first', cs.rules)}${renderCsStage('final', cs.rules)}`;
 }
 
 function renderJapanSeries() {
@@ -521,6 +571,15 @@ function renderModalContent() {
     : state.modalTab === 'interleague' ? renderInterleagueStandings()
         : state.modalTab === 'cs' ? renderCs()
         : renderJapanSeries();
+  content.querySelectorAll('[data-npb-cs-toggle]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = document.getElementById(button.getAttribute('aria-controls'));
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', String(!expanded));
+      button.textContent = expanded ? '表示' : '非表示';
+      if (target) target.hidden = expanded;
+    });
+  });
   updateNpbScrollSurfaces();
 }
 

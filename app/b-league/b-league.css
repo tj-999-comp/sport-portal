@@ -1,45 +1,297 @@
-.b-league-theme { --accent:#111; --accent-soft:#ededed; --muted:#666; --line:#d6d6d6; }
-.b-modal-tabs { display:flex; flex:0 0 auto; gap:3px; overflow-x:hidden; margin:0 -4px 12px; border-bottom:1px solid var(--line); scrollbar-width:none; }
-.b-modal-tabs.is-scrollable { overflow-x:auto; }
-.b-modal-tabs::-webkit-scrollbar { display:none; }
-.b-modal-tab { flex:0 0 auto; min-height:38px; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--muted); font-size:11px; font-weight:800; cursor:pointer; padding:8px 9px; white-space:nowrap; }
-.b-modal-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
-.b-modal-tab:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
-.b-modal-content { min-height:0; flex:1 1 auto; overflow:auto; overscroll-behavior:none; scroll-snap-type:both mandatory; touch-action:pan-x pan-y; -webkit-overflow-scrolling:touch; padding-bottom:12px; }
-.b-modal-content h3 { margin:0 0 8px; font-size:14px; text-align:center; }
-.b-modal-content > .b-standing-wrap + h3 { margin-top:22px; }
-.b-modal-content h4 { margin:12px 0 6px; font-size:13px; }
-.b-modal-content > :first-child h3 { margin-top:0; }
-.b-modal-content .table-wrap { width:100%; flex:none; overflow-x:auto; overflow-y:visible; scroll-snap-type:both mandatory; }
-.b-standing-wrap { display:flex; justify-content:center; overflow-x:auto; border:0; border-radius:0; padding:0; }
-.b-zone-table { width:max-content; min-width:0; table-layout:auto; font-size:11px; }
-.b-zone-table th, .b-zone-table td { padding:8px 1.5em; }
-.b-zone-table th:first-child, .b-zone-table td:first-child { width:3em; min-width:3em; max-width:3em; padding-right:1em; text-align:center; }
-.b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { width:5.5em; min-width:5.5em; max-width:5.5em; padding-left:1em; text-align:center; }
-.b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3), .b-zone-table th:nth-child(4), .b-zone-table td:nth-child(4), .b-zone-table th:nth-child(5), .b-zone-table td:nth-child(5) { width:3em; }
-.b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3) { padding-right:1em; }
-.b-zone-table th:nth-child(4), .b-zone-table td:nth-child(4), .b-zone-table th:nth-child(5), .b-zone-table td:nth-child(5) { padding-left:1em; }
-.b-zone-table th:nth-child(6), .b-zone-table td:nth-child(6) { width:5em; padding-right:.75em; text-align:center; }
-.b-zone-table th:nth-child(7), .b-zone-table td:nth-child(7) { width:4em; padding-left:1em; padding-right:.75em; text-align:center; }
-.b-zone-table th:nth-child(8), .b-zone-table td:nth-child(8) { width:5em; padding-left:.75em; padding-right:.75em; text-align:center; }
-.b-zone-table th:nth-child(9), .b-zone-table td:nth-child(9) { width:5em; padding-left:.75em; padding-right:.75em; text-align:center; }
-.b-zone-table th:nth-child(10), .b-zone-table td:nth-child(10) { width:5em; padding-left:1em; padding-right:0; text-align:center; }
-.b-zone-table th:first-child, .b-zone-table td:first-child { padding-left:0; padding-right:0; }
-.b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { padding-left:0; padding-right:1.5em; }
-.b-zone-table th:nth-child(3), .b-zone-table td:nth-child(3) { padding-left:1.5em; padding-right:.75em; }
-.b-zone-table th:nth-child(4), .b-zone-table td:nth-child(4), .b-zone-table th:nth-child(5), .b-zone-table td:nth-child(5) { padding-left:.75em; padding-right:.75em; }
-.b-zone-table th:nth-child(6), .b-zone-table td:nth-child(6) { padding-left:.75em; padding-right:.75em; }
-.b-zone-table th:nth-child(7), .b-zone-table td:nth-child(7) { padding-left:.75em; padding-right:.75em; }
-.b-zone-table th:nth-child(8), .b-zone-table td:nth-child(8), .b-zone-table th:nth-child(9), .b-zone-table td:nth-child(9) { padding-left:.75em; padding-right:.75em; }
-.b-zone-table th:nth-child(10), .b-zone-table td:nth-child(10) { padding-left:1em; padding-right:0; }
-.b-zone-table td.team-column { font-weight:700; text-align:center; }
-.b-zone-table th:first-child, .b-zone-table td:first-child { position:sticky; left:0; z-index:3; background-color:#fff !important; }
-.b-zone-table th:nth-child(2), .b-zone-table td:nth-child(2) { position:sticky; left:3em; z-index:2; background-color:#fff !important; box-shadow:none; }
-.b-league-theme .team-row.loser .score { font-weight:400; }
-.b-league-theme .match-meta.match-venue { justify-content:center; }
-.b-note { color:var(--muted); font-size:12px; line-height:1.65; }
-.b-playoff-card { border-top:1px solid var(--line); padding:10px 0; }
-.b-playoff-card strong { display:block; margin-bottom:4px; }
-.b-league-theme .status-indicator.success { background:#111; }
-.b-league-theme .date-chip.active { color:#111; border-color:#111; }
-.b-league-theme .date-chip.active small, .b-league-theme .date-chip.active span { color:#111; }
+.b-league-theme {
+  --accent: #111;
+  --accent-soft: #ededed;
+  --muted: #666;
+  --line: #d6d6d6;
+}
+
+.b-modal-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 3px;
+  overflow-x: hidden;
+  margin: 0 -4px 12px;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+
+.b-modal-tabs.is-scrollable {
+  overflow-x: auto;
+}
+
+.b-modal-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.b-modal-tab {
+  flex: 0 0 auto;
+  min-height: 38px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 8px 9px;
+  white-space: nowrap;
+}
+
+.b-modal-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.b-modal-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.b-modal-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  overscroll-behavior: none;
+  scroll-snap-type: both mandatory;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+}
+
+.b-modal-content h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.b-modal-content > .b-standing-wrap + h3 {
+  margin-top: 22px;
+}
+
+.b-modal-content h4 {
+  margin: 12px 0 6px;
+  font-size: 13px;
+}
+
+.b-modal-content > :first-child h3 {
+  margin-top: 0;
+}
+
+.b-modal-content .table-wrap {
+  width: 100%;
+  flex: none;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: both mandatory;
+}
+
+.b-standing-wrap {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.b-zone-table {
+  width: max-content;
+  min-width: 0;
+  table-layout: auto;
+  font-size: 11px;
+}
+
+.b-zone-table th,
+.b-zone-table td {
+  padding: 8px 1.5em;
+}
+
+.b-zone-table th:first-child,
+.b-zone-table td:first-child {
+  width: 3em;
+  min-width: 3em;
+  max-width: 3em;
+  padding-right: 1em;
+  text-align: center;
+}
+
+.b-zone-table th:nth-child(2),
+.b-zone-table td:nth-child(2) {
+  width: 5.5em;
+  min-width: 5.5em;
+  max-width: 5.5em;
+  padding-left: 1em;
+  text-align: center;
+}
+
+.b-zone-table th:nth-child(3),
+.b-zone-table td:nth-child(3),
+.b-zone-table th:nth-child(4),
+.b-zone-table td:nth-child(4),
+.b-zone-table th:nth-child(5),
+.b-zone-table td:nth-child(5) {
+  width: 3em;
+}
+
+.b-zone-table th:nth-child(3),
+.b-zone-table td:nth-child(3) {
+  padding-right: 1em;
+}
+
+.b-zone-table th:nth-child(4),
+.b-zone-table td:nth-child(4),
+.b-zone-table th:nth-child(5),
+.b-zone-table td:nth-child(5) {
+  padding-left: 1em;
+}
+
+.b-zone-table th:nth-child(6),
+.b-zone-table td:nth-child(6) {
+  width: 5em;
+  padding-right: .75em;
+  text-align: center;
+}
+
+.b-zone-table th:nth-child(7),
+.b-zone-table td:nth-child(7) {
+  width: 4em;
+  padding-left: 1em;
+  padding-right: .75em;
+  text-align: center;
+}
+
+.b-zone-table th:nth-child(8),
+.b-zone-table td:nth-child(8) {
+  width: 5em;
+  padding-left: .75em;
+  padding-right: .75em;
+  text-align: center;
+}
+
+.b-zone-table th:nth-child(9),
+.b-zone-table td:nth-child(9) {
+  width: 5em;
+  padding-left: .75em;
+  padding-right: .75em;
+  text-align: center;
+}
+
+.b-zone-table th:nth-child(10),
+.b-zone-table td:nth-child(10) {
+  width: 5em;
+  padding-left: 1em;
+  padding-right: 0;
+  text-align: center;
+}
+
+.b-zone-table th:first-child,
+.b-zone-table td:first-child {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.b-zone-table th:nth-child(2),
+.b-zone-table td:nth-child(2) {
+  padding-left: 0;
+  padding-right: 1.5em;
+}
+
+.b-zone-table th:nth-child(3),
+.b-zone-table td:nth-child(3) {
+  padding-left: 1.5em;
+  padding-right: .75em;
+}
+
+.b-zone-table th:nth-child(4),
+.b-zone-table td:nth-child(4),
+.b-zone-table th:nth-child(5),
+.b-zone-table td:nth-child(5) {
+  padding-left: .75em;
+  padding-right: .75em;
+}
+
+.b-zone-table th:nth-child(6),
+.b-zone-table td:nth-child(6) {
+  padding-left: .75em;
+  padding-right: .75em;
+}
+
+.b-zone-table th:nth-child(7),
+.b-zone-table td:nth-child(7) {
+  padding-left: .75em;
+  padding-right: .75em;
+}
+
+.b-zone-table th:nth-child(8),
+.b-zone-table td:nth-child(8),
+.b-zone-table th:nth-child(9),
+.b-zone-table td:nth-child(9) {
+  padding-left: .75em;
+  padding-right: .75em;
+}
+
+.b-zone-table th:nth-child(10),
+.b-zone-table td:nth-child(10) {
+  padding-left: 1em;
+  padding-right: 0;
+}
+
+.b-zone-table td.team-column {
+  font-weight: 700;
+  text-align: center;
+}
+
+.b-zone-table th:first-child,
+.b-zone-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background-color: #fff !important;
+}
+
+.b-zone-table th:nth-child(2),
+.b-zone-table td:nth-child(2) {
+  position: sticky;
+  left: 3em;
+  z-index: 2;
+  background-color: #fff !important;
+  box-shadow: none;
+}
+
+.b-league-theme .team-row.loser .score {
+  font-weight: 400;
+}
+
+.b-league-theme .match-meta.match-venue {
+  justify-content: center;
+}
+
+.b-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.b-playoff-card {
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.b-playoff-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.b-league-theme .status-indicator.success {
+  background: #111;
+}
+
+.b-league-theme .date-chip.active {
+  color: #111;
+  border-color: #111;
+}
+
+.b-league-theme .date-chip.active small,
+.b-league-theme .date-chip.active span {
+  color: #111;
+}

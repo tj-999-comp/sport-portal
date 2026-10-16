@@ -356,8 +356,7 @@ h1 {
   --score-width: 3ch;
   align-items: center;
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) 2em
+  grid-template-columns: minmax(0, 1fr) 2em
     var(--score-width) var(--score-gap) 14px
     var(--score-gap) var(--score-width)
     2em minmax(0, 1fr);
@@ -373,7 +372,7 @@ h1 {
   min-width: 0;
 }
 
-.team-row.home .team-name-block ,
+.team-row.home .team-name-block,
 .team-row.away .team-name-block {
   justify-self: stretch;
   width: 100%;
@@ -466,7 +465,7 @@ h1 {
 .npb-score.home,
 .npb-score.away,
 .nba-score-home,
-.nba-score-away{
+.nba-score-away {
   justify-content: stretch;
 }
 
@@ -753,7 +752,6 @@ td.team-column {
   .status-detail {
     display: none;
   }
-
   .bottom-nav button {
     min-width: 0;
     padding-right: 8px;

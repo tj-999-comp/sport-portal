@@ -125,10 +125,23 @@ body.sport-theme--nba {
   content: "";
 }
 
-.sport-mark--ball::after { transform: rotate(90deg); }
+.sport-mark--ball::after {
+  transform: rotate(90deg);
+}
 
 @media (max-width: 560px) {
-  .sport-hero { min-height: 280px; padding-right: 12px; padding-left: 12px; }
-  .sport-mark { right: 7px; width: 92px; height: 92px; }
-  .sport-mark--court { width: 112px; height: 72px; }
+  .sport-hero {
+    min-height: 280px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+  .sport-mark {
+    right: 7px;
+    width: 92px;
+    height: 92px;
+  }
+  .sport-mark--court {
+    width: 112px;
+    height: 72px;
+  }
 }

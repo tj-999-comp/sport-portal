@@ -1,0 +1,89 @@
+.j-standings-table {
+  width: max-content;
+  min-width: 0;
+  table-layout: auto;
+  font-size: 11px;
+}
+
+.j-standings-table th,
+.j-standings-table td {
+  padding: 8px .5em;
+}
+
+/* Tune each column independently with the same nth-child pattern as B.League. */
+.j-standings-table th:first-child,
+.j-standings-table td:first-child {
+  width: 3em;
+  min-width: 3em;
+  max-width: 3em;
+  padding-right: 0;
+  padding-left: 0;
+  text-align: center;
+}
+
+.j-standings-table th:nth-child(2),
+.j-standings-table td:nth-child(2) {
+  width: 5.2em;
+  max-width: 5.2em;
+  min-width: 5.2em;
+  padding-left: 0.5em;
+  text-align: center;
+}
+
+.j-standings-table th:nth-child(3),
+.j-standings-table td:nth-child(3) {
+  width: 3em;
+}
+
+.j-standings-table th:nth-child(4),
+.j-standings-table td:nth-child(4),
+.j-standings-table th:nth-child(5),
+.j-standings-table td:nth-child(5),
+.j-standings-table th:nth-child(6),
+.j-standings-table td:nth-child(6) {
+  width: 2em;
+}
+
+.j-standings-table th:nth-child(7),
+.j-standings-table td:nth-child(7),
+.j-standings-table th:nth-child(8),
+.j-standings-table td:nth-child(8),
+.j-standings-table th:nth-child(9),
+.j-standings-table td:nth-child(9),
+.j-standings-table th:nth-child(10),
+.j-standings-table td:nth-child(10) {
+  width: 3em;
+  text-align: center;
+}
+
+.j-standings-table td.team-column,
+.j-standings-table th.team-column {
+  font-weight: 700;
+  /* text-align: left; */
+}
+
+.j-standings-table th:first-child,
+.j-standings-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #fff;
+  text-align: center;
+}
+
+.j-standings-table th:nth-child(2),
+.j-standings-table td:nth-child(2) {
+  position: sticky;
+  left: 3em;
+  z-index: 2;
+  background: #fff;
+}
+
+/* Keep the sticky header above the sticky body columns during vertical scroll. */
+.j-standings-table thead th:first-child {
+  z-index: 5;
+}
+
+.j-standings-table thead th:nth-child(2) {
+  z-index: 4;
+}

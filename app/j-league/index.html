@@ -7,6 +7,7 @@
   <meta name="description" content="J1・J2・J3リーグの試合予定・結果・順位表を確認するスポーツポータル">
   <title>スポーツポータル | 2026 J1</title>
   <link rel="stylesheet" href="/common/styles.css?v=league-tabs-bottom-2">
+  <link rel="stylesheet" href="/j-league/j-league.css?v=standings-columns-1">
 </head>
 <body class="league-page">
   <main class="page-shell">
@@ -61,9 +62,9 @@
     <div class="standings-sheet-panel" id="standings-panel" tabindex="-1">
       <div class="modal-grabber" aria-hidden="true"></div>
       <div class="table-wrap" tabindex="0" aria-label="順位表をスクロール">
-        <table>
+        <table class="j-standings-table">
           <thead>
-            <tr><th>順位</th><th class="team-column">チーム</th><th>試合</th><th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th><th>得失</th><th>勝点</th></tr>
+            <tr><th>順位</th><th class="team-column">クラブ</th><th>試合</th><th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th><th>得失</th><th>勝点</th></tr>
           </thead>
           <tbody id="standings-body"></tbody>
         </table>
